@@ -13,6 +13,6 @@ class CreateMarkers < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :markers, [:map_id, :position]
+    add_index :markers, [ :map_id, :position ]
   end
 end

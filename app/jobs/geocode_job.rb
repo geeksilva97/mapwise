@@ -6,7 +6,7 @@ class GeocodeJob < ApplicationJob
     marker = Marker.find(marker_id)
     return if marker.lat != 0.0 || marker.lng != 0.0
 
-    address = [marker.title, marker.description].compact.join(", ")
+    address = [ marker.title, marker.description ].compact.join(", ")
     result = GeocodeService.geocode(address, api_key)
 
     if result[:success]

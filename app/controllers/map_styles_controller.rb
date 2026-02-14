@@ -1,6 +1,6 @@
 class MapStylesController < ApplicationController
   def index
-    @styles = MapStyle.for_user(Current.user).order(:system_default => :desc, :name => :asc)
+    @styles = MapStyle.for_user(Current.user).order(system_default: :desc, name: :asc)
   end
 
   def create

@@ -17,6 +17,6 @@ class CreateMaps < ActiveRecord::Migration[8.1]
     end
 
     add_index :maps, :embed_token, unique: true
-    add_index :maps, [:user_id, :created_at]
+    add_index :maps, [ :user_id, :created_at ]
   end
 end

@@ -13,6 +13,6 @@ class CreateLayers < ActiveRecord::Migration[8.1]
       t.integer :position, default: 0
       t.timestamps
     end
-    add_index :layers, [:map_id, :position]
+    add_index :layers, [ :map_id, :position ]
   end
 end

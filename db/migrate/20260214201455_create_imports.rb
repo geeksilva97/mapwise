@@ -12,6 +12,6 @@ class CreateImports < ActiveRecord::Migration[8.1]
       t.text :column_mapping
       t.timestamps
     end
-    add_index :imports, [:map_id, :created_at]
+    add_index :imports, [ :map_id, :created_at ]
   end
 end

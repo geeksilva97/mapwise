@@ -106,7 +106,7 @@ class MarkerGroupsControllerTest < ActionDispatch::IntegrationTest
     marker_two = markers(:two_on_one)
 
     patch assign_markers_map_marker_group_path(@map, @group),
-          params: { marker_ids: [marker_one.id, marker_two.id] },
+          params: { marker_ids: [ marker_one.id, marker_two.id ] },
           as: :json
 
     assert_response :success
@@ -126,7 +126,7 @@ class MarkerGroupsControllerTest < ActionDispatch::IntegrationTest
     other_marker = markers(:on_other_map)
 
     patch assign_markers_map_marker_group_path(@map, @group),
-          params: { marker_ids: [other_marker.id] },
+          params: { marker_ids: [ other_marker.id ] },
           as: :json
 
     assert_response :success
@@ -148,7 +148,7 @@ class MarkerGroupsControllerTest < ActionDispatch::IntegrationTest
   test "assign_markers requires authentication" do
     sign_out
     patch assign_markers_map_marker_group_path(@map, @group),
-          params: { marker_ids: [markers(:one).id] },
+          params: { marker_ids: [ markers(:one).id ] },
           as: :json
 
     assert_redirected_to new_session_path

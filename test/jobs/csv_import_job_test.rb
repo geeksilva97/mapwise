@@ -4,7 +4,7 @@ class CsvImportJobTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
 
   test "enqueues job" do
-    assert_enqueued_with(job: CsvImportJob, args: [42]) do
+    assert_enqueued_with(job: CsvImportJob, args: [ 42 ]) do
       CsvImportJob.perform_later(42)
     end
   end

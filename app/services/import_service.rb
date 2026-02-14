@@ -20,7 +20,7 @@ class ImportService
       error_log: @errors.presence
     )
   rescue => e
-    @import.update!(status: "failed", error_log: [{ row: 0, message: e.message }])
+    @import.update!(status: "failed", error_log: [ { row: 0, message: e.message } ])
     raise
   end
 

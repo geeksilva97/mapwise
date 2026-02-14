@@ -72,7 +72,7 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
   def create_tempfile(filename, content)
     ext = File.extname(filename)
     base = File.basename(filename, ext)
-    tempfile = Tempfile.new([base, ext])
+    tempfile = Tempfile.new([ base, ext ])
     tempfile.write(content)
     tempfile.rewind
     tempfile

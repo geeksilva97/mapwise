@@ -89,7 +89,7 @@ class LayerTest < ActiveSupport::TestCase
 
   test "ordered scope sorts by position" do
     layers = maps(:one).layers.ordered
-    assert_equal [0, 1, 2], layers.map(&:position)
+    assert_equal [ 0, 1, 2 ], layers.map(&:position)
   end
 
   test "visible scope filters hidden layers" do

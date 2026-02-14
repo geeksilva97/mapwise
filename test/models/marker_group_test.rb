@@ -50,7 +50,7 @@ class MarkerGroupTest < ActiveSupport::TestCase
 
   test "ordered scope sorts by position" do
     groups = maps(:one).marker_groups.ordered
-    assert_equal [0, 1, 2], groups.map(&:position)
+    assert_equal [ 0, 1, 2 ], groups.map(&:position)
   end
 
   test "visible scope filters hidden groups" do

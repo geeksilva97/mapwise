@@ -9,6 +9,6 @@ class CreateMarkerGroups < ActiveRecord::Migration[8.1]
       t.integer :position, default: 0, null: false
       t.timestamps
     end
-    add_index :marker_groups, [:map_id, :position]
+    add_index :marker_groups, [ :map_id, :position ]
   end
 end
