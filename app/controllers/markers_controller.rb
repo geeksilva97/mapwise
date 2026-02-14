@@ -4,7 +4,6 @@ class MarkersController < ApplicationController
 
   def create
     @marker = @map.markers.build(marker_params)
-    @marker.position = @map.markers.count
 
     if @marker.save
       respond_to do |format|

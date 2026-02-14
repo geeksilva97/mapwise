@@ -117,4 +117,61 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :not_found
   end
+
+  test "update saves settings via turbo_stream" do
+    patch map_path(@map),
+          params: { map: { title: "Stream Title" } },
+          as: :turbo_stream
+
+    assert_response :success
+    @map.reload
+    assert_equal "Stream Title", @map.title
+  end
+
+  test "new map gets US-center defaults on create" do
+    post maps_path, params: { map: { title: "Defaults Test" } }
+    map = Map.last
+    assert_in_delta 39.8283, map.center_lat, 0.0001
+    assert_in_delta(-98.5795, map.center_lng, 0.0001)
+    assert_equal 4, map.zoom
+  end
+
+  # Dual-mode rendering: JSON styles vs cloud Map ID
+
+  test "editor renders style-json data attribute for map with JSON styles" do
+    styled = maps(:styled_map)
+    get edit_map_path(styled)
+    assert_response :success
+    assert_select "#map-canvas[data-map-style-json-value]"
+    assert_select "#map-canvas[data-map-google-map-id-value]", count: 0
+  end
+
+  test "editor renders google-map-id data attribute for cloud-styled map" do
+    cloud = maps(:cloud_styled_map)
+    get edit_map_path(cloud)
+    assert_response :success
+    assert_select "#map-canvas[data-map-google-map-id-value='abc123def456']"
+  end
+
+  test "viewer renders style-json data attribute for map with JSON styles" do
+    styled = maps(:styled_map)
+    get map_path(styled)
+    assert_response :success
+    assert_select "#map-canvas[data-map-style-json-value]"
+    assert_select "#map-canvas[data-map-google-map-id-value]", count: 0
+  end
+
+  test "viewer renders google-map-id data attribute for cloud-styled map" do
+    cloud = maps(:cloud_styled_map)
+    get map_path(cloud)
+    assert_response :success
+    assert_select "#map-canvas[data-map-google-map-id-value='abc123def456']"
+  end
+
+  test "editor omits both style attrs for plain map" do
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "#map-canvas[data-map-style-json-value]", count: 0
+    assert_select "#map-canvas[data-map-google-map-id-value]", count: 0
+  end
 end

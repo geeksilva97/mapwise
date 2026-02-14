@@ -15,15 +15,13 @@ class MapStylesController < ApplicationController
   end
 
   def destroy
-    @map_style = MapStyle.find(params[:id])
+    @map_style = MapStyle.for_user(Current.user).find(params[:id])
 
     if @map_style.system_default?
       redirect_to map_styles_path, alert: "Cannot delete system presets."
-    elsif @map_style.user == Current.user
+    else
       @map_style.destroy
       redirect_to map_styles_path, notice: "Style deleted."
-    else
-      head :not_found
     end
   end
 

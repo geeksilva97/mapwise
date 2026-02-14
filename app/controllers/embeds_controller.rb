@@ -4,22 +4,10 @@ class EmbedsController < ApplicationController
   layout "embed"
 
   def show
-    @map = Map.find_by(embed_token: params[:token])
+    @map = Map.find_public_by_token(params[:token])
+    return render plain: "Map not found", status: :not_found unless @map
 
-    if @map.nil?
-      render plain: "Map not found", status: :not_found
-      return
-    end
-
-    unless @map.public?
-      render plain: "Map not found", status: :not_found
-      return
-    end
-
-    @api_key = @map.user.api_keys.first&.google_maps_key
-
-    unless @api_key
-      render "not_configured", status: :service_unavailable
-    end
+    @api_key = @map.embed_api_key
+    render "not_configured", status: :service_unavailable unless @api_key
   end
 end

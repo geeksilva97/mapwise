@@ -27,11 +27,38 @@ class MapTest < ActiveSupport::TestCase
 
   test "default values" do
     map = Map.new
-    assert_equal 0.0, map.center_lat
-    assert_equal 0.0, map.center_lng
-    assert_equal 3, map.zoom
+    assert_in_delta 39.8283, map.center_lat, 0.0001
+    assert_in_delta(-98.5795, map.center_lng, 0.0001)
+    assert_equal 4, map.zoom
     assert_equal "roadmap", map.map_type
     assert_equal false, map.public
+  end
+
+  test "find_public_by_token returns public map" do
+    public_map = maps(:public_map)
+    found = Map.find_public_by_token(public_map.embed_token)
+    assert_equal public_map, found
+  end
+
+  test "find_public_by_token returns nil for private map" do
+    private_map = maps(:one)
+    assert_nil Map.find_public_by_token(private_map.embed_token)
+  end
+
+  test "find_public_by_token returns nil for invalid token" do
+    assert_nil Map.find_public_by_token("nonexistent_token")
+  end
+
+  test "embed_api_key returns user's first API key" do
+    map = maps(:one)
+    expected_key = api_keys(:one).google_maps_key
+    assert_equal expected_key, map.embed_api_key
+  end
+
+  test "embed_api_key returns nil when user has no API keys" do
+    map = maps(:one)
+    map.user.api_keys.destroy_all
+    assert_nil map.embed_api_key
   end
 
   test "valid with all required attributes" do

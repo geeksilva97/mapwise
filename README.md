@@ -66,8 +66,7 @@ Public maps can be embedded with:
 The editor is a full-screen split view with a sidebar and map canvas:
 
 - **Markers tab**: Add, edit, drag, and delete markers on the map.
-- **Styles tab**: Select a map style from a dropdown (Default, Silver, Night, Retro, Aubergine, Minimal).
-- **Settings tab**: Edit title, description, starting position (lat/lng/zoom). Use the "Use current view" button to capture the map's current position. Settings save inline via Turbo Stream without leaving the tab.
+- **Settings tab**: Edit title, description, starting position (lat/lng/zoom), and map style. Use the "Use current view" button to capture the map's current position. Settings save inline via Turbo Stream. Style changes apply immediately.
 
 ## UI & Layouts
 
@@ -84,5 +83,5 @@ Auth pages (sign in, sign up) hide the navbar for a clean, centered card design.
 - Rails 8.1 with Hotwire (Turbo + Stimulus)
 - Tailwind CSS
 - SQLite with Solid Queue, Solid Cache, Solid Cable
-- Google Maps JavaScript API (AdvancedMarkerElement)
+- Google Maps JavaScript API (dual-mode: AdvancedMarkerElement with cloud Map ID, or legacy Marker with JSON styles)
 - Importmap (no bundler), Propshaft

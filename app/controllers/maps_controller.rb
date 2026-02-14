@@ -3,7 +3,7 @@ class MapsController < ApplicationController
   before_action :set_map, only: %i[ show edit update destroy ]
 
   def new
-    @map = Current.user.maps.build(center_lat: 39.8283, center_lng: -98.5795, zoom: 4)
+    @map = Current.user.maps.build
   end
 
   def create

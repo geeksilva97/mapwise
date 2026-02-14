@@ -15,8 +15,8 @@ MapWise is a multi-tenant SaaS map creation platform inspired by Google My Maps 
 - **Public maps**: Also viewable inside MapWise, plus embeddable via iframe on external sites (requires customer API key).
 
 **Important API notes discovered during research**:
-- `google.maps.Marker` is deprecated — use `AdvancedMarkerElement` (requires `mapId`)
-- Google Maps JSON styling is being deprecated in favor of cloud-based `mapId` styling — support both
+- `google.maps.Marker` is deprecated — use `AdvancedMarkerElement` when `mapId` is available
+- Google Maps JSON styling is incompatible with `mapId` — dual-mode: `AdvancedMarkerElement` + cloud styling when `google_map_id` is set, legacy `Marker` + JSON styles otherwise
 - Google Maps Drawing Library is deprecated — use [Terra Draw](https://github.com/JamesLMilner/terra-draw) for shapes (Phase 2)
 
 ---
@@ -193,6 +193,43 @@ resources :map_styles, only: [:index, :create, :destroy]
 get "embed/:token", to: "embeds#show", as: :embed
 root "dashboard#index"
 ```
+
+---
+
+## Pre-Phase 2 — Code Quality Refactoring (DONE)
+
+Security fixes, separation of concerns, and code quality improvements before Phase 2.
+
+### Security (P0)
+- **XSS fixes**: Replaced `innerHTML` with DOM API (`createElement`/`textContent`) in marker sidebar and InfoWindow content
+- **Scoped find**: `MapStylesController#destroy` now uses `MapStyle.for_user(Current.user).find()` instead of unscoped `MapStyle.find()`
+
+### Separation of Concerns (P1)
+- **Marker auto-positioning**: Moved to `before_create :assign_position` callback in Marker model
+- **Map defaults**: US center (39.8283, -98.5795) and zoom (4) as `attribute` defaults in Map model
+- **Embed resolution**: Extracted `Map.find_public_by_token` and `Map#embed_api_key` methods
+- **Style authorization**: Scoped find + `system_default?` guard replaces manual ownership checks
+
+### Code Quality (P2)
+- **CSRF utility**: `app/javascript/utils/csrf.js` — shared across all controllers
+- **Fetch error handling**: All fetch calls have `.catch()` with `console.error` + visual toast
+- **Marker validations**: lat (-90..90), lng (-180..180), hex color format
+- **N+1 fix**: `counter_cache: true` on Marker → Map; dashboard uses `markers_count` column
+- **Nav helper**: `nav_link_to(label, path, mobile:)` replaces 6 inline active-link checks
+
+### Dual-Mode Map Rendering
+Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId` disables JSON `styles`.
+
+- **With `google_map_id`**: Sets `mapId` → `AdvancedMarkerElement` with `PinElement` → cloud-based styling
+- **Without `google_map_id`**: No `mapId` → legacy `Marker` with SVG pin icons → JSON styles via `setOptions`
+
+### UI Changes
+- Merged Styles tab into Settings tab (editor sidebar: Markers | Settings)
+- Style picker is now a section in Settings with immediate-apply behavior
+
+### Tests
+- 126 tests, 361 assertions (up from 104/308)
+- New coverage: validation bounds, auto-positioning, model methods, dual-mode data attributes, cross-user auth
 
 ---
 

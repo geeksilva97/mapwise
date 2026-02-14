@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_14_171443) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_14_184148) do
   create_table "api_keys", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "google_maps_key", null: false
@@ -39,6 +39,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_14_171443) do
     t.string "embed_token", null: false
     t.string "google_map_id"
     t.string "map_type", default: "roadmap"
+    t.integer "markers_count", default: 0, null: false
     t.boolean "public", default: false
     t.text "style_json"
     t.string "title", null: false

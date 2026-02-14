@@ -70,4 +70,15 @@ class MapStylesControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
   end
+
+  test "cross-user deletion attempt returns 404" do
+    sign_in_as(users(:two))
+    user_one_style = map_styles(:user_one_custom)
+
+    assert_no_difference("MapStyle.count") do
+      delete map_style_path(user_one_style)
+    end
+
+    assert_response :not_found
+  end
 end

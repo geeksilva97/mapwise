@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { csrfToken } from "utils/csrf"
 
 export default class extends Controller {
   static values = {
@@ -7,7 +8,6 @@ export default class extends Controller {
 
   select(event) {
     const styleJson = event.currentTarget.value
-    const csrfToken = document.querySelector("[name='csrf-token']")?.content
 
     // Apply style to map via the map controller
     const mapEl = document.getElementById("map-canvas")
@@ -21,9 +21,10 @@ export default class extends Controller {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken
+        "X-CSRF-Token": csrfToken()
       },
       body: JSON.stringify({ map: { style_json: styleJson } })
     })
+      .catch(err => console.error("Failed to save style:", err))
   }
 }

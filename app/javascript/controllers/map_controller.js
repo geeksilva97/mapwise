@@ -1,4 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
+import { csrfToken } from "utils/csrf"
+
+// Two rendering modes based on google_map_id presence:
+//   With google_map_id → mapId set → AdvancedMarkerElement, cloud-based styling
+//   Without google_map_id → no mapId → legacy Marker with SVG icons, JSON styles
 
 export default class extends Controller {
   static values = {
@@ -44,16 +49,22 @@ export default class extends Controller {
 
   async initMap() {
     const { Map } = await google.maps.importLibrary("maps")
-    await google.maps.importLibrary("marker")
+
+    this.useAdvancedMarkers = !!this.googleMapIdValue
+
+    if (this.useAdvancedMarkers) {
+      await google.maps.importLibrary("marker")
+    }
 
     const mapOptions = {
       center: { lat: this.centerLatValue, lng: this.centerLngValue },
       zoom: this.zoomValue,
-      mapTypeId: "roadmap",
-      mapId: this.googleMapIdValue || "DEMO_MAP_ID"
+      mapTypeId: "roadmap"
     }
 
-    if (!this.googleMapIdValue && this.styleJsonValue) {
+    if (this.googleMapIdValue) {
+      mapOptions.mapId = this.googleMapIdValue
+    } else if (this.styleJsonValue) {
       try {
         mapOptions.styles = JSON.parse(this.styleJsonValue)
       } catch (e) { /* ignore invalid JSON */ }
@@ -90,13 +101,12 @@ export default class extends Controller {
     if (!this.idValue) return
 
     const center = this.map.getCenter()
-    const csrfToken = document.querySelector("[name='csrf-token']")?.content
 
     fetch(`/maps/${this.idValue}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken
+        "X-CSRF-Token": csrfToken()
       },
       body: JSON.stringify({
         map: {
@@ -106,6 +116,7 @@ export default class extends Controller {
         }
       })
     })
+      .catch(err => console.error("Failed to save map state:", err))
   }
 
   // Called by external Stimulus actions to enter placement mode
@@ -123,31 +134,35 @@ export default class extends Controller {
 
   renderMarkers() {
     // Clear existing markers
-    this.mapMarkers.forEach(m => m.map = null)
+    this.mapMarkers.forEach(m => {
+      if (this.useAdvancedMarkers) {
+        m.map = null
+      } else {
+        m.setMap(null)
+      }
+    })
     this.mapMarkers = []
 
     this.markersValue.forEach(markerData => {
-      const pinGlyph = new google.maps.marker.PinElement({
-        background: markerData.color || "#FF0000",
-        borderColor: markerData.color || "#FF0000",
-        glyphColor: "#FFFFFF"
-      })
-
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        map: this.map,
-        position: { lat: markerData.lat, lng: markerData.lng },
-        title: markerData.title || "",
-        content: pinGlyph.element,
-        gmpDraggable: !this.readonlyValue
-      })
+      const marker = this.useAdvancedMarkers
+        ? this.#createAdvancedMarker(markerData)
+        : this.#createLegacyMarker(markerData)
 
       if (!this.readonlyValue) {
-        marker.addListener("dragend", () => {
-          const pos = marker.position
-          this.dispatch("markerDragged", {
-            detail: { id: markerData.id, lat: pos.lat, lng: pos.lng }
+        if (this.useAdvancedMarkers) {
+          marker.addListener("dragend", () => {
+            const pos = marker.position
+            this.dispatch("markerDragged", {
+              detail: { id: markerData.id, lat: pos.lat, lng: pos.lng }
+            })
           })
-        })
+        } else {
+          marker.addListener("dragend", (event) => {
+            this.dispatch("markerDragged", {
+              detail: { id: markerData.id, lat: event.latLng.lat(), lng: event.latLng.lng() }
+            })
+          })
+        }
 
         marker.addListener("click", () => {
           this.dispatch("markerClicked", { detail: { id: markerData.id } })
@@ -156,9 +171,20 @@ export default class extends Controller {
 
       // Info window for viewer/read-only mode
       if (this.readonlyValue && markerData.title) {
-        const infoWindow = new google.maps.InfoWindow({
-          content: `<div class="p-2"><strong>${markerData.title}</strong>${markerData.description ? `<p>${markerData.description}</p>` : ""}</div>`
-        })
+        const infoContent = document.createElement("div")
+        infoContent.className = "p-2"
+
+        const strong = document.createElement("strong")
+        strong.textContent = markerData.title
+        infoContent.appendChild(strong)
+
+        if (markerData.description) {
+          const p = document.createElement("p")
+          p.textContent = markerData.description
+          infoContent.appendChild(p)
+        }
+
+        const infoWindow = new google.maps.InfoWindow({ content: infoContent })
 
         marker.addListener("click", () => {
           infoWindow.open({ anchor: marker, map: this.map })
@@ -169,15 +195,57 @@ export default class extends Controller {
     })
   }
 
-  // Apply a style JSON string
+  // Apply a style JSON string (only works in legacy mode — no mapId)
   applyStyle(styleJson) {
-    if (!this.map) return
+    if (!this.map || this.useAdvancedMarkers) return
 
     try {
       const styles = JSON.parse(styleJson)
       this.map.setOptions({ styles })
     } catch (e) {
       // ignore invalid JSON
+    }
+  }
+
+  // --- Private ---
+
+  #createAdvancedMarker(markerData) {
+    const pinGlyph = new google.maps.marker.PinElement({
+      background: markerData.color || "#FF0000",
+      borderColor: markerData.color || "#FF0000",
+      glyphColor: "#FFFFFF"
+    })
+
+    return new google.maps.marker.AdvancedMarkerElement({
+      map: this.map,
+      position: { lat: markerData.lat, lng: markerData.lng },
+      title: markerData.title || "",
+      content: pinGlyph.element,
+      gmpDraggable: !this.readonlyValue
+    })
+  }
+
+  #createLegacyMarker(markerData) {
+    return new google.maps.Marker({
+      map: this.map,
+      position: { lat: markerData.lat, lng: markerData.lng },
+      title: markerData.title || "",
+      draggable: !this.readonlyValue,
+      icon: this.#markerIcon(markerData.color)
+    })
+  }
+
+  #markerIcon(color) {
+    const safeColor = /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#FF0000"
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="40" viewBox="0 0 28 40">` +
+      `<path d="M14 0C6.3 0 0 6.3 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.3 21.7 0 14 0z" fill="${safeColor}" stroke="white" stroke-width="1.5"/>` +
+      `<circle cx="14" cy="14" r="5" fill="white" opacity="0.9"/>` +
+      `</svg>`
+
+    return {
+      url: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(28, 40),
+      anchor: new google.maps.Point(14, 40)
     }
   }
 }

@@ -20,6 +20,28 @@ public_map:
   embed_token: public_token_xyz789
   public: true
 
+styled_map:
+  user: one
+  title: Styled Map
+  center_lat: 39.8283
+  center_lng: -98.5795
+  zoom: 4
+  map_type: roadmap
+  embed_token: styled_token_aaa111
+  public: false
+  style_json: '[{"elementType":"geometry","stylers":[{"color":"#242f3e"}]}]'
+
+cloud_styled_map:
+  user: one
+  title: Cloud Styled Map
+  center_lat: 39.8283
+  center_lng: -98.5795
+  zoom: 4
+  map_type: roadmap
+  embed_token: cloud_token_bbb222
+  public: false
+  google_map_id: abc123def456
+
 two:
   user: two
   title: Other User Map
