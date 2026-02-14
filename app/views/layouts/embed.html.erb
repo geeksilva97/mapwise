@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= @map&.title || "MapWise" %></title>
-  <%= stylesheet_link_tag "application" %>
+  <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
   <%= javascript_importmap_tags %>
 </head>
 <body class="m-0 p-0 overflow-hidden">
