@@ -1,14 +1,9 @@
-<div class="space-y-2">
+<select data-action="change->style-picker#select"
+        class="block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
   <% styles.each do |style| %>
-    <button data-action="click->style-picker#select"
-            data-style-json="<%= style.style_json %>"
-            data-style-id="<%= style.id %>"
-            class="w-full text-left p-3 rounded-lg border hover:border-blue-400 hover:bg-blue-50 transition-colors
-                   <%= 'border-blue-600 bg-blue-50' if map.style_json == style.style_json %>">
-      <span class="font-medium text-sm"><%= style.name %></span>
-      <% if style.system_default? %>
-        <span class="text-xs text-gray-400 ml-1">preset</span>
-      <% end %>
-    </button>
+    <option value="<%= style.style_json %>"
+            <%= "selected" if map.style_json == style.style_json %>>
+      <%= style.name %><%= " (preset)" if style.system_default? %>
+    </option>
   <% end %>
-</div>
+</select>

@@ -5,6 +5,13 @@ export default class extends Controller {
     mapId: Number
   }
 
+  // Proxy to the map controller's enterPlacementMode (button is in sidebar, map controller is on #map-canvas)
+  enterPlacementMode() {
+    const mapEl = document.getElementById("map-canvas")
+    const mapController = this.application.getControllerForElementAndIdentifier(mapEl, "map")
+    if (mapController) mapController.enterPlacementMode()
+  }
+
   // Called when the map controller dispatches markerPlaced
   placed(event) {
     const { lat, lng } = event.detail

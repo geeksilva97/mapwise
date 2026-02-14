@@ -34,6 +34,13 @@
        data-map-center-lng-value="<%= @map.center_lng %>"
        data-map-zoom-value="<%= @map.zoom %>"
        data-map-readonly-value="true"
+       data-map-markers-value="<%= @map.markers.select(:id, :lat, :lng, :title, :description, :color).to_json %>"
+       <% if @map.style_json.present? %>
+         data-map-style-json-value="<%= @map.style_json %>"
+       <% end %>
+       <% if @map.google_map_id.present? %>
+         data-map-google-map-id-value="<%= @map.google_map_id %>"
+       <% end %>
        class="flex-1">
   </div>
 </div>

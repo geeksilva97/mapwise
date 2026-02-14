@@ -49,8 +49,7 @@ export default class extends Controller {
     const mapOptions = {
       center: { lat: this.centerLatValue, lng: this.centerLngValue },
       zoom: this.zoomValue,
-      mapTypeId: "roadmap",
-      mapId: "MAPWISE_DEFAULT"
+      mapTypeId: "roadmap"
     }
 
     if (this.googleMapIdValue) {

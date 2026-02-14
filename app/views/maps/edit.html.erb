@@ -13,6 +13,9 @@
       <h1 class="font-bold text-lg"><%= @map.title %></h1>
     </div>
     <div class="flex gap-2">
+      <%= link_to root_path, class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-sm font-medium transition-colors" do %>
+        Dashboard
+      <% end %>
       <%= link_to map_path(@map), class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-sm font-medium transition-colors" do %>
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -46,8 +49,8 @@
       <div data-tabs-target="panel" class="flex-1 overflow-y-auto p-4">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-bold text-lg">Markers (<span id="marker_count"><%= @map.markers.count %></span>)</h2>
-          <button data-action="click->map#enterPlacementMode"
-                  class="rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium">
+          <button data-action="click->marker-editor#enterPlacementMode"
+                  class="rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer">
             + Add
           </button>
         </div>
@@ -90,6 +93,12 @@
          data-map-id-value="<%= @map.id %>"
          data-map-readonly-value="false"
          data-map-markers-value="<%= @map.markers.select(:id, :lat, :lng, :title, :description, :color).to_json %>"
+         <% if @map.style_json.present? %>
+           data-map-style-json-value="<%= @map.style_json %>"
+         <% end %>
+         <% if @map.google_map_id.present? %>
+           data-map-google-map-id-value="<%= @map.google_map_id %>"
+         <% end %>
          data-action="map:markerPlaced->marker-editor#placed map:markerDragged->marker-editor#dragged"
          class="flex-1">
     </div>
