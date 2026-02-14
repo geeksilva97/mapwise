@@ -264,9 +264,62 @@ Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId
 
 ---
 
+## Phase 5 — Create with AI (Outline)
+
+**Problem**: Creating complex maps manually is tedious — users must add markers one by one, configure settings, apply styles. Power users want a faster way.
+
+**Solution**: A chat tab in the editor sidebar where users describe what they want in natural language. Claude interprets the request and executes map operations via tool use.
+
+### Architecture
+- **Anthropic Claude** as AI provider, platform API key in `credentials.yml.enc`
+- **Background job** (`AiChatJob`) for async API calls via Solid Queue
+- **Turbo Streams over Action Cable** (Solid Cable) for real-time response delivery
+- **Tool use loop** in `AiChatService` — Claude calls tools, service executes them, returns results, repeats until final text
+- **Map sync via Turbo Stream** — after AI makes changes, broadcast updated map data that Stimulus picks up
+
+### Data Model
+- `ChatMessage` — belongs_to map, role (user/assistant/system), content (text), tool_calls (JSON)
+
+### Implementation Steps
+1. Add `gem "anthropic"` + credentials
+2. `ChatMessage` model + migration
+3. `ChatMessagesController` — create action, nested under maps
+4. `AiChatJob` + `AiChatService` with Anthropic API tool loop
+5. AI tool classes under `app/services/ai_tools/`: `CreateMarker`, `UpdateMarker`, `DeleteMarker`, `ListMarkers`, `UpdateMap`, `ApplyStyle`
+6. Turbo Stream broadcasts — append assistant bubble + broadcast map state sync
+7. Editor UI — third tab: [Markers] [Settings] [AI Chat]
+8. Stimulus `chat_controller.js` — form submission, auto-scroll, typing indicator, map sync
+9. System prompt design with current map state + available tools
+10. Tests — model, controller, service (mocked API), job
+
+### AI Tools
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `create_marker` | Add marker to map | lat, lng, title, description, color |
+| `update_marker` | Edit existing marker | marker_id, title, description, color, lat, lng |
+| `delete_marker` | Remove marker | marker_id |
+| `list_markers` | Get all markers on map | — |
+| `update_map` | Change title, description, center, zoom | title, description, center_lat, center_lng, zoom |
+| `apply_style` | Apply a map style by name | style_name |
+
+Tools expanded incrementally as Phase 2–4 features land (CSV import, layers, clustering, etc.).
+
+### Deferred
+- Voice input
+- Image/screenshot understanding
+- Multi-turn tool call streaming
+- Token usage tracking / rate limiting
+- "Create with AI" button on dashboard
+
+**New routes**: `resources :chat_messages, only: :create` (nested under maps)
+
+---
+
 ## Gems (Beyond Rails 8 Defaults)
 
 - Phase 2: `roo` (~> 2.10) for Excel parsing
+- Phase 5: `anthropic` for Claude API
 - Phase 1 needs **no extra gems** — Rails 8 provides everything
 
 ## Importmap Pins (Added as Needed)
