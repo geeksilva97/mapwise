@@ -244,4 +244,38 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "#map-canvas[data-map-clustering-enabled-value='true']"
   end
+
+  # Search
+
+  test "update saves search_enabled and search_mode" do
+    patch map_path(@map),
+          params: { map: { search_enabled: true, search_mode: "markers" } },
+          as: :turbo_stream
+
+    assert_response :success
+    @map.reload
+    assert @map.search_enabled?
+    assert_equal "markers", @map.search_mode
+  end
+
+  test "viewer renders search overlay when search enabled" do
+    public_map = maps(:public_map)
+    assert public_map.search_enabled?
+    get map_path(public_map)
+    assert_response :success
+    assert_select "[data-controller='map-search']"
+  end
+
+  test "viewer hides search overlay when search disabled" do
+    get map_path(@map)
+    assert_response :success
+    assert_select "[data-controller='map-search']", count: 0
+  end
+
+  test "editor does not render search overlay" do
+    public_map = maps(:public_map)
+    get edit_map_path(public_map)
+    assert_response :success
+    assert_select "[data-controller='map-search']", count: 0
+  end
 end

@@ -13,6 +13,7 @@ class Map < ApplicationRecord
 
   validates :title, presence: true
   validates :embed_token, uniqueness: true, allow_nil: true
+  validates :search_mode, inclusion: { in: %w[places markers] }
 
   def self.find_public_by_token(token)
     find_by(embed_token: token, public: true)

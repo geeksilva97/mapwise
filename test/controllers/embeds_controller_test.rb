@@ -46,4 +46,20 @@ class EmbedsControllerTest < ActionDispatch::IntegrationTest
     # Should not have the main application layout navigation
     assert_select "header", false
   end
+
+  test "embed renders search overlay when search enabled" do
+    map = maps(:public_map)
+    assert map.search_enabled?
+    get embed_path(token: map.embed_token)
+    assert_response :success
+    assert_select "[data-controller='map-search']"
+  end
+
+  test "embed hides search overlay when search disabled" do
+    map = maps(:public_map)
+    map.update!(search_enabled: false)
+    get embed_path(token: map.embed_token)
+    assert_response :success
+    assert_select "[data-controller='map-search']", count: 0
+  end
 end

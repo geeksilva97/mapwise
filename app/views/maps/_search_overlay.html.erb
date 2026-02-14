@@ -1,0 +1,33 @@
+<% if map.search_enabled? %>
+  <div class="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-80"
+       data-controller="map-search"
+       data-map-search-mode-value="<%= map.search_mode %>"
+       <% if map.search_mode == "markers" %>
+         data-map-search-markers-value="<%= map.markers.select(:id, :lat, :lng, :title, :description).to_json %>"
+       <% end %>>
+    <div class="relative">
+      <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+      </div>
+      <input type="text"
+             data-map-search-target="input"
+             data-action="input->map-search#onInput keydown->map-search#onKeydown"
+             placeholder="<%= map.search_mode == 'markers' ? 'Search markers…' : 'Search places…' %>"
+             class="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-8 py-2 text-sm shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+             autocomplete="off">
+      <button type="button"
+              data-map-search-target="clearButton"
+              data-action="click->map-search#clear"
+              class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 hover:text-gray-600 hidden cursor-pointer">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <ul data-map-search-target="results"
+        class="mt-1 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg hidden">
+    </ul>
+  </div>
+<% end %>

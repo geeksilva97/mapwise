@@ -3,6 +3,7 @@
      data-drawing-map-id-value="<%= @map.id %>"
      data-drawing-readonly-value="true"
      data-drawing-layers-value="<%= @map.layers.visible.ordered.to_json(only: [:id, :name, :layer_type, :geometry_data, :stroke_color, :stroke_width, :fill_color, :fill_opacity, :visible]) %>">
+  <%= render "maps/search_overlay", map: @map %>
   <div id="map-canvas"
        data-controller="map"
        data-map-center-lat-value="<%= @map.center_lat %>"

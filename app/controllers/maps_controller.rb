@@ -59,6 +59,6 @@ class MapsController < ApplicationController
   def map_params
     params.require(:map).permit(:title, :description, :center_lat, :center_lng,
                                 :zoom, :map_type, :public, :style_json, :google_map_id,
-                                :clustering_enabled)
+                                :clustering_enabled, :search_enabled, :search_mode)
   end
 end

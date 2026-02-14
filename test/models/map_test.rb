@@ -62,6 +62,29 @@ class MapTest < ActiveSupport::TestCase
     assert_nil map.embed_api_key
   end
 
+  test "search_mode validates inclusion" do
+    map = maps(:one)
+    map.search_mode = "places"
+    assert map.valid?
+
+    map.search_mode = "markers"
+    assert map.valid?
+
+    map.search_mode = "invalid"
+    assert_not map.valid?
+    assert_includes map.errors[:search_mode], "is not included in the list"
+  end
+
+  test "search_enabled defaults to false" do
+    map = Map.new(user: users(:one), title: "Search Test")
+    assert_equal false, map.search_enabled
+  end
+
+  test "search_mode defaults to places" do
+    map = Map.new(user: users(:one), title: "Search Test")
+    assert_equal "places", map.search_mode
+  end
+
   test "valid with all required attributes" do
     map = Map.new(user: users(:one), title: "Valid Map")
     assert map.valid?

@@ -19,6 +19,8 @@ public_map:
   map_type: roadmap
   embed_token: public_token_xyz789
   public: true
+  search_enabled: true
+  search_mode: places
 
 styled_map:
   user: one

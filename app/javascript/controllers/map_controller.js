@@ -21,6 +21,7 @@ export default class extends Controller {
 
   connect() {
     this.mapMarkers = []
+    this.markerInfoMap = new Map()
     this.markerClusterer = null
     this.placementMode = false
     this.circleSelectionMode = false
@@ -144,6 +145,9 @@ export default class extends Controller {
       this.markerClusterer = null
     }
 
+    // Clear marker info map
+    this.markerInfoMap.clear()
+
     // Clear existing markers
     this.mapMarkers.forEach(m => {
       if (this.useAdvancedMarkers) {
@@ -218,6 +222,8 @@ export default class extends Controller {
         marker.addListener("click", () => {
           infoWindow.open({ anchor: marker, map: this.map })
         })
+
+        this.markerInfoMap.set(markerData.id, { marker, infoWindow })
       }
 
       this.mapMarkers.push(marker)
@@ -320,6 +326,24 @@ export default class extends Controller {
       this.element.removeEventListener("mouseup", this._circleUpHandler)
       this._circleUpHandler = null
     }
+  }
+
+  // Pan the map to given coordinates and optionally set zoom
+  panTo(lat, lng, zoom) {
+    if (!this.map) return
+    this.map.panTo({ lat, lng })
+    if (zoom !== undefined) this.map.setZoom(zoom)
+  }
+
+  // Pan to a marker by ID and open its info window
+  openInfoWindowForMarker(markerId) {
+    const entry = this.markerInfoMap.get(markerId)
+    if (!entry) return
+
+    const { marker, infoWindow } = entry
+    const pos = this.useAdvancedMarkers ? marker.position : marker.getPosition()
+    this.map.panTo(pos)
+    infoWindow.open({ anchor: marker, map: this.map })
   }
 
   // Apply a style JSON string (only works in legacy mode — no mapId)
