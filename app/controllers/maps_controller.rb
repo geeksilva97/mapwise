@@ -25,11 +25,20 @@ class MapsController < ApplicationController
   def update
     if @map.update(map_params)
       respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.update("settings_feedback") {
+            helpers.tag.p("Settings saved.", class: "text-sm text-green-600 font-medium")
+          }
+        end
         format.html { redirect_to edit_map_path(@map), notice: "Map updated." }
         format.json { head :ok }
       end
     else
       respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace("map_settings_form",
+            partial: "form", locals: { map: @map })
+        end
         format.html { render :edit, status: :unprocessable_entity }
         format.json { render json: @map.errors, status: :unprocessable_entity }
       end

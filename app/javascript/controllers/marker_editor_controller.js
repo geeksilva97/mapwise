@@ -7,9 +7,7 @@ export default class extends Controller {
 
   // Proxy to the map controller's enterPlacementMode (button is in sidebar, map controller is on #map-canvas)
   enterPlacementMode() {
-    const mapEl = document.getElementById("map-canvas")
-    const mapController = this.application.getControllerForElementAndIdentifier(mapEl, "map")
-    if (mapController) mapController.enterPlacementMode()
+    this.#mapController()?.enterPlacementMode()
   }
 
   // Called when the map controller dispatches markerPlaced
@@ -57,6 +55,23 @@ export default class extends Controller {
     })
   }
 
+  // Capture the current map center/zoom into the settings form fields
+  capturePosition() {
+    const mapController = this.#mapController()
+    if (!mapController?.map) return
+
+    const center = mapController.map.getCenter()
+    const zoom = mapController.map.getZoom()
+
+    const latField = document.getElementById("map_center_lat")
+    const lngField = document.getElementById("map_center_lng")
+    const zoomField = document.getElementById("map_zoom")
+
+    if (latField) latField.value = Math.round(center.lat() * 1000000) / 1000000
+    if (lngField) lngField.value = Math.round(center.lng() * 1000000) / 1000000
+    if (zoomField) zoomField.value = zoom
+  }
+
   // Re-read markers data from the JSON script tag and update the map controller
   refreshMapMarkers() {
     const dataEl = document.getElementById("markers-data")
@@ -71,5 +86,10 @@ export default class extends Controller {
         // ignore parse errors
       }
     }
+  }
+
+  #mapController() {
+    const mapEl = document.getElementById("map-canvas")
+    return this.application.getControllerForElementAndIdentifier(mapEl, "map")
   }
 }
