@@ -21,7 +21,6 @@ export default class extends Controller {
   placed(event) {
     const { lat, lng } = event.detail
     const mapCtrl = this.#mapController()
-    this.#exitPlacementMode(mapCtrl)
 
     fetch(`/maps/${this.mapIdValue}/markers`, {
       method: "POST",

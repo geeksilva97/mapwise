@@ -84,8 +84,6 @@ export default class extends Controller {
         this.dispatch("markerPlaced", {
           detail: { lat: event.latLng.lat(), lng: event.latLng.lng() }
         })
-        this.placementMode = false
-        this.element.style.cursor = ""
       }
     })
   }

@@ -154,6 +154,17 @@ class MarkersControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "create multiple markers in sequence" do
+    assert_difference("Marker.count", 3) do
+      3.times do |i|
+        post map_markers_path(@map),
+             params: { marker: { lat: 40.0 + i, lng: -74.0 + i, title: "Marker #{i}" } },
+             as: :json
+        assert_response :success
+      end
+    end
+  end
+
   test "create with marker_group_id" do
     group = marker_groups(:restaurants)
     post map_markers_path(@map),
