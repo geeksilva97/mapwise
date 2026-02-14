@@ -81,6 +81,60 @@
           <%= render "map_styles/picker", styles: MapStyle.for_user(Current.user), map: @map %>
           <p class="text-xs text-gray-400 mt-2">Applies immediately. <% if MapStyle.for_user(Current.user).where(system_default: false).any? %>Manage styles in <%= link_to "Map Styles", map_styles_path, class: "text-blue-600 hover:text-blue-800 underline" %>.<% end %></p>
         </div>
+
+        <div class="border-t border-gray-200 pt-4 mt-4"
+             data-controller="share"
+             data-share-map-id-value="<%= @map.id %>">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Sharing</p>
+
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox"
+                   data-share-target="toggle"
+                   data-action="change->share#togglePublic"
+                   <%= "checked" if @map.public? %>
+                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500/20">
+            <span class="text-sm font-medium text-gray-700">Public map</span>
+          </label>
+          <p class="text-xs text-gray-400 mt-1.5 ml-6.5">Public maps can be embedded on external websites.</p>
+          <p data-share-target="status" class="hidden text-xs font-medium text-green-600 mt-1.5 ml-6.5"></p>
+
+          <div data-share-target="embedSection" class="<%= 'hidden' unless @map.public? %> mt-4 space-y-3">
+            <% if Current.user.api_keys.any? %>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Embed code</label>
+                <div class="flex gap-1.5">
+                  <input type="text" readonly
+                         data-share-target="embedCode"
+                         value='<iframe src="<%= embed_url(@map.embed_token) %>" width="100%" height="400" frameborder="0"></iframe>'
+                         class="block w-full rounded-lg border border-gray-300 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600 font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                  <button type="button"
+                          data-action="click->share#copyEmbed"
+                          class="shrink-0 rounded-lg px-2.5 py-1.5 border border-gray-300 hover:bg-gray-50 text-xs font-medium text-gray-700 cursor-pointer transition-colors">
+                    Copy
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Direct link</label>
+                <div class="flex gap-1.5">
+                  <input type="text" readonly
+                         data-share-target="directLink"
+                         value="<%= embed_url(@map.embed_token) %>"
+                         class="block w-full rounded-lg border border-gray-300 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-600 font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+                  <button type="button"
+                          data-action="click->share#copyLink"
+                          class="shrink-0 rounded-lg px-2.5 py-1.5 border border-gray-300 hover:bg-gray-50 text-xs font-medium text-gray-700 cursor-pointer transition-colors">
+                    Copy
+                  </button>
+                </div>
+              </div>
+            <% else %>
+              <div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5">
+                <p class="text-sm text-amber-800">To enable embedding, add a Google Maps API key in <%= link_to "API Keys", api_keys_path, class: "font-medium text-amber-900 underline" %>.</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
       </div>
     </aside>
 

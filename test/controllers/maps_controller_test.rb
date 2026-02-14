@@ -174,4 +174,49 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#map-canvas[data-map-style-json-value]", count: 0
     assert_select "#map-canvas[data-map-google-map-id-value]", count: 0
   end
+
+  # Sharing UI
+
+  test "editor shows sharing section with unchecked toggle for private map" do
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "[data-controller='share']"
+    assert_select "input[data-share-target='toggle']:not([checked])"
+    assert_select "[data-share-target='embedSection'].hidden"
+  end
+
+  test "editor shows sharing section with checked toggle for public map" do
+    public_map = maps(:public_map)
+    get edit_map_path(public_map)
+    assert_response :success
+    assert_select "input[data-share-target='toggle'][checked]"
+  end
+
+  test "editor shows embed code when map is public and user has API key" do
+    public_map = maps(:public_map)
+    get edit_map_path(public_map)
+    assert_response :success
+    assert_select "input[data-share-target='embedCode']"
+    assert_select "input[data-share-target='directLink']"
+  end
+
+  test "editor shows API key warning when public but no API key" do
+    @user.api_keys.destroy_all
+    public_map = maps(:public_map)
+    get edit_map_path(public_map)
+    assert_response :success
+    assert_select "[data-share-target='embedSection']" do
+      assert_select "a[href='#{api_keys_path}']"
+    end
+  end
+
+  test "toggling public via JSON updates map visibility" do
+    assert_not @map.public?
+    patch map_path(@map),
+          params: { map: { public: true } },
+          as: :json
+    assert_response :ok
+    @map.reload
+    assert @map.public?
+  end
 end
