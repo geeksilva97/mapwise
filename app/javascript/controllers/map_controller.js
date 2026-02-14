@@ -7,7 +7,6 @@ import { csrfToken } from "utils/csrf"
 
 export default class extends Controller {
   static values = {
-    apiKey: String,
     centerLat: { type: Number, default: 0 },
     centerLng: { type: Number, default: 0 },
     zoom: { type: Number, default: 3 },
@@ -25,30 +24,20 @@ export default class extends Controller {
     this.markerClusterer = null
     this.placementMode = false
     this.circleSelectionMode = false
-    this.loadGoogleMaps()
+    this.waitForGoogleMaps()
   }
 
   disconnect() {
     if (this.saveTimeout) clearTimeout(this.saveTimeout)
   }
 
-  async loadGoogleMaps() {
+  waitForGoogleMaps() {
     if (window.google?.maps?.Map) {
       this.initMap()
-      return
+    } else {
+      // Script is in the layout with async/defer — poll until ready
+      setTimeout(() => this.waitForGoogleMaps(), 100)
     }
-
-    return new Promise((resolve) => {
-      const script = document.createElement("script")
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=marker,places,geometry&v=weekly`
-      script.async = true
-      script.defer = true
-      script.onload = () => {
-        this.initMap()
-        resolve()
-      }
-      document.head.appendChild(script)
-    })
   }
 
   async initMap() {

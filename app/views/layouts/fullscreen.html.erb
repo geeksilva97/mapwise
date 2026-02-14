@@ -17,6 +17,7 @@
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    <script src="https://maps.googleapis.com/maps/api/js?key=<%= platform_api_key %>&libraries=marker,places,geometry&v=weekly" async defer></script>
   </head>
 
   <body class="m-0 p-0 overflow-hidden">
