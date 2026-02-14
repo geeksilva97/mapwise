@@ -49,12 +49,11 @@ export default class extends Controller {
     const mapOptions = {
       center: { lat: this.centerLatValue, lng: this.centerLngValue },
       zoom: this.zoomValue,
-      mapTypeId: "roadmap"
+      mapTypeId: "roadmap",
+      mapId: this.googleMapIdValue || "DEMO_MAP_ID"
     }
 
-    if (this.googleMapIdValue) {
-      mapOptions.mapId = this.googleMapIdValue
-    } else if (this.styleJsonValue) {
+    if (!this.googleMapIdValue && this.styleJsonValue) {
       try {
         mapOptions.styles = JSON.parse(this.styleJsonValue)
       } catch (e) { /* ignore invalid JSON */ }
