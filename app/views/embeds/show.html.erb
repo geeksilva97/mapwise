@@ -1,16 +1,24 @@
-<div id="map-canvas"
-     data-controller="map"
-     data-map-api-key-value="<%= @api_key %>"
-     data-map-center-lat-value="<%= @map.center_lat %>"
-     data-map-center-lng-value="<%= @map.center_lng %>"
-     data-map-zoom-value="<%= @map.zoom %>"
-     data-map-readonly-value="true"
-     data-map-markers-value="<%= @map.markers.select(:id, :lat, :lng, :title, :description, :color).to_json %>"
-     <% if @map.style_json.present? %>
-       data-map-style-json-value="<%= @map.style_json %>"
-     <% end %>
-     <% if @map.google_map_id.present? %>
-       data-map-google-map-id-value="<%= @map.google_map_id %>"
-     <% end %>
-     class="w-screen h-screen">
+<div class="w-screen h-screen relative"
+     data-controller="drawing"
+     data-drawing-map-id-value="<%= @map.id %>"
+     data-drawing-readonly-value="true"
+     data-drawing-layers-value="<%= @map.layers.visible.ordered.to_json(only: [:id, :name, :layer_type, :geometry_data, :stroke_color, :stroke_width, :fill_color, :fill_opacity, :visible]) %>">
+  <div id="map-canvas"
+       data-controller="map"
+       data-map-api-key-value="<%= @api_key %>"
+       data-map-center-lat-value="<%= @map.center_lat %>"
+       data-map-center-lng-value="<%= @map.center_lng %>"
+       data-map-zoom-value="<%= @map.zoom %>"
+       data-map-readonly-value="true"
+       data-map-markers-value="<%= @map.markers.select(:id, :lat, :lng, :title, :description, :color, :marker_group_id, :custom_info_html).to_json %>"
+       data-map-groups-value="<%= @map.marker_groups.ordered.to_json(only: [:id, :name, :color, :visible]) %>"
+       data-map-clustering-enabled-value="<%= @map.clustering_enabled? %>"
+       <% if @map.style_json.present? %>
+         data-map-style-json-value="<%= @map.style_json %>"
+       <% end %>
+       <% if @map.google_map_id.present? %>
+         data-map-google-map-id-value="<%= @map.google_map_id %>"
+       <% end %>
+       class="absolute inset-0">
+  </div>
 </div>

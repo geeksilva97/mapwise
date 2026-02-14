@@ -1,0 +1,47 @@
+polygon_layer:
+  map: one
+  name: Park Area
+  layer_type: polygon
+  geometry_data: '{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-74.0,40.7],[-74.0,40.8],[-73.9,40.8],[-73.9,40.7],[-74.0,40.7]]]},"properties":{}}'
+  stroke_color: "#3B82F6"
+  stroke_width: 2
+  fill_color: "#3B82F6"
+  fill_opacity: 0.3
+  visible: true
+  position: 0
+
+line_layer:
+  map: one
+  name: Walking Route
+  layer_type: line
+  geometry_data: '{"type":"Feature","geometry":{"type":"LineString","coordinates":[[-74.0,40.7],[-73.95,40.75],[-73.9,40.8]]},"properties":{}}'
+  stroke_color: "#EF4444"
+  stroke_width: 3
+  fill_color: "#EF4444"
+  fill_opacity: 0.0
+  visible: true
+  position: 1
+
+hidden_layer:
+  map: one
+  name: Hidden Zone
+  layer_type: rectangle
+  geometry_data: '{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-74.1,40.6],[-74.1,40.7],[-74.0,40.7],[-74.0,40.6],[-74.1,40.6]]]},"properties":{}}'
+  stroke_color: "#6B7280"
+  stroke_width: 2
+  fill_color: "#6B7280"
+  fill_opacity: 0.2
+  visible: false
+  position: 2
+
+on_other_map:
+  map: two
+  name: Other Map Layer
+  layer_type: circle
+  geometry_data: '{"type":"Feature","geometry":{"type":"Point","coordinates":[-0.1278,51.5074]},"properties":{"radius":500}}'
+  stroke_color: "#22C55E"
+  stroke_width: 2
+  fill_color: "#22C55E"
+  fill_opacity: 0.3
+  visible: true
+  position: 0

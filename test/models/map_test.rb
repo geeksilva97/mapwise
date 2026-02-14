@@ -32,6 +32,7 @@ class MapTest < ActiveSupport::TestCase
     assert_equal 4, map.zoom
     assert_equal "roadmap", map.map_type
     assert_equal false, map.public
+    assert_equal false, map.clustering_enabled
   end
 
   test "find_public_by_token returns public map" do
@@ -72,12 +73,44 @@ class MapTest < ActiveSupport::TestCase
     assert map.markers.count >= 1
   end
 
+  test "has many marker_groups" do
+    map = maps(:one)
+    assert_respond_to map, :marker_groups
+    assert map.marker_groups.count >= 1
+  end
+
+  test "destroys marker_groups on destroy" do
+    map = maps(:one)
+    group_count = map.marker_groups.count
+    assert group_count > 0
+
+    assert_difference("MarkerGroup.count", -group_count) do
+      map.destroy
+    end
+  end
+
   test "destroys markers on destroy" do
     map = maps(:one)
     marker_count = map.markers.count
     assert marker_count > 0
 
     assert_difference("Marker.count", -marker_count) do
+      map.destroy
+    end
+  end
+
+  test "has many layers" do
+    map = maps(:one)
+    assert_respond_to map, :layers
+    assert map.layers.count >= 1
+  end
+
+  test "destroys layers on destroy" do
+    map = maps(:one)
+    layer_count = map.layers.count
+    assert layer_count > 0
+
+    assert_difference("Layer.count", -layer_count) do
       map.destroy
     end
   end

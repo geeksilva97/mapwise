@@ -1,0 +1,4 @@
+<%= turbo_stream.append "layers_list" do %>
+  <%= render "layers/layer_item", layer: @layer %>
+<% end %>
+<%= turbo_stream.remove "layers_empty" %>

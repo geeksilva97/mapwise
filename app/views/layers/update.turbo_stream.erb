@@ -1,0 +1,3 @@
+<%= turbo_stream.replace "layer_#{@layer.id}" do %>
+  <%= render "layers/layer_item", layer: @layer %>
+<% end %>

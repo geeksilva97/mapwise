@@ -128,6 +128,17 @@ export default class extends Controller {
     if (zoomField) zoomField.value = mapCtrl.map.getZoom()
   }
 
+  // Proxy layer actions to drawing controller (sidebar can't reach it directly)
+  deleteLayer(event) {
+    const drawingCtrl = this.#drawingController()
+    if (drawingCtrl) drawingCtrl.deleteLayer(event)
+  }
+
+  toggleLayerVisibility(event) {
+    const drawingCtrl = this.#drawingController()
+    if (drawingCtrl) drawingCtrl.toggleLayerVisibility(event)
+  }
+
   showCircleBanner() {
     if (this.hasCircleSelectionBannerTarget) {
       this.circleSelectionBannerTarget.classList.remove("hidden")
@@ -219,5 +230,10 @@ export default class extends Controller {
   #mapController() {
     const mapEl = document.getElementById("map-canvas")
     return this.application.getControllerForElementAndIdentifier(mapEl, "map")
+  }
+
+  #drawingController() {
+    const drawingEl = document.querySelector("[data-controller='drawing']")
+    return this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
   }
 }
