@@ -4,6 +4,12 @@
     <span class="text-sm font-medium truncate"><%= marker.title.presence || "Untitled Marker" %></span>
   </div>
   <div class="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100">
+    <% if marker.marker_group_id.present? %>
+      <a href="#" data-action="click->marker-editor#ungroupMarker"
+         data-marker-editor-id-param="<%= marker.id %>"
+         class="text-gray-500 hover:text-gray-700 text-xs font-medium cursor-pointer"
+         title="Remove from group">Ungroup</a>
+    <% end %>
     <%= link_to "Edit", edit_map_marker_path(marker.map, marker),
         data: { turbo_frame: "marker_form" },
         class: "text-blue-600 hover:text-blue-800 text-xs font-medium" %>

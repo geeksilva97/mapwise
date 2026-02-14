@@ -37,6 +37,10 @@
         </button>
         <button data-tabs-target="tab" data-action="click->tabs#select"
                 class="flex-1 py-3 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+          Import
+        </button>
+        <button data-tabs-target="tab" data-action="click->tabs#select"
+                class="flex-1 py-3 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700">
           Settings
         </button>
       </nav>
@@ -56,8 +60,13 @@
           <p class="text-sm text-blue-700 font-medium">Click on the map to place a marker</p>
         </div>
 
-        <div id="markers_list" class="space-y-1">
-          <% @map.markers.order(:position).each do |marker| %>
+        <div data-marker-editor-target="circleSelectionBanner" class="hidden mb-3 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2">
+          <p class="text-sm text-indigo-700 font-medium">Draw a circle on the map to select markers</p>
+        </div>
+
+        <%# Ungrouped markers %>
+        <div id="markers_list" class="space-y-1 mb-4">
+          <% @map.markers.where(marker_group_id: nil).order(:position).each do |marker| %>
             <%= render "markers/marker_item", marker: marker %>
           <% end %>
         </div>
@@ -67,6 +76,52 @@
         <% end %>
 
         <turbo-frame id="marker_form"></turbo-frame>
+
+        <%# Groups section %>
+        <div class="border-t border-gray-200 pt-4 mt-4"
+             data-controller="group">
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Groups</p>
+            <button type="button"
+                    data-action="click->group#showNewForm"
+                    class="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer">
+              + New Group
+            </button>
+          </div>
+
+          <div id="new_group_form_container"></div>
+
+          <div id="groups_list" class="space-y-2">
+            <% @map.marker_groups.ordered.each do |group| %>
+              <%= render "marker_groups/group_section", map: @map, group: group %>
+            <% end %>
+          </div>
+
+          <% if @map.marker_groups.empty? %>
+            <p id="groups_empty" class="text-sm text-gray-400">No groups yet. Create a group to organize markers.</p>
+          <% end %>
+        </div>
+
+        <%# Layers section %>
+        <div class="border-t border-gray-200 pt-4 mt-4">
+          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Layers</p>
+
+          <div id="layers_list" class="space-y-1">
+            <% @map.layers.ordered.each do |layer| %>
+              <%= render "layers/layer_item", layer: layer %>
+            <% end %>
+          </div>
+
+          <% if @map.layers.empty? %>
+            <p id="layers_empty" class="text-sm text-gray-400 mt-2">Use the drawing tools on the map to add shapes.</p>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Import panel %>
+      <div data-tabs-target="panel" class="flex-1 overflow-y-auto p-4 hidden">
+        <h2 class="font-bold text-lg mb-4">Import Data</h2>
+        <%= render "imports/upload", map: @map %>
       </div>
 
       <%# Settings panel %>
@@ -138,24 +193,81 @@
       </div>
     </aside>
 
-    <%# Map canvas %>
-    <div id="map-canvas"
-         data-controller="map"
-         data-map-api-key-value="<%= platform_api_key %>"
-         data-map-center-lat-value="<%= @map.center_lat %>"
-         data-map-center-lng-value="<%= @map.center_lng %>"
-         data-map-zoom-value="<%= @map.zoom %>"
-         data-map-id-value="<%= @map.id %>"
-         data-map-readonly-value="false"
-         data-map-markers-value="<%= @map.markers.select(:id, :lat, :lng, :title, :description, :color).to_json %>"
-         <% if @map.style_json.present? %>
-           data-map-style-json-value="<%= @map.style_json %>"
-         <% end %>
-         <% if @map.google_map_id.present? %>
-           data-map-google-map-id-value="<%= @map.google_map_id %>"
-         <% end %>
-         data-action="map:markerPlaced->marker-editor#placed map:markerDragged->marker-editor#dragged"
-         class="flex-1">
+    <%# Map canvas with drawing controller %>
+    <div class="flex-1 relative"
+         data-controller="drawing"
+         data-drawing-map-id-value="<%= @map.id %>"
+         data-drawing-readonly-value="false"
+         data-drawing-layers-value="<%= @map.layers.visible.ordered.to_json(only: [:id, :name, :layer_type, :geometry_data, :stroke_color, :stroke_width, :fill_color, :fill_opacity, :visible]) %>">
+
+      <%# Drawing toolbar %>
+      <div data-drawing-target="toolbar"
+           class="absolute top-3 left-3 z-10 flex gap-1 bg-white rounded-lg shadow-md border border-gray-200 p-1">
+        <button type="button" data-action="click->drawing#drawPolygon" data-mode="polygon"
+                class="p-2 rounded hover:bg-gray-100 transition-colors" title="Draw polygon">
+          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6z" />
+          </svg>
+        </button>
+        <button type="button" data-action="click->drawing#drawLine" data-mode="linestring"
+                class="p-2 rounded hover:bg-gray-100 transition-colors" title="Draw line">
+          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75l16.5 16.5" />
+          </svg>
+        </button>
+        <button type="button" data-action="click->drawing#drawCircle" data-mode="circle"
+                class="p-2 rounded hover:bg-gray-100 transition-colors" title="Draw circle">
+          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <circle cx="12" cy="12" r="9" />
+          </svg>
+        </button>
+        <button type="button" data-action="click->drawing#drawRectangle" data-mode="rectangle"
+                class="p-2 rounded hover:bg-gray-100 transition-colors" title="Draw rectangle">
+          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <rect x="3.75" y="5.25" width="16.5" height="13.5" rx="1" />
+          </svg>
+        </button>
+        <button type="button" data-action="click->drawing#drawFreehand" data-mode="freehand"
+                class="p-2 rounded hover:bg-gray-100 transition-colors" title="Draw freehand">
+          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+          </svg>
+        </button>
+        <div class="w-px bg-gray-200 mx-0.5"></div>
+        <button type="button" data-action="click->drawing#selectMode" data-mode="select"
+                class="p-2 rounded hover:bg-gray-100 transition-colors" title="Select & edit">
+          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.042 21.672L13.684 16.6m0 0l-2.51 2.225.569-9.47 5.227 7.917-3.286-.672zM12 2.25V4.5m5.834.166l-1.591 1.591M20.25 10.5H18M7.757 14.743l-1.59 1.59M6 10.5H3.75m4.007-4.243l-1.59-1.59" />
+          </svg>
+        </button>
+        <button type="button" data-action="click->drawing#cancelDrawing" data-mode="render"
+                class="p-2 rounded hover:bg-gray-100 transition-colors" title="Cancel drawing">
+          <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="map-canvas"
+           data-controller="map"
+           data-map-api-key-value="<%= platform_api_key %>"
+           data-map-center-lat-value="<%= @map.center_lat %>"
+           data-map-center-lng-value="<%= @map.center_lng %>"
+           data-map-zoom-value="<%= @map.zoom %>"
+           data-map-id-value="<%= @map.id %>"
+           data-map-readonly-value="false"
+           data-map-markers-value="<%= @map.markers.select(:id, :lat, :lng, :title, :description, :color, :marker_group_id, :custom_info_html).to_json %>"
+           data-map-groups-value="<%= @map.marker_groups.ordered.to_json(only: [:id, :name, :color, :visible]) %>"
+           data-map-clustering-enabled-value="<%= @map.clustering_enabled? %>"
+           <% if @map.style_json.present? %>
+             data-map-style-json-value="<%= @map.style_json %>"
+           <% end %>
+           <% if @map.google_map_id.present? %>
+             data-map-google-map-id-value="<%= @map.google_map_id %>"
+           <% end %>
+           data-action="map:markerPlaced->marker-editor#placed map:markerDragged->marker-editor#dragged map:circleSelectionStarted->marker-editor#showCircleBanner map:circleSelectionEnded->marker-editor#hideCircleBanner"
+           class="absolute inset-0">
+      </div>
     </div>
   </div>
 

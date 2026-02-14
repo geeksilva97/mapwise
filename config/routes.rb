@@ -6,7 +6,16 @@ Rails.application.routes.draw do
   resources :map_styles, only: %i[ index create destroy ]
 
   resources :maps do
-    resources :markers, except: %i[ index show ]
+    resources :markers, except: %i[ index show ] do
+      member { patch :ungroup }
+    end
+    resources :marker_groups, only: %i[ create update destroy ] do
+      member { patch :toggle_visibility; patch :assign_markers }
+    end
+    resources :imports, only: %i[ create show update ]
+    resources :layers, only: %i[ create update destroy ] do
+      member { patch :toggle_visibility }
+    end
   end
 
   get "embed/:token", to: "embeds#show", as: :embed

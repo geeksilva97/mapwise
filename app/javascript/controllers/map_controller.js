@@ -14,13 +14,17 @@ export default class extends Controller {
     id: { type: Number, default: 0 },
     readonly: { type: Boolean, default: true },
     markers: { type: Array, default: [] },
+    groups: { type: Array, default: [] },
+    clusteringEnabled: { type: Boolean, default: false },
     styleJson: { type: String, default: "" },
     googleMapId: { type: String, default: "" }
   }
 
   connect() {
     this.mapMarkers = []
+    this.markerClusterer = null
     this.placementMode = false
+    this.circleSelectionMode = false
     this.loadGoogleMaps()
   }
 
@@ -36,7 +40,7 @@ export default class extends Controller {
 
     return new Promise((resolve) => {
       const script = document.createElement("script")
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=marker,places&v=weekly`
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${this.apiKeyValue}&libraries=marker,places,geometry&v=weekly`
       script.async = true
       script.defer = true
       script.onload = () => {
@@ -132,7 +136,27 @@ export default class extends Controller {
     }
   }
 
+  // Re-render markers when groups change (visibility toggle)
+  groupsValueChanged() {
+    if (this.map) {
+      this.renderMarkers()
+    }
+  }
+
+  // Re-render markers when clustering is toggled
+  clusteringEnabledValueChanged() {
+    if (this.map) {
+      this.renderMarkers()
+    }
+  }
+
   renderMarkers() {
+    // Clear existing clusterer
+    if (this.markerClusterer) {
+      this.markerClusterer.clearMarkers()
+      this.markerClusterer = null
+    }
+
     // Clear existing markers
     this.mapMarkers.forEach(m => {
       if (this.useAdvancedMarkers) {
@@ -143,10 +167,24 @@ export default class extends Controller {
     })
     this.mapMarkers = []
 
+    // Build a set of hidden group IDs
+    const hiddenGroupIds = new Set(
+      this.groupsValue
+        .filter(g => !g.visible)
+        .map(g => g.id)
+    )
+
+    const addToMap = !this.clusteringEnabledValue
+
     this.markersValue.forEach(markerData => {
+      // Skip markers whose group is hidden
+      if (markerData.marker_group_id && hiddenGroupIds.has(markerData.marker_group_id)) {
+        return
+      }
+
       const marker = this.useAdvancedMarkers
-        ? this.#createAdvancedMarker(markerData)
-        : this.#createLegacyMarker(markerData)
+        ? this.#createAdvancedMarker(markerData, addToMap)
+        : this.#createLegacyMarker(markerData, addToMap)
 
       if (!this.readonlyValue) {
         if (this.useAdvancedMarkers) {
@@ -170,18 +208,22 @@ export default class extends Controller {
       }
 
       // Info window for viewer/read-only mode
-      if (this.readonlyValue && markerData.title) {
+      if (this.readonlyValue && (markerData.title || markerData.custom_info_html)) {
         const infoContent = document.createElement("div")
         infoContent.className = "p-2"
 
-        const strong = document.createElement("strong")
-        strong.textContent = markerData.title
-        infoContent.appendChild(strong)
+        if (markerData.custom_info_html) {
+          infoContent.innerHTML = markerData.custom_info_html
+        } else {
+          const strong = document.createElement("strong")
+          strong.textContent = markerData.title
+          infoContent.appendChild(strong)
 
-        if (markerData.description) {
-          const p = document.createElement("p")
-          p.textContent = markerData.description
-          infoContent.appendChild(p)
+          if (markerData.description) {
+            const p = document.createElement("p")
+            p.textContent = markerData.description
+            infoContent.appendChild(p)
+          }
         }
 
         const infoWindow = new google.maps.InfoWindow({ content: infoContent })
@@ -193,6 +235,104 @@ export default class extends Controller {
 
       this.mapMarkers.push(marker)
     })
+
+    // Apply clustering if enabled
+    if (this.clusteringEnabledValue && this.mapMarkers.length > 0) {
+      this.#applyClustering()
+    }
+  }
+
+  // Circle selection: draw a circle to select enclosed markers
+  enterCircleSelectionMode(callback) {
+    this.circleSelectionMode = true
+    this.circleCallback = callback
+    this.map.setOptions({ draggable: false })
+    this.element.style.cursor = "crosshair"
+    this.dispatch("circleSelectionStarted")
+
+    this._circleMouseDown = (event) => {
+      this._circleCenter = event.latLng
+      this._selectionCircle = new google.maps.Circle({
+        map: this.map,
+        center: event.latLng,
+        radius: 0,
+        fillColor: "#3B82F6",
+        fillOpacity: 0.15,
+        strokeColor: "#3B82F6",
+        strokeWeight: 2,
+        clickable: false
+      })
+    }
+
+    this._circleMouseMove = (event) => {
+      if (!this._selectionCircle || !this._circleCenter) return
+      const radius = google.maps.geometry.spherical.computeDistanceBetween(
+        this._circleCenter, event.latLng
+      )
+      this._selectionCircle.setRadius(radius)
+    }
+
+    this._circleMouseUp = () => {
+      if (!this._selectionCircle || !this._circleCenter) return
+
+      const center = this._circleCenter
+      const radius = this._selectionCircle.getRadius()
+
+      // Find enclosed markers
+      const enclosedIds = this.markersValue
+        .filter(m => {
+          const pos = new google.maps.LatLng(m.lat, m.lng)
+          const dist = google.maps.geometry.spherical.computeDistanceBetween(center, pos)
+          return dist <= radius
+        })
+        .map(m => m.id)
+
+      // Grab callback before cleanup nulls it
+      const callback = this.circleCallback
+
+      // Clean up
+      this._selectionCircle.setMap(null)
+      this._selectionCircle = null
+      this._circleCenter = null
+      this.exitCircleSelectionMode()
+
+      if (callback) {
+        callback(enclosedIds)
+      }
+    }
+
+    this._circleDownListener = this.map.addListener("mousedown", this._circleMouseDown)
+    this._circleMoveListener = this.map.addListener("mousemove", this._circleMouseMove)
+    // Use DOM mouseup — Google Maps mouseup is unreliable when draggable is false
+    this._circleUpHandler = this._circleMouseUp
+    this.element.addEventListener("mouseup", this._circleUpHandler)
+  }
+
+  exitCircleSelectionMode() {
+    this.circleSelectionMode = false
+    this.circleCallback = null
+    this.map.setOptions({ draggable: true })
+    this.element.style.cursor = ""
+    this.dispatch("circleSelectionEnded")
+
+    if (this._selectionCircle) {
+      this._selectionCircle.setMap(null)
+      this._selectionCircle = null
+    }
+    this._circleCenter = null
+
+    if (this._circleDownListener) {
+      google.maps.event.removeListener(this._circleDownListener)
+      this._circleDownListener = null
+    }
+    if (this._circleMoveListener) {
+      google.maps.event.removeListener(this._circleMoveListener)
+      this._circleMoveListener = null
+    }
+    if (this._circleUpHandler) {
+      this.element.removeEventListener("mouseup", this._circleUpHandler)
+      this._circleUpHandler = null
+    }
   }
 
   // Apply a style JSON string (only works in legacy mode — no mapId)
@@ -209,7 +349,26 @@ export default class extends Controller {
 
   // --- Private ---
 
-  #createAdvancedMarker(markerData) {
+  async #applyClustering() {
+    try {
+      const { MarkerClusterer } = await import("@googlemaps/markerclusterer")
+      this.markerClusterer = new MarkerClusterer({
+        map: this.map,
+        markers: this.mapMarkers
+      })
+    } catch (e) {
+      console.warn("MarkerClusterer not available, adding markers directly:", e)
+      this.mapMarkers.forEach(m => {
+        if (this.useAdvancedMarkers) {
+          m.map = this.map
+        } else {
+          m.setMap(this.map)
+        }
+      })
+    }
+  }
+
+  #createAdvancedMarker(markerData, addToMap = true) {
     const pinGlyph = new google.maps.marker.PinElement({
       background: markerData.color || "#FF0000",
       borderColor: markerData.color || "#FF0000",
@@ -217,7 +376,7 @@ export default class extends Controller {
     })
 
     return new google.maps.marker.AdvancedMarkerElement({
-      map: this.map,
+      map: addToMap ? this.map : null,
       position: { lat: markerData.lat, lng: markerData.lng },
       title: markerData.title || "",
       content: pinGlyph.element,
@@ -225,9 +384,9 @@ export default class extends Controller {
     })
   }
 
-  #createLegacyMarker(markerData) {
+  #createLegacyMarker(markerData, addToMap = true) {
     return new google.maps.Marker({
-      map: this.map,
+      map: addToMap ? this.map : null,
       position: { lat: markerData.lat, lng: markerData.lng },
       title: markerData.title || "",
       draggable: !this.readonlyValue,

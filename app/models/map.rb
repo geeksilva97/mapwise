@@ -1,6 +1,9 @@
 class Map < ApplicationRecord
   belongs_to :user
   has_many :markers, dependent: :destroy
+  has_many :marker_groups, dependent: :destroy
+  has_many :imports, dependent: :destroy
+  has_many :layers, dependent: :destroy
 
   attribute :center_lat, :float, default: 39.8283
   attribute :center_lng, :float, default: -98.5795

@@ -112,4 +112,56 @@ class MarkersControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_path
   end
+
+  test "create with custom_info_html" do
+    post map_markers_path(@map),
+         params: { marker: { lat: 41.0, lng: -87.0, custom_info_html: "<p>Custom</p>" } },
+         as: :json
+
+    assert_response :success
+    marker = Marker.last
+    assert_equal "<p>Custom</p>", marker.custom_info_html
+  end
+
+  test "update with custom_info_html" do
+    patch map_marker_path(@map, @marker),
+          params: { marker: { custom_info_html: "<strong>Bold</strong>" } },
+          as: :json
+
+    assert_response :success
+    @marker.reload
+    assert_equal "<strong>Bold</strong>", @marker.custom_info_html
+  end
+
+  test "ungroup removes marker from group and resets color" do
+    group = marker_groups(:restaurants)
+    @marker.update!(marker_group_id: group.id, color: group.color)
+
+    patch ungroup_map_marker_path(@map, @marker), as: :json
+
+    assert_response :success
+    @marker.reload
+    assert_nil @marker.marker_group_id
+    assert_equal "#FF0000", @marker.color
+  end
+
+  test "ungroup on other user's map returns not found" do
+    other_map = maps(:two)
+    other_marker = markers(:on_other_map)
+
+    patch ungroup_map_marker_path(other_map, other_marker), as: :json
+
+    assert_response :not_found
+  end
+
+  test "create with marker_group_id" do
+    group = marker_groups(:restaurants)
+    post map_markers_path(@map),
+         params: { marker: { lat: 41.0, lng: -87.0, marker_group_id: group.id } },
+         as: :json
+
+    assert_response :success
+    marker = Marker.last
+    assert_equal group.id, marker.marker_group_id
+  end
 end

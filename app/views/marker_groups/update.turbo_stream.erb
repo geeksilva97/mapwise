@@ -1,0 +1,3 @@
+<%= turbo_stream.replace "group_#{@marker_group.id}" do %>
+  <%= render "marker_groups/group_section", map: @map, group: @marker_group %>
+<% end %>

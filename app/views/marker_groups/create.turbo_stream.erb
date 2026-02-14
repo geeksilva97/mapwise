@@ -1,0 +1,5 @@
+<%= turbo_stream.append "groups_list" do %>
+  <%= render "marker_groups/group_section", map: @map, group: @marker_group %>
+<% end %>
+<%= turbo_stream.remove "group_form" %>
+<%= turbo_stream.remove "groups_empty" %>

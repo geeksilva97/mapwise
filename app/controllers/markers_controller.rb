@@ -1,6 +1,6 @@
 class MarkersController < ApplicationController
   before_action :set_map
-  before_action :set_marker, only: %i[ edit update destroy ]
+  before_action :set_marker, only: %i[ edit update destroy ungroup ]
 
   def create
     @marker = @map.markers.build(marker_params)
@@ -35,6 +35,13 @@ class MarkersController < ApplicationController
     end
   end
 
+  def ungroup
+    @marker.update!(marker_group_id: nil, color: "#FF0000")
+    respond_to do |format|
+      format.json { render json: @marker }
+    end
+  end
+
   def destroy
     @marker.destroy
     respond_to do |format|
@@ -54,6 +61,6 @@ class MarkersController < ApplicationController
   end
 
   def marker_params
-    params.require(:marker).permit(:lat, :lng, :title, :description, :color, :icon, :position)
+    params.require(:marker).permit(:lat, :lng, :title, :description, :color, :icon, :position, :marker_group_id, :custom_info_html)
   end
 end

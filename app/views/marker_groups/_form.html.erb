@@ -1,0 +1,31 @@
+<div id="group_form" class="border rounded-lg p-3 mb-3 bg-gray-50">
+  <%= form_with model: [map, marker_group], class: "space-y-2" do |form| %>
+    <% if marker_group.errors.any? %>
+      <div class="bg-red-50 text-red-500 px-3 py-2 text-sm rounded-lg">
+        <% marker_group.errors.each do |error| %>
+          <p><%= error.full_message %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div>
+      <%= form.label :name, class: "block text-xs font-medium text-gray-700" %>
+      <%= form.text_field :name, placeholder: "Group name", class: "block w-full shadow-sm rounded-md border border-gray-300 focus:outline-blue-600 px-3 py-1.5 mt-1 text-sm" %>
+    </div>
+
+    <div>
+      <%= form.label :color, class: "block text-xs font-medium text-gray-700" %>
+      <%= form.color_field :color, class: "h-8 w-full rounded-md border border-gray-300 cursor-pointer mt-1" %>
+    </div>
+
+    <div class="flex gap-2">
+      <%= form.submit marker_group.persisted? ? "Update Group" : "Create Group",
+          class: "rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer" %>
+      <button type="button"
+              data-action="click->group#cancelForm"
+              class="rounded-md px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-sm font-medium cursor-pointer">
+        Cancel
+      </button>
+    </div>
+  <% end %>
+</div>

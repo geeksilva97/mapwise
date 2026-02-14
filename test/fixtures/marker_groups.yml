@@ -1,0 +1,27 @@
+restaurants:
+  map: one
+  name: Restaurants
+  color: "#EF4444"
+  visible: true
+  position: 0
+
+hotels:
+  map: one
+  name: Hotels
+  color: "#3B82F6"
+  visible: true
+  position: 1
+
+hidden:
+  map: one
+  name: Hidden Group
+  color: "#6B7280"
+  visible: false
+  position: 2
+
+on_other_map:
+  map: two
+  name: Landmarks
+  color: "#22C55E"
+  visible: true
+  position: 0

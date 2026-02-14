@@ -3,7 +3,7 @@ import { csrfToken } from "utils/csrf"
 
 export default class extends Controller {
   static values = { mapId: Number }
-  static targets = ["addButton", "placementBanner", "count"]
+  static targets = ["addButton", "placementBanner", "circleSelectionBanner", "count"]
 
   // Toggle placement mode on/off
   togglePlacementMode() {
@@ -82,6 +82,25 @@ export default class extends Controller {
       .catch(err => this.#showError("Failed to delete marker.", err))
   }
 
+  // Remove a marker from its group
+  ungroupMarker(event) {
+    event.preventDefault()
+    const markerId = event.params.id
+
+    fetch(`/maps/${this.mapIdValue}/markers/${markerId}/ungroup`, {
+      method: "PATCH",
+      headers: { "Accept": "application/json", "X-CSRF-Token": csrfToken() }
+    })
+      .then(r => {
+        if (!r.ok) throw new Error(`Failed to ungroup marker: ${r.status}`)
+        return r.json()
+      })
+      .then(() => {
+        window.location.reload()
+      })
+      .catch(err => this.#showError("Failed to ungroup marker.", err))
+  }
+
   // Called when the map controller dispatches markerDragged
   dragged(event) {
     const { id, lat, lng } = event.detail
@@ -107,6 +126,18 @@ export default class extends Controller {
     if (latField) latField.value = Math.round(center.lat() * 1000000) / 1000000
     if (lngField) lngField.value = Math.round(center.lng() * 1000000) / 1000000
     if (zoomField) zoomField.value = mapCtrl.map.getZoom()
+  }
+
+  showCircleBanner() {
+    if (this.hasCircleSelectionBannerTarget) {
+      this.circleSelectionBannerTarget.classList.remove("hidden")
+    }
+  }
+
+  hideCircleBanner() {
+    if (this.hasCircleSelectionBannerTarget) {
+      this.circleSelectionBannerTarget.classList.add("hidden")
+    }
   }
 
   // --- Private ---
