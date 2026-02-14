@@ -42,6 +42,16 @@ User (auth generator + name)
 
 ---
 
+## UI Architecture
+
+- **Three layouts**: `application.html.erb` (navbar + container), `fullscreen.html.erb` (zero-padding for editor/viewer), `embed.html.erb` (minimal for iframes)
+- **Shared partials**: `shared/_navbar.html.erb` (responsive nav with logo, links, user menu, mobile hamburger), `shared/_flash.html.erb` (flash messages with SVG icons)
+- **Auth pages**: Sign in and sign up hide the navbar via `content_for :hide_navbar` for a clean centered card design
+- **Stimulus controllers**: `navbar_controller.js` (mobile menu toggle), plus existing map/tabs/marker-editor/style-picker controllers
+- **Editor settings**: Inline save via Turbo Stream — no page refresh, stays on current tab
+- **Style picker**: Select dropdown (was buttons), uses Stimulus `application.getControllerForElementAndIdentifier` to communicate with the map controller on a sibling element
+- **Design tokens**: Cards use `bg-white rounded-xl border border-gray-200 shadow-sm`, inputs use `rounded-lg border-gray-300 bg-gray-50` with blue focus ring, page background `bg-gray-50`
+
 ## Architecture
 
 - **Google Maps loading**: Script tag injected by Stimulus controller; API key passed via `data-` attribute

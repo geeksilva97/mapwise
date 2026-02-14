@@ -61,9 +61,28 @@ Public maps can be embedded with:
 <iframe src="https://your-domain.com/embed/TOKEN" width="100%" height="400" frameborder="0"></iframe>
 ```
 
+### Map Editor
+
+The editor is a full-screen split view with a sidebar and map canvas:
+
+- **Markers tab**: Add, edit, drag, and delete markers on the map.
+- **Styles tab**: Select a map style from a dropdown (Default, Silver, Night, Retro, Aubergine, Minimal).
+- **Settings tab**: Edit title, description, starting position (lat/lng/zoom). Use the "Use current view" button to capture the map's current position. Settings save inline via Turbo Stream without leaving the tab.
+
+## UI & Layouts
+
+MapWise uses three layouts:
+
+- **Application layout**: Standard pages with responsive navbar, flash messages, and content container (dashboard, auth pages, API keys, map styles, new map).
+- **Fullscreen layout**: Zero-padding layout for the map editor and viewer.
+- **Embed layout**: Minimal layout for iframe embeds.
+
+Auth pages (sign in, sign up) hide the navbar for a clean, centered card design.
+
 ## Stack
 
 - Rails 8.1 with Hotwire (Turbo + Stimulus)
 - Tailwind CSS
 - SQLite with Solid Queue, Solid Cache, Solid Cable
 - Google Maps JavaScript API (AdvancedMarkerElement)
+- Importmap (no bundler), Propshaft
