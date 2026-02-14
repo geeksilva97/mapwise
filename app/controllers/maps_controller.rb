@@ -1,4 +1,5 @@
 class MapsController < ApplicationController
+  layout "fullscreen", only: %i[ show edit ]
   before_action :set_map, only: %i[ show edit update destroy ]
 
   def new

@@ -1,28 +1,31 @@
-<div class="max-w-6xl mx-auto px-4 py-8">
-  <% if notice = flash[:notice] %>
-    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-lg inline-block" id="notice"><%= notice %></p>
-  <% end %>
-
-  <div class="flex items-center justify-between mb-8">
-    <h1 class="font-bold text-4xl">My Maps</h1>
-    <div class="flex gap-3">
-      <%= link_to "New Map", new_map_path, class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium" %>
-      <%= link_to "API Keys", api_keys_path, class: "rounded-md px-3.5 py-2.5 border border-gray-300 hover:bg-gray-50 font-medium" %>
-      <%= button_to "Sign out", session_path, method: :delete, class: "rounded-md px-3.5 py-2.5 border border-gray-300 hover:bg-gray-50 font-medium cursor-pointer" %>
-    </div>
-  </div>
-
-  <% if @maps.any? %>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <% @maps.each do |map| %>
-        <%= render "maps/map_card", map: map %>
-      <% end %>
-    </div>
-  <% else %>
-    <div class="text-center py-16">
-      <h2 class="text-xl font-medium text-gray-600 mb-2">No maps yet</h2>
-      <p class="text-gray-500 mb-6">Create your first map to get started.</p>
-      <%= link_to "Create Map", new_map_path, class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium" %>
-    </div>
+<div class="flex items-center justify-between mb-8">
+  <h1 class="text-2xl font-bold text-gray-900">My Maps</h1>
+  <%= link_to new_map_path, class: "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors" do %>
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+    </svg>
+    New Map
   <% end %>
 </div>
+
+<% if @maps.any? %>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% @maps.each do |map| %>
+      <%= render "maps/map_card", map: map %>
+    <% end %>
+  </div>
+<% else %>
+  <div class="text-center py-20">
+    <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+    </svg>
+    <h2 class="mt-4 text-lg font-medium text-gray-600">No maps yet</h2>
+    <p class="mt-1 text-sm text-gray-500">Create your first map to get started.</p>
+    <%= link_to new_map_path, class: "mt-6 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors" do %>
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+      Create Map
+    <% end %>
+  </div>
+<% end %>

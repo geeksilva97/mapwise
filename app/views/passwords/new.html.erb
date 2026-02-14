@@ -1,17 +1,28 @@
-<div class="mx-auto md:w-2/3 w-full">
-  <% if alert = flash[:alert] %>
-    <p class="py-2 px-3 bg-red-50 mb-5 text-red-500 font-medium rounded-lg inline-block" id="alert"><%= alert %></p>
-  <% end %>
-
-  <h1 class="font-bold text-4xl">Forgot your password?</h1>
-
-  <%= form_with url: passwords_path, class: "contents" do |form| %>
-    <div class="my-5">
-      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "block shadow-sm rounded-md border border-gray-400 focus:outline-solid focus:outline-blue-600 px-3 py-2 mt-2 w-full" %>
+<div class="min-h-[80vh] flex items-center justify-center">
+  <div class="w-full max-w-md">
+    <div class="text-center mb-8">
+      <svg class="mx-auto h-12 w-12 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+      </svg>
+      <h1 class="mt-4 text-2xl font-bold text-gray-900">Forgot your password?</h1>
+      <p class="mt-1 text-sm text-gray-500">We'll email you reset instructions</p>
     </div>
 
-    <div class="inline">
-      <%= form.submit "Email reset instructions", class: "w-full sm:w-auto text-center rounded-lg px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <%= form_with url: passwords_path do |form| %>
+        <div class="space-y-4">
+          <div>
+            <label for="email_address" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "you@example.com", value: params[:email_address], class: "block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none" %>
+          </div>
+
+          <%= form.submit "Email reset instructions", class: "w-full rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
+        </div>
+      <% end %>
     </div>
-  <% end %>
+
+    <p class="mt-4 text-center text-sm text-gray-500">
+      <%= link_to "Back to sign in", new_session_path, class: "text-blue-600 hover:text-blue-500" %>
+    </p>
+  </div>
 </div>

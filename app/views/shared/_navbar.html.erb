@@ -1,0 +1,70 @@
+<nav class="sticky top-0 z-50 bg-white border-b border-gray-200" data-controller="navbar">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <%# Logo %>
+      <%= link_to root_path, class: "flex items-center gap-2 text-gray-900 hover:text-gray-700" do %>
+        <svg class="h-7 w-7 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+        </svg>
+        <span class="text-lg font-bold">MapWise</span>
+      <% end %>
+
+      <%# Desktop links %>
+      <% if authenticated? %>
+        <div class="hidden sm:flex items-center gap-1">
+          <%= link_to "My Maps", root_path,
+              class: "px-3 py-2 rounded-lg text-sm font-medium #{request.path == "/" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"}" %>
+          <%= link_to "API Keys", api_keys_path,
+              class: "px-3 py-2 rounded-lg text-sm font-medium #{request.path == "/api_keys" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"}" %>
+          <%= link_to "Map Styles", map_styles_path,
+              class: "px-3 py-2 rounded-lg text-sm font-medium #{request.path == "/map_styles" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"}" %>
+        </div>
+
+        <div class="hidden sm:flex items-center gap-3">
+          <span class="text-sm text-gray-500"><%= Current.user.name %></span>
+          <%= button_to "Sign out", session_path, method: :delete,
+              class: "rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 cursor-pointer" %>
+        </div>
+      <% else %>
+        <div class="hidden sm:flex items-center gap-3">
+          <%= link_to "Sign in", new_session_path,
+              class: "rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50" %>
+          <%= link_to "Sign up", new_registration_path,
+              class: "rounded-lg px-3.5 py-2 text-sm font-medium bg-blue-600 text-white hover:bg-blue-500" %>
+        </div>
+      <% end %>
+
+      <%# Mobile hamburger %>
+      <button data-action="click->navbar#toggle" class="sm:hidden p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <%# Mobile menu %>
+  <div class="hidden sm:hidden border-t border-gray-200" data-navbar-target="menu">
+    <div class="px-4 py-3 space-y-1">
+      <% if authenticated? %>
+        <%= link_to "My Maps", root_path,
+            class: "block px-3 py-2 rounded-lg text-sm font-medium #{request.path == "/" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"}" %>
+        <%= link_to "API Keys", api_keys_path,
+            class: "block px-3 py-2 rounded-lg text-sm font-medium #{request.path == "/api_keys" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"}" %>
+        <%= link_to "Map Styles", map_styles_path,
+            class: "block px-3 py-2 rounded-lg text-sm font-medium #{request.path == "/map_styles" ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"}" %>
+        <div class="border-t border-gray-200 mt-2 pt-2">
+          <span class="block px-3 py-1 text-sm text-gray-500"><%= Current.user.name %></span>
+          <%= button_to "Sign out", session_path, method: :delete,
+              class: "w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 cursor-pointer" %>
+        </div>
+      <% else %>
+        <%= link_to "Sign in", new_session_path,
+            class: "block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50" %>
+        <%= link_to "Sign up", new_registration_path,
+            class: "block px-3 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-500 text-center" %>
+      <% end %>
+    </div>
+  </div>
+</nav>
