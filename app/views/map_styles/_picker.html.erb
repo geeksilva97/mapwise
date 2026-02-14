@@ -1,0 +1,14 @@
+<div class="space-y-2">
+  <% styles.each do |style| %>
+    <button data-action="click->style-picker#select"
+            data-style-json="<%= style.style_json %>"
+            data-style-id="<%= style.id %>"
+            class="w-full text-left p-3 rounded-lg border hover:border-blue-400 hover:bg-blue-50 transition-colors
+                   <%= 'border-blue-600 bg-blue-50' if map.style_json == style.style_json %>">
+      <span class="font-medium text-sm"><%= style.name %></span>
+      <% if style.system_default? %>
+        <span class="text-xs text-gray-400 ml-1">preset</span>
+      <% end %>
+    </button>
+  <% end %>
+</div>

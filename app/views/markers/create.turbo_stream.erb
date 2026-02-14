@@ -1,0 +1,17 @@
+<%= turbo_stream.append "markers_list" do %>
+  <%= render "markers/marker_item", marker: @marker %>
+<% end %>
+
+<%= turbo_stream.replace "marker_form" do %>
+  <turbo-frame id="marker_form"></turbo-frame>
+<% end %>
+
+<%= turbo_stream.replace "markers_data" do %>
+  <script type="application/json" id="markers-data" data-map-target="markersData">
+    <%= @map.markers.select(:id, :lat, :lng, :title, :description, :color).to_json.html_safe %>
+  </script>
+<% end %>
+
+<%= turbo_stream.update "marker_count" do %>
+  <%= @map.markers.count %>
+<% end %>

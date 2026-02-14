@@ -1,0 +1,11 @@
+<%= turbo_stream.remove @marker %>
+
+<%= turbo_stream.replace "markers_data" do %>
+  <script type="application/json" id="markers-data" data-map-target="markersData">
+    <%= @map.markers.select(:id, :lat, :lng, :title, :description, :color).to_json.html_safe %>
+  </script>
+<% end %>
+
+<%= turbo_stream.update "marker_count" do %>
+  <%= @map.markers.count %>
+<% end %>

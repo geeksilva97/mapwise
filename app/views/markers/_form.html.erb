@@ -1,0 +1,43 @@
+<turbo-frame id="marker_form">
+  <div class="border rounded-lg p-4 mt-4 bg-gray-50">
+    <h3 class="font-bold text-sm mb-3"><%= marker.persisted? ? "Edit Marker" : "New Marker" %></h3>
+
+    <%= form_with model: [map, marker], class: "space-y-3" do |form| %>
+      <% if marker.errors.any? %>
+        <div class="bg-red-50 text-red-500 px-3 py-2 text-sm rounded-lg">
+          <% marker.errors.each do |error| %>
+            <p><%= error.full_message %></p>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%= form.hidden_field :lat %>
+      <%= form.hidden_field :lng %>
+
+      <div>
+        <%= form.label :title, class: "block text-xs font-medium text-gray-700" %>
+        <%= form.text_field :title, placeholder: "Marker name", class: "block shadow-sm rounded-md border border-gray-300 focus:outline-blue-600 px-3 py-1.5 mt-1 w-full text-sm" %>
+      </div>
+
+      <div>
+        <%= form.label :description, class: "block text-xs font-medium text-gray-700" %>
+        <%= form.text_area :description, rows: 2, placeholder: "Description", class: "block shadow-sm rounded-md border border-gray-300 focus:outline-blue-600 px-3 py-1.5 mt-1 w-full text-sm" %>
+      </div>
+
+      <div>
+        <%= form.label :color, class: "block text-xs font-medium text-gray-700" %>
+        <%= form.color_field :color, class: "h-8 w-full rounded-md border border-gray-300 cursor-pointer mt-1" %>
+      </div>
+
+      <div class="flex gap-2">
+        <%= form.submit marker.persisted? ? "Update" : "Create",
+            class: "rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer" %>
+        <% if marker.persisted? %>
+          <%= link_to "Cancel", edit_map_path(map),
+              class: "rounded-md px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-sm font-medium",
+              data: { turbo_frame: "marker_form" } %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</turbo-frame>

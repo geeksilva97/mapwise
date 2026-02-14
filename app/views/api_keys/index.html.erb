@@ -1,0 +1,30 @@
+<div class="mx-auto md:w-2/3 w-full">
+  <% if notice = flash[:notice] %>
+    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-lg inline-block" id="notice"><%= notice %></p>
+  <% end %>
+
+  <h1 class="font-bold text-4xl">API Keys</h1>
+  <p class="text-gray-600 mt-2">Add your Google Maps API key to enable map embedding on external sites. Maps inside MapWise work without a key.</p>
+
+  <% if @api_keys.any? %>
+    <div class="mt-6 space-y-4">
+      <% @api_keys.each do |api_key| %>
+        <div class="border rounded-lg p-4 flex items-center justify-between">
+          <div>
+            <p class="font-medium"><%= api_key.label %></p>
+            <p class="text-sm text-gray-500 font-mono"><%= api_key.google_maps_key.first(8) %>...<%= api_key.google_maps_key.last(4) %></p>
+          </div>
+          <div class="flex gap-2">
+            <%= button_to "Remove", api_key_path(api_key), method: :delete, class: "text-red-600 hover:text-red-800 text-sm", data: { turbo_confirm: "Are you sure?" } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="mt-8 border rounded-lg p-6">
+    <h2 class="font-bold text-xl mb-4">Add API Key</h2>
+
+    <%= render "form", api_key: @api_key %>
+  </div>
+</div>

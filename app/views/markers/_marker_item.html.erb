@@ -1,0 +1,15 @@
+<div id="<%= dom_id(marker) %>" class="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 group">
+  <div class="flex items-center gap-2">
+    <span class="w-3 h-3 rounded-full" style="background-color: <%= marker.color %>"></span>
+    <span class="text-sm font-medium"><%= marker.title.presence || "Untitled Marker" %></span>
+  </div>
+  <div class="flex gap-1 opacity-0 group-hover:opacity-100">
+    <%= link_to "Edit", edit_map_marker_path(marker.map, marker),
+        data: { turbo_frame: "marker_form" },
+        class: "text-blue-600 hover:text-blue-800 text-xs" %>
+    <%= button_to "Delete", map_marker_path(marker.map, marker),
+        method: :delete,
+        class: "text-red-600 hover:text-red-800 text-xs",
+        data: { turbo_confirm: "Remove this marker?" } %>
+  </div>
+</div>

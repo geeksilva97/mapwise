@@ -1,0 +1,28 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+  <% if notice = flash[:notice] %>
+    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-lg inline-block" id="notice"><%= notice %></p>
+  <% end %>
+
+  <div class="flex items-center justify-between mb-8">
+    <h1 class="font-bold text-4xl">My Maps</h1>
+    <div class="flex gap-3">
+      <%= link_to "New Map", new_map_path, class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium" %>
+      <%= link_to "API Keys", api_keys_path, class: "rounded-md px-3.5 py-2.5 border border-gray-300 hover:bg-gray-50 font-medium" %>
+      <%= button_to "Sign out", session_path, method: :delete, class: "rounded-md px-3.5 py-2.5 border border-gray-300 hover:bg-gray-50 font-medium cursor-pointer" %>
+    </div>
+  </div>
+
+  <% if @maps.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @maps.each do |map| %>
+        <%= render "maps/map_card", map: map %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-center py-16">
+      <h2 class="text-xl font-medium text-gray-600 mb-2">No maps yet</h2>
+      <p class="text-gray-500 mb-6">Create your first map to get started.</p>
+      <%= link_to "Create Map", new_map_path, class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium" %>
+    </div>
+  <% end %>
+</div>

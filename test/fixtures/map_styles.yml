@@ -1,0 +1,21 @@
+system_default:
+  name: Default
+  style_json: "[]"
+  system_default: true
+
+system_night:
+  name: Night
+  style_json: '[{"elementType":"geometry","stylers":[{"color":"#242f3e"}]}]'
+  system_default: true
+
+user_one_custom:
+  user: one
+  name: My Custom Style
+  style_json: '[{"featureType":"water","stylers":[{"color":"#ff0000"}]}]'
+  system_default: false
+
+user_two_custom:
+  user: two
+  name: Other Custom
+  style_json: '[{"featureType":"road","stylers":[{"color":"#00ff00"}]}]'
+  system_default: false

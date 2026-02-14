@@ -1,0 +1,32 @@
+one:
+  user: one
+  title: My First Map
+  description: A test map
+  center_lat: 40.7128
+  center_lng: -74.0060
+  zoom: 12
+  map_type: roadmap
+  embed_token: test_token_abc123
+  public: false
+
+public_map:
+  user: one
+  title: Public Map
+  description: A public map
+  center_lat: 0.0
+  center_lng: 0.0
+  zoom: 3
+  map_type: roadmap
+  embed_token: public_token_xyz789
+  public: true
+
+two:
+  user: two
+  title: Other User Map
+  description: Belongs to user two
+  center_lat: 51.5074
+  center_lng: -0.1278
+  zoom: 10
+  map_type: roadmap
+  embed_token: other_user_token_456
+  public: false

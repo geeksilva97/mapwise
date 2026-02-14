@@ -1,0 +1,25 @@
+one:
+  map: one
+  lat: 40.7128
+  lng: -74.0060
+  title: New York City
+  description: The Big Apple
+  color: "#FF0000"
+  position: 0
+
+two_on_one:
+  map: one
+  lat: 34.0522
+  lng: -118.2437
+  title: Los Angeles
+  description: City of Angels
+  color: "#3B82F6"
+  position: 1
+
+on_other_map:
+  map: two
+  lat: 51.5074
+  lng: -0.1278
+  title: London
+  color: "#22C55E"
+  position: 0

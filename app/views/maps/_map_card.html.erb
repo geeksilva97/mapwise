@@ -1,0 +1,31 @@
+<div class="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+  <div class="bg-gray-100 h-40 flex items-center justify-center">
+    <span class="text-gray-400 text-sm">Map Preview</span>
+  </div>
+
+  <div class="p-4">
+    <h3 class="font-bold text-lg"><%= map.title %></h3>
+    <% if map.description.present? %>
+      <p class="text-sm text-gray-500 mt-1 line-clamp-2"><%= map.description %></p>
+    <% end %>
+
+    <div class="flex items-center justify-between mt-3">
+      <div class="text-xs text-gray-400">
+        <span><%= map.markers.count %> markers</span>
+        &middot;
+        <span>Updated <%= time_ago_in_words(map.updated_at) %> ago</span>
+      </div>
+
+      <div class="flex gap-2">
+        <%= link_to "Edit", edit_map_path(map), class: "text-blue-600 hover:text-blue-800 text-sm font-medium" %>
+        <%= link_to "View", map_path(map), class: "text-gray-600 hover:text-gray-800 text-sm font-medium" %>
+      </div>
+    </div>
+
+    <% if map.public? %>
+      <span class="inline-block mt-2 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Public</span>
+    <% else %>
+      <span class="inline-block mt-2 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Private</span>
+    <% end %>
+  </div>
+</div>

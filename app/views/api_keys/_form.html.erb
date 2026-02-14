@@ -1,0 +1,25 @@
+<%= form_with model: api_key, url: api_keys_path, class: "contents" do |form| %>
+  <% if api_key.errors.any? %>
+    <div class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-lg mb-4">
+      <ul class="list-disc ml-5">
+        <% api_key.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="my-3">
+    <%= form.label :label, class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :label, placeholder: "Default", class: "block shadow-sm rounded-md border border-gray-400 focus:outline-blue-600 px-3 py-2 mt-2 w-full" %>
+  </div>
+
+  <div class="my-3">
+    <%= form.label :google_maps_key, "Google Maps API Key", class: "block text-sm font-medium text-gray-700" %>
+    <%= form.text_field :google_maps_key, required: true, placeholder: "AIzaSy...", class: "block shadow-sm rounded-md border border-gray-400 focus:outline-blue-600 px-3 py-2 mt-2 w-full font-mono" %>
+  </div>
+
+  <div class="mt-4">
+    <%= form.submit "Save API Key", class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium cursor-pointer" %>
+  </div>
+<% end %>
