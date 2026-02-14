@@ -1,0 +1,11 @@
+title,lat,lng,color,description,group
+Central Park,40.785091,-73.968285,#00FF00,Famous park in Manhattan,Parks
+Times Square,40.758896,-73.985130,#FF0000,The Crossroads of the World,Landmarks
+Brooklyn Bridge,40.706086,-73.996864,#0000FF,Historic suspension bridge,Landmarks
+Statue of Liberty,40.689247,-74.044502,#FFD700,Iconic national monument,Landmarks
+Empire State Building,40.748817,-73.985428,#FF6600,Art Deco skyscraper,Buildings
+Grand Central Terminal,40.752726,-73.977229,#8B4513,Historic train station,Buildings
+High Line,40.748000,-74.004900,#00FF00,Elevated linear park,Parks
+Prospect Park,40.660204,-73.968956,#00FF00,Brooklyn's flagship park,Parks
+One World Trade Center,40.712743,-74.013379,#333333,Tallest building in NYC,Buildings
+Coney Island,40.574926,-73.985941,#FF69B4,Amusement area and beach,Recreation

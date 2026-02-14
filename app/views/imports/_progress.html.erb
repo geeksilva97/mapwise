@@ -1,0 +1,17 @@
+<div id="import_area" data-controller="import"
+     data-import-map-id-value="<%= import.map_id %>"
+     data-import-import-id-value="<%= import.id %>"
+     data-import-polling-value="true">
+  <h3 class="font-bold text-sm mb-3">Importing...</h3>
+  <p class="text-xs text-gray-500 mb-2"><%= import.file_name %></p>
+
+  <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+    <div class="bg-blue-600 h-2.5 rounded-full transition-all"
+         data-import-target="progressBar"
+         style="width: <%= import.progress_percentage %>%"></div>
+  </div>
+
+  <p class="text-xs text-gray-500" data-import-target="progressText">
+    <%= import.processed_rows %> / <%= import.total_rows %> rows processed (<%= import.progress_percentage %>%)
+  </p>
+</div>

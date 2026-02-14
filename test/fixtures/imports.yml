@@ -1,0 +1,18 @@
+pending_import:
+  map: one
+  status: pending
+  file_name: markers.csv
+  total_rows: 0
+  processed_rows: 0
+  success_count: 0
+  error_count: 0
+
+completed_import:
+  map: one
+  status: completed
+  file_name: cities.xlsx
+  total_rows: 10
+  processed_rows: 10
+  success_count: 8
+  error_count: 2
+  error_log: '[{"row":3,"message":"Lat is invalid"},{"row":7,"message":"Lng is missing"}]'

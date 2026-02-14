@@ -1,0 +1,38 @@
+<div id="import_area" data-controller="import" data-import-map-id-value="<%= map.id %>" data-import-import-id-value="<%= import.id %>">
+  <h3 class="font-bold text-sm mb-3">Map Columns</h3>
+  <p class="text-xs text-gray-500 mb-3">File: <span class="font-medium"><%= import.file_name %></span></p>
+
+  <form data-action="submit->import#submitMapping" class="space-y-3">
+    <% marker_fields = [["Latitude", "lat"], ["Longitude", "lng"], ["Address", "address"], ["Title", "title"], ["Description", "description"], ["Color", "color"], ["Group", "group"]] %>
+
+    <% marker_fields.each do |label, field| %>
+      <div>
+        <label class="block text-xs font-medium text-gray-700"><%= label %></label>
+        <select name="column_mapping[<%= field %>]"
+                class="block w-full rounded-md border border-gray-300 focus:outline-blue-600 px-3 py-1.5 mt-1 text-sm">
+          <option value="">-- Skip --</option>
+          <% headers.each do |header| %>
+            <option value="<%= header %>"
+              <%= "selected" if header&.downcase&.strip == field || (field == "lat" && header&.downcase&.include?("lat")) || (field == "lng" && header&.downcase&.match?(/lon|lng/)) %>
+            ><%= header %></option>
+          <% end %>
+        </select>
+      </div>
+    <% end %>
+
+    <div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+      <p class="text-xs text-amber-800">Either Latitude + Longitude or Address is required. Address geocoding requires a Google Maps API key.</p>
+    </div>
+
+    <div class="flex gap-2">
+      <button type="submit"
+              class="rounded-lg px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors">
+        Start Import
+      </button>
+      <button type="button" data-action="click->import#cancel"
+              class="rounded-lg px-4 py-2 border border-gray-300 hover:bg-gray-50 text-sm font-medium cursor-pointer transition-colors">
+        Cancel
+      </button>
+    </div>
+  </form>
+</div>

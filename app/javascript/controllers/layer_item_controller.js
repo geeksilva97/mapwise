@@ -36,7 +36,7 @@ export default class extends Controller {
         // Update sidebar display
         this.displayNameTarget.textContent = layer.name
         this.displayDotTarget.style.backgroundColor = layer.fill_color || "#3B82F6"
-        this.displayDotTarget.style.border = `1px solid ${layer.stroke_color || "#3B82F6"}`
+        this.displayDotTarget.style.borderColor = layer.stroke_color || "#3B82F6"
 
         // Collapse form
         this.formTarget.classList.add("hidden")

@@ -178,7 +178,7 @@ export default class extends Controller {
 
     const item = document.createElement("div")
     item.id = `marker_${marker.id}`
-    item.className = "flex items-center justify-between p-2 rounded-md hover:bg-gray-50 group"
+    item.className = "flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50 group"
 
     const left = document.createElement("div")
     left.className = "flex items-center gap-2 min-w-0"

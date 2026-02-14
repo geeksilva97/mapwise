@@ -300,15 +300,15 @@ export default class extends Controller {
 
     const item = document.createElement("div")
     item.id = `layer_${layer.id}`
-    item.className = "flex items-center justify-between p-2 rounded-md hover:bg-gray-50 group"
+    item.className = "flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50 group"
 
     const left = document.createElement("div")
     left.className = "flex items-center gap-2 min-w-0"
 
     const dot = document.createElement("span")
-    dot.className = "w-3 h-3 rounded shrink-0"
+    dot.className = "w-3 h-3 rounded border shrink-0"
     dot.style.backgroundColor = layer.fill_color || "#3B82F6"
-    dot.style.border = `1px solid ${layer.stroke_color || "#3B82F6"}`
+    dot.style.borderColor = layer.stroke_color || "#3B82F6"
 
     const name = document.createElement("span")
     name.className = "text-sm font-medium truncate"

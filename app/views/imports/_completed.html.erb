@@ -1,0 +1,44 @@
+<div id="import_area" data-controller="import" data-import-map-id-value="<%= map.id %>">
+  <h3 class="font-bold text-sm mb-3">
+    <% if import.completed? %>
+      Import Complete
+    <% else %>
+      Import Failed
+    <% end %>
+  </h3>
+
+  <div class="space-y-2 mb-4">
+    <p class="text-sm text-gray-700">File: <span class="font-medium"><%= import.file_name %></span></p>
+
+    <% if import.completed? %>
+      <div class="flex gap-4">
+        <p class="text-sm text-green-600 font-medium"><%= import.success_count %> markers imported</p>
+        <% if import.error_count > 0 %>
+          <p class="text-sm text-red-600 font-medium"><%= import.error_count %> errors</p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if import.error_log.present? %>
+      <details class="mt-2">
+        <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-700">View errors (<%= import.error_log.size %>)</summary>
+        <div class="mt-2 max-h-40 overflow-y-auto rounded-lg bg-gray-50 border border-gray-200 p-2">
+          <% import.error_log.each do |error| %>
+            <p class="text-xs text-red-600 mb-1">Row <%= error["row"] %>: <%= error["message"] %></p>
+          <% end %>
+        </div>
+      </details>
+    <% end %>
+  </div>
+
+  <div class="flex gap-2">
+    <button type="button" data-action="click->import#reload"
+            class="rounded-lg px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors">
+      Reload Map
+    </button>
+    <button type="button" data-action="click->import#newImport"
+            class="rounded-lg px-4 py-2 border border-gray-300 hover:bg-gray-50 text-sm font-medium cursor-pointer transition-colors">
+      New Import
+    </button>
+  </div>
+</div>

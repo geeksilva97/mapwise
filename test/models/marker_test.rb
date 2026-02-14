@@ -89,4 +89,52 @@ class MarkerTest < ActiveSupport::TestCase
     marker = map.markers.create!(lat: 35.0, lng: -80.0, position: 99)
     assert_equal 99, marker.position
   end
+
+  # Group association
+  test "belongs to marker_group optionally" do
+    marker = markers(:one)
+    assert_equal marker_groups(:restaurants), marker.marker_group
+  end
+
+  test "valid without marker_group" do
+    marker = Marker.new(map: maps(:one), lat: 40.0, lng: -74.0)
+    assert marker.valid?
+  end
+
+  test "marker_group_id is nullified when group is destroyed" do
+    group = marker_groups(:restaurants)
+    marker = markers(:one)
+    assert_equal group.id, marker.marker_group_id
+
+    group.destroy
+    marker.reload
+    assert_nil marker.marker_group_id
+  end
+
+  # Custom info HTML sanitization
+  test "sanitizes script tags from custom_info_html" do
+    marker = markers(:one)
+    marker.update!(custom_info_html: '<p>Hello</p><script>alert("xss")</script>')
+    assert_no_match(/<script>/, marker.custom_info_html)
+    assert_includes marker.custom_info_html, "<p>Hello</p>"
+  end
+
+  test "preserves safe tags in custom_info_html" do
+    marker = markers(:one)
+    html = '<p><strong>Title</strong></p><a href="https://example.com" target="_blank">Link</a>'
+    marker.update!(custom_info_html: html)
+    assert_equal html, marker.custom_info_html
+  end
+
+  test "allows blank custom_info_html" do
+    marker = markers(:one)
+    marker.update!(custom_info_html: "")
+    assert_equal "", marker.custom_info_html
+  end
+
+  test "allows nil custom_info_html" do
+    marker = markers(:one)
+    marker.update!(custom_info_html: nil)
+    assert_nil marker.custom_info_html
+  end
 end

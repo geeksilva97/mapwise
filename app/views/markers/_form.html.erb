@@ -29,6 +29,23 @@
         <%= form.color_field :color, class: "h-8 w-full rounded-md border border-gray-300 cursor-pointer mt-1" %>
       </div>
 
+      <% if map.marker_groups.any? %>
+        <div>
+          <%= form.label :marker_group_id, "Group", class: "block text-xs font-medium text-gray-700" %>
+          <%= form.select :marker_group_id,
+              map.marker_groups.ordered.map { |g| [g.name, g.id] },
+              { include_blank: "No group", selected: marker.marker_group_id },
+              class: "block w-full shadow-sm rounded-md border border-gray-300 focus:outline-blue-600 px-3 py-1.5 mt-1 text-sm" %>
+        </div>
+      <% end %>
+
+      <div>
+        <%= form.label :custom_info_html, "Custom Info Window HTML", class: "block text-xs font-medium text-gray-700" %>
+        <%= form.text_area :custom_info_html, rows: 3, placeholder: "<p>Custom popup content</p>",
+            class: "block shadow-sm rounded-md border border-gray-300 focus:outline-blue-600 px-3 py-1.5 mt-1 w-full text-sm font-mono" %>
+        <p class="text-xs text-gray-400 mt-1">HTML for the info window popup. Allowed tags: p, strong, em, a, img, ul, ol, li, etc.</p>
+      </div>
+
       <div class="flex gap-2">
         <%= form.submit marker.persisted? ? "Update" : "Create",
             class: "rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer" %>
