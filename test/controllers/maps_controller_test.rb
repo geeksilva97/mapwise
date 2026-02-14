@@ -219,4 +219,29 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     @map.reload
     assert @map.public?
   end
+
+  # Clustering
+
+  test "update saves clustering_enabled" do
+    assert_not @map.clustering_enabled?
+    patch map_path(@map),
+          params: { map: { clustering_enabled: true } },
+          as: :json
+    assert_response :ok
+    @map.reload
+    assert @map.clustering_enabled?
+  end
+
+  test "editor renders clustering data attribute" do
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "#map-canvas[data-map-clustering-enabled-value='false']"
+  end
+
+  test "editor renders clustering data attribute when enabled" do
+    @map.update!(clustering_enabled: true)
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "#map-canvas[data-map-clustering-enabled-value='true']"
+  end
 end

@@ -22,6 +22,15 @@
 
     <% unless map.new_record? %>
       <div class="border-t border-gray-200 pt-4 mt-2">
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Display options</p>
+        <label class="flex items-center gap-2.5 cursor-pointer">
+          <%= form.check_box :clustering_enabled, class: "h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500/20" %>
+          <span class="text-sm font-medium text-gray-700">Enable marker clustering</span>
+        </label>
+        <p class="text-xs text-gray-400 mt-1 ml-6.5">Groups nearby markers into clusters when zoomed out.</p>
+      </div>
+
+      <div class="border-t border-gray-200 pt-4 mt-2">
         <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Starting position</p>
 
         <div class="grid grid-cols-2 gap-3">
