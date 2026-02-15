@@ -196,10 +196,29 @@ export default class extends Controller {
     })
   }
 
+  // Callback-based LineString mode for planned path drawing
+  drawLineForPlannedPath() {
+    if (!this.draw) return
+
+    this.plannedPathMode = true
+    this.setMode("linestring")
+  }
+
   handleFinish(id) {
     const snapshot = this.draw.getSnapshot()
     const feature = snapshot.find(f => f.id === id)
     if (!feature) return
+
+    // If in planned path mode, invoke the callback instead of saving as layer
+    if (this.plannedPathMode && this.plannedPathCallback) {
+      this.draw.removeFeatures([id])
+      this.draw.setMode("render")
+      this.activeMode = "render"
+      this.plannedPathMode = false
+      this.updateToolbarState()
+      this.plannedPathCallback(feature)
+      return
+    }
 
     const geometryType = feature.geometry.type.toLowerCase()
     const layerType = LAYER_TYPE_MAP[geometryType] || "polygon"

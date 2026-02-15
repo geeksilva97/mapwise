@@ -1,0 +1,76 @@
+<div class="h-screen flex flex-col">
+  <header class="bg-white border-b px-4 py-3 flex items-center justify-between shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2">
+        <span class="relative flex h-2.5 w-2.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+        </span>
+        <h1 class="font-bold text-lg"><%= @map.title %> — Tracking</h1>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <%= link_to edit_map_path(@map), class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-sm font-medium transition-colors" do %>
+        Edit
+      <% end %>
+      <%= link_to root_path, class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-sm font-medium transition-colors" do %>
+        Dashboard
+      <% end %>
+    </div>
+  </header>
+
+  <div class="flex flex-1 overflow-hidden"
+       data-controller="tracking"
+       data-tracking-map-id-value="<%= @map.id %>"
+       data-tracking-vehicles-value="<%= @map.tracked_vehicles.active.ordered.to_json(only: [:id, :name, :color, :icon, :active, :planned_path]) %>"
+       data-tracking-center-lat-value="<%= @map.center_lat %>"
+       data-tracking-center-lng-value="<%= @map.center_lng %>"
+       data-tracking-zoom-value="<%= @map.zoom %>"
+       <% if @map.style_json.present? %>
+         data-tracking-style-json-value="<%= @map.style_json %>"
+       <% end %>
+       <% if @map.google_map_id.present? %>
+         data-tracking-google-map-id-value="<%= @map.google_map_id %>"
+       <% end %>>
+    <%# Sidebar %>
+    <aside class="w-80 border-r bg-white flex flex-col shrink-0" data-controller="tabs">
+      <nav class="flex border-b shrink-0">
+        <button data-tabs-target="tab" data-action="click->tabs#select"
+                class="flex-1 py-3 text-sm font-medium text-center border-b-2 border-blue-600 text-blue-600">
+          Vehicles
+        </button>
+        <button data-tabs-target="tab" data-action="click->tabs#select"
+                class="flex-1 py-3 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+          Alerts
+        </button>
+        <button data-tabs-target="tab" data-action="click->tabs#select"
+                class="flex-1 py-3 text-sm font-medium text-center border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+          History
+        </button>
+      </nav>
+
+      <%# Vehicles panel %>
+      <div data-tabs-target="panel" class="flex-1 overflow-y-auto p-4">
+        <%= render "tracked_vehicles/live_vehicle_list", vehicles: @map.tracked_vehicles.active.ordered %>
+      </div>
+
+      <%# Alerts panel %>
+      <div data-tabs-target="panel" class="flex-1 overflow-y-auto p-4 hidden">
+        <%= render "deviation_alerts/alert_list", alerts: DeviationAlert.unacknowledged.recent.joins(:tracked_vehicle).where(tracked_vehicles: { map_id: @map.id }) %>
+      </div>
+
+      <%# History panel %>
+      <div data-tabs-target="panel" class="flex-1 overflow-y-auto p-4 hidden">
+        <%= render "tracked_vehicles/playback_controls", vehicles: @map.tracked_vehicles.ordered, map: @map %>
+      </div>
+    </aside>
+
+    <%# Map canvas %>
+    <div class="flex-1 relative">
+      <div id="tracking-map-canvas"
+           data-tracking-target="map"
+           class="absolute inset-0">
+      </div>
+    </div>
+  </div>
+</div>

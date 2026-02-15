@@ -1,0 +1,7 @@
+<%= turbo_stream.remove "vehicle_#{@vehicle.id}" %>
+<%= turbo_stream.update "vehicle-count", @map.tracked_vehicles.count %>
+<% if @map.tracked_vehicles.empty? %>
+  <%= turbo_stream.append "vehicles_list" do %>
+    <p id="vehicles_empty" class="text-sm text-gray-400 mt-2">Add vehicles to start tracking.</p>
+  <% end %>
+<% end %>

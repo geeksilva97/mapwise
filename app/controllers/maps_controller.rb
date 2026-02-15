@@ -1,6 +1,6 @@
 class MapsController < ApplicationController
-  layout "fullscreen", only: %i[ show edit ]
-  before_action :set_map, only: %i[ show edit update destroy ]
+  layout "fullscreen", only: %i[ show edit tracking ]
+  before_action :set_map, only: %i[ show edit update destroy tracking ]
 
   def new
     @map = Current.user.maps.build
@@ -20,6 +20,9 @@ class MapsController < ApplicationController
   end
 
   def edit
+  end
+
+  def tracking
   end
 
   def update

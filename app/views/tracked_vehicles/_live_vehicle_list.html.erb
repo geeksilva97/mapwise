@@ -1,0 +1,25 @@
+<div id="live_vehicles_list" class="space-y-2">
+  <% vehicles.each do |vehicle| %>
+    <div id="live_vehicle_<%= vehicle.id %>"
+         data-action="click->tracking#focusVehicle"
+         data-vehicle-id="<%= vehicle.id %>"
+         class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+      <span class="w-3 h-3 rounded-full shrink-0" style="background-color: <%= vehicle.color %>"></span>
+      <div class="min-w-0 flex-1">
+        <p class="text-sm font-medium truncate"><%= vehicle.name %></p>
+        <% if (last = vehicle.last_tracking_point) %>
+          <p class="text-xs text-gray-400">
+            <%= last.speed ? "#{last.speed.round(1)} km/h" : "No speed" %> &middot;
+            <%= time_ago_in_words(last.recorded_at) %> ago
+          </p>
+        <% else %>
+          <p class="text-xs text-gray-400">No data yet</p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <% if vehicles.empty? %>
+    <p class="text-sm text-gray-400">No active vehicles. Add vehicles in the editor.</p>
+  <% end %>
+</div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_14_223300) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_14_230200) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -46,6 +46,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_14_223300) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_api_keys_on_user_id"
+  end
+
+  create_table "deviation_alerts", force: :cascade do |t|
+    t.boolean "acknowledged", default: false, null: false
+    t.datetime "created_at", null: false
+    t.float "distance_meters", null: false
+    t.string "message"
+    t.integer "tracked_vehicle_id", null: false
+    t.integer "tracking_point_id"
+    t.datetime "updated_at", null: false
+    t.index ["tracked_vehicle_id", "acknowledged"], name: "index_deviation_alerts_on_tracked_vehicle_id_and_acknowledged"
+    t.index ["tracked_vehicle_id"], name: "index_deviation_alerts_on_tracked_vehicle_id"
+    t.index ["tracking_point_id"], name: "index_deviation_alerts_on_tracking_point_id"
   end
 
   create_table "imports", force: :cascade do |t|
@@ -155,6 +168,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_14_223300) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "tracked_vehicles", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "color", default: "#3B82F6"
+    t.datetime "created_at", null: false
+    t.float "deviation_threshold_meters"
+    t.string "icon"
+    t.integer "map_id", null: false
+    t.string "name", null: false
+    t.text "planned_path"
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "webhook_token", null: false
+    t.index ["map_id", "position"], name: "index_tracked_vehicles_on_map_id_and_position"
+    t.index ["map_id"], name: "index_tracked_vehicles_on_map_id"
+    t.index ["webhook_token"], name: "index_tracked_vehicles_on_webhook_token", unique: true
+  end
+
+  create_table "tracking_points", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.float "heading"
+    t.float "lat", null: false
+    t.float "lng", null: false
+    t.datetime "recorded_at", null: false
+    t.float "speed"
+    t.integer "tracked_vehicle_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tracked_vehicle_id", "recorded_at"], name: "index_tracking_points_on_tracked_vehicle_id_and_recorded_at"
+    t.index ["tracked_vehicle_id"], name: "index_tracking_points_on_tracked_vehicle_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_address", null: false
@@ -167,6 +210,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_14_223300) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "api_keys", "users"
+  add_foreign_key "deviation_alerts", "tracked_vehicles"
+  add_foreign_key "deviation_alerts", "tracking_points"
   add_foreign_key "imports", "maps"
   add_foreign_key "layers", "maps"
   add_foreign_key "map_styles", "users"
@@ -175,4 +220,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_14_223300) do
   add_foreign_key "markers", "maps"
   add_foreign_key "markers", "marker_groups"
   add_foreign_key "sessions", "users"
+  add_foreign_key "tracked_vehicles", "maps"
+  add_foreign_key "tracking_points", "tracked_vehicles"
 end

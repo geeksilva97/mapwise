@@ -1,0 +1,12 @@
+bike_deviation:
+  tracked_vehicle: courier_bike
+  tracking_point: bike_point_one
+  distance_meters: 150.5
+  message: "Vehicle deviated 150.5m from planned path"
+  acknowledged: false
+
+old_alert:
+  tracked_vehicle: courier_bike
+  distance_meters: 80.0
+  message: "Vehicle deviated 80.0m from planned path"
+  acknowledged: true

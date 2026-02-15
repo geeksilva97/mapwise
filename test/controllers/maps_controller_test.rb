@@ -278,4 +278,31 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "[data-controller='map-search']", count: 0
   end
+
+  # Tracking
+
+  test "tracking page renders" do
+    get tracking_map_path(@map)
+    assert_response :success
+    assert_select "h1", /Tracking/
+    assert_select "[data-controller='tracking']"
+  end
+
+  test "tracking page requires auth" do
+    sign_out
+    get tracking_map_path(@map)
+    assert_redirected_to new_session_path
+  end
+
+  test "tracking page 404s for other user map" do
+    other_map = maps(:two)
+    get tracking_map_path(other_map)
+    assert_response :not_found
+  end
+
+  test "editor shows tracking tab" do
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "button", text: "Tracking"
+  end
 end

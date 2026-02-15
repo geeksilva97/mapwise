@@ -16,7 +16,21 @@ Rails.application.routes.draw do
     resources :layers, only: %i[ create update destroy ] do
       member { patch :toggle_visibility }
     end
+    resources :tracked_vehicles, except: [:show] do
+      member do
+        patch :toggle_active
+        delete :clear_points
+        patch :save_planned_path
+        get :points
+      end
+    end
+    resources :deviation_alerts, only: [] do
+      member { patch :acknowledge }
+    end
+    member { get :tracking }
   end
+
+  post "webhooks/tracking/:token", to: "webhooks#tracking", as: :webhook_tracking
 
   get "embed/:token", to: "embeds#show", as: :embed
   get "dashboard", to: "dashboard#index", as: :dashboard

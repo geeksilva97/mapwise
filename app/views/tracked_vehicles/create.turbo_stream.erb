@@ -1,0 +1,6 @@
+<%= turbo_stream.replace "vehicle_form", "" %>
+<%= turbo_stream.append "vehicles_list" do %>
+  <%= render "tracked_vehicles/vehicle_item", vehicle: @vehicle, map: @map %>
+<% end %>
+<%= turbo_stream.remove "vehicles_empty" %>
+<%= turbo_stream.update "vehicle-count", @map.tracked_vehicles.count %>

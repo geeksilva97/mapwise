@@ -1,0 +1,23 @@
+<div id="alerts_list" class="space-y-2">
+  <% alerts.each do |alert| %>
+    <div id="alert_<%= alert.id %>" class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <p class="text-sm font-medium text-amber-800"><%= alert.tracked_vehicle.name %></p>
+          <p class="text-xs text-amber-600 mt-0.5"><%= alert.message || "Deviated #{alert.distance_meters.round(1)}m from path" %></p>
+          <p class="text-xs text-amber-400 mt-1"><%= time_ago_in_words(alert.created_at) %> ago</p>
+        </div>
+        <button type="button"
+                data-action="click->tracking#acknowledgeAlert"
+                data-alert-id="<%= alert.id %>"
+                class="shrink-0 text-xs font-medium text-amber-700 hover:text-amber-900 cursor-pointer">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  <% end %>
+
+  <% if alerts.empty? %>
+    <p class="text-sm text-gray-400">No alerts. All vehicles are on track.</p>
+  <% end %>
+</div>

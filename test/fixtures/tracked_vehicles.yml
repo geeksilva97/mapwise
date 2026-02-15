@@ -1,0 +1,33 @@
+delivery_truck:
+  map: one
+  name: Delivery Truck
+  webhook_token: truck_token_abc123
+  color: "#3B82F6"
+  active: true
+  position: 0
+
+courier_bike:
+  map: one
+  name: Courier Bike
+  webhook_token: bike_token_def456
+  color: "#EF4444"
+  active: true
+  position: 1
+  planned_path: '{"type":"Feature","geometry":{"type":"LineString","coordinates":[[-74.006,40.7128],[-73.99,40.72],[-73.98,40.73]]}}'
+  deviation_threshold_meters: 100.0
+
+inactive_van:
+  map: one
+  name: Inactive Van
+  webhook_token: van_token_ghi789
+  color: "#6B7280"
+  active: false
+  position: 2
+
+other_vehicle:
+  map: two
+  name: Other Vehicle
+  webhook_token: other_token_jkl012
+  color: "#10B981"
+  active: true
+  position: 0
