@@ -1,6 +1,8 @@
 require "test_helper"
 
 class DeviationCheckJobTest < ActiveJob::TestCase
+  include ActionCable::TestHelper
+
   test "does not create alert when point is on path" do
     vehicle = tracked_vehicles(:courier_bike)
     point = vehicle.tracking_points.create!(
