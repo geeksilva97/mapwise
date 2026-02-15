@@ -36,4 +36,10 @@ class CsvImportJobTest < ActiveSupport::TestCase
     assert_equal "failed", import.status
     assert import.error_log.present?
   end
+
+  test "handles missing import gracefully" do
+    assert_nothing_raised do
+      CsvImportJob.perform_now(-1)
+    end
+  end
 end

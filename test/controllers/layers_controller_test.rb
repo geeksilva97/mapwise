@@ -114,6 +114,39 @@ class LayersControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "create with invalid params via json" do
+    assert_no_difference("Layer.count") do
+      post map_layers_path(@map), params: {
+        layer: { name: "", layer_type: "polygon", geometry_data: '{"type":"Feature"}' }
+      }, as: :json
+    end
+
+    assert_response :unprocessable_entity
+  end
+
+  test "update with invalid params via turbo_stream" do
+    patch map_layer_path(@map, @layer), params: {
+      layer: { name: "" }
+    }, as: :turbo_stream
+
+    assert_response :unprocessable_entity
+  end
+
+  test "update with invalid params via json" do
+    patch map_layer_path(@map, @layer), params: {
+      layer: { name: "" }
+    }, as: :json
+
+    assert_response :unprocessable_entity
+  end
+
+  test "toggle_visibility via json returns layer data" do
+    patch toggle_visibility_map_layer_path(@map, @layer), as: :json
+    assert_response :success
+    data = JSON.parse(response.body)
+    assert_equal false, data["visible"]
+  end
+
   test "requires authentication" do
     sign_out
     post map_layers_path(@map), params: {

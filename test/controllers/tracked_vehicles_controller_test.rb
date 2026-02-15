@@ -169,6 +169,80 @@ class TrackedVehiclesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  # TURBO STREAM responses
+  test "should create vehicle via turbo_stream" do
+    assert_difference "TrackedVehicle.count", 1 do
+      post map_tracked_vehicles_path(@map),
+        params: { tracked_vehicle: { name: "Stream Vehicle", color: "#10B981" } },
+        as: :turbo_stream
+    end
+    assert_response :success
+  end
+
+  test "should create invalid vehicle via turbo_stream re-renders form" do
+    assert_no_difference "TrackedVehicle.count" do
+      post map_tracked_vehicles_path(@map),
+        params: { tracked_vehicle: { name: "" } },
+        as: :turbo_stream
+    end
+    assert_response :success
+  end
+
+  test "should update vehicle via turbo_stream" do
+    patch map_tracked_vehicle_path(@map, @vehicle),
+      params: { tracked_vehicle: { name: "TS Updated" } },
+      as: :turbo_stream
+    assert_response :success
+    assert_equal "TS Updated", @vehicle.reload.name
+  end
+
+  test "should update invalid vehicle via turbo_stream re-renders form" do
+    patch map_tracked_vehicle_path(@map, @vehicle),
+      params: { tracked_vehicle: { name: "" } },
+      as: :turbo_stream
+    assert_response :success
+  end
+
+  test "should destroy vehicle via turbo_stream" do
+    assert_difference "TrackedVehicle.count", -1 do
+      delete map_tracked_vehicle_path(@map, @vehicle), as: :turbo_stream
+    end
+    assert_response :success
+  end
+
+  test "should toggle active via turbo_stream" do
+    patch toggle_active_map_tracked_vehicle_path(@map, @vehicle), as: :turbo_stream
+    assert_response :success
+    assert_not @vehicle.reload.active?
+  end
+
+  test "should clear points via turbo_stream" do
+    delete clear_points_map_tracked_vehicle_path(@map, @vehicle), as: :turbo_stream
+    assert_response :success
+    assert_equal 0, @vehicle.tracking_points.count
+  end
+
+  test "should save planned path via turbo_stream" do
+    geojson = '{"type":"Feature","geometry":{"type":"LineString","coordinates":[[-74,40.7],[-73.9,40.8]]}}'
+    patch save_planned_path_map_tracked_vehicle_path(@map, @vehicle),
+      params: { planned_path: geojson },
+      as: :turbo_stream
+    assert_response :success
+    assert_equal geojson, @vehicle.reload.planned_path
+  end
+
+  test "should edit vehicle via turbo_stream" do
+    get edit_map_tracked_vehicle_path(@map, @vehicle), as: :turbo_stream
+    assert_response :success
+  end
+
+  test "should edit vehicle via json" do
+    get edit_map_tracked_vehicle_path(@map, @vehicle), as: :json
+    assert_response :success
+    data = JSON.parse(response.body)
+    assert_equal @vehicle.name, data["name"]
+  end
+
   # AUTH
   test "should require authentication" do
     sign_out

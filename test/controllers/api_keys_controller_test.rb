@@ -78,4 +78,21 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :not_found
   end
+
+  test "update with invalid params re-renders form" do
+    api_key = api_keys(:one)
+    patch api_key_path(api_key), params: {
+      api_key: { google_maps_key: "" }
+    }
+    assert_response :unprocessable_entity
+  end
+
+  test "update label only" do
+    api_key = api_keys(:one)
+    patch api_key_path(api_key), params: {
+      api_key: { label: "Renamed Key" }
+    }
+    assert_redirected_to api_keys_path
+    assert_equal "Renamed Key", api_key.reload.label
+  end
 end

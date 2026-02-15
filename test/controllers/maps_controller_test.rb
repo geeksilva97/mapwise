@@ -305,4 +305,38 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "button", text: "Tracking"
   end
+
+  # Update failures
+
+  test "update with invalid params via turbo_stream re-renders form" do
+    patch map_path(@map),
+          params: { map: { title: "" } },
+          as: :turbo_stream
+
+    assert_response :success
+    assert_equal @map.reload.title, maps(:one).title
+  end
+
+  test "update with invalid params via json returns errors" do
+    patch map_path(@map),
+          params: { map: { title: "" } },
+          as: :json
+
+    assert_response :unprocessable_entity
+  end
+
+  test "update with invalid params via html re-renders edit" do
+    patch map_path(@map),
+          params: { map: { title: "" } }
+
+    assert_response :unprocessable_entity
+  end
+
+  test "destroy requires ownership" do
+    other_map = maps(:two)
+    assert_no_difference("Map.count") do
+      delete map_path(other_map)
+    end
+    assert_response :not_found
+  end
 end

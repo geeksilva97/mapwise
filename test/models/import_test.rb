@@ -59,4 +59,13 @@ class ImportTest < ActiveSupport::TestCase
     import = Import.new
     assert_equal "pending", import.status
   end
+
+  test "progress_percentage rounds correctly" do
+    import = Import.new(total_rows: 3, processed_rows: 1)
+    assert_equal 33, import.progress_percentage
+  end
+
+  test "processing? returns false for completed" do
+    assert_not imports(:completed_import).processing?
+  end
 end

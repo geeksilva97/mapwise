@@ -175,4 +175,34 @@ class MarkersControllerTest < ActionDispatch::IntegrationTest
     marker = Marker.last
     assert_equal group.id, marker.marker_group_id
   end
+
+  test "create with invalid params via json returns errors" do
+    post map_markers_path(@map),
+         params: { marker: { lat: 999, lng: -74.0 } },
+         as: :json
+
+    assert_response :unprocessable_entity
+  end
+
+  test "update with invalid params via turbo_stream re-renders form" do
+    patch map_marker_path(@map, @marker),
+          params: { marker: { lat: 999 } },
+          as: :turbo_stream
+
+    assert_response :success
+  end
+
+  test "update with invalid params via json returns errors" do
+    patch map_marker_path(@map, @marker),
+          params: { marker: { lat: 999 } },
+          as: :json
+
+    assert_response :unprocessable_entity
+  end
+
+  test "destroy via json returns no_content" do
+    marker = @map.markers.create!(lat: 40.0, lng: -74.0, title: "Temp")
+    delete map_marker_path(@map, marker), as: :json
+    assert_response :no_content
+  end
 end

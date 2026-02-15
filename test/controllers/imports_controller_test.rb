@@ -55,6 +55,67 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Latitude", import.column_mapping["lat"]
   end
 
+  test "create without file via turbo_stream returns error" do
+    post map_imports_path(@map), as: :turbo_stream
+    assert_response :success
+  end
+
+  test "create without file via html redirects with alert" do
+    post map_imports_path(@map)
+    assert_redirected_to edit_map_path(@map)
+  end
+
+  test "create with CSV file via turbo_stream returns column mapping" do
+    csv_content = "lat,lng,title\n40.7,-74.0,NYC\n34.0,-118.2,LA"
+    file = create_tempfile("markers.csv", csv_content)
+
+    assert_difference("Import.count") do
+      post map_imports_path(@map),
+           params: { file: Rack::Test::UploadedFile.new(file.path, "text/csv", false, original_filename: "markers.csv") },
+           as: :turbo_stream
+    end
+
+    assert_response :success
+  end
+
+  test "create with CSV file returns import with headers" do
+    csv_content = "lat,lng,title\n40.7,-74.0,NYC"
+    file = create_tempfile("markers.csv", csv_content)
+
+    assert_difference("Import.count") do
+      post map_imports_path(@map),
+           params: { file: Rack::Test::UploadedFile.new(file.path, "text/csv", false, original_filename: "markers.csv") },
+           as: :turbo_stream
+    end
+
+    assert_response :success
+  end
+
+  test "show completed import via turbo_stream" do
+    import = imports(:completed_import)
+    get map_import_path(@map, import), as: :turbo_stream
+    assert_response :success
+  end
+
+  test "show pending import via turbo_stream" do
+    import = imports(:pending_import)
+    import.update!(status: "processing")
+    get map_import_path(@map, import), as: :turbo_stream
+    assert_response :success
+  end
+
+  test "update via turbo_stream renders progress" do
+    import = @map.imports.create!(file_name: "test.csv", status: "mapping")
+
+    patch map_import_path(@map, import),
+          params: { column_mapping: { lat: "Latitude", lng: "Longitude" } },
+          as: :turbo_stream
+
+    assert_response :success
+    import.reload
+    assert_equal "processing", import.status
+  end
+
   test "user cannot access imports on other user's maps" do
     other_map = maps(:two)
     post map_imports_path(other_map), as: :json

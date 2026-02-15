@@ -34,6 +34,13 @@ class DeviationAlertsControllerTest < ActionDispatch::IntegrationTest
     assert acknowledged.reload.acknowledged?
   end
 
+  test "should acknowledge alert via turbo_stream" do
+    alert = deviation_alerts(:bike_deviation)
+    patch acknowledge_map_deviation_alert_path(@map, alert), as: :turbo_stream
+    assert_response :success
+    assert alert.reload.acknowledged?
+  end
+
   test "should require authentication" do
     sign_out
     patch acknowledge_map_deviation_alert_path(@map, @alert), as: :json

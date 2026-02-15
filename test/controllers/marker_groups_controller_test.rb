@@ -154,6 +154,48 @@ class MarkerGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
+  test "create with missing name via turbo_stream re-renders form" do
+    assert_no_difference("MarkerGroup.count") do
+      post map_marker_groups_path(@map),
+           params: { marker_group: { color: "#FF0000" } },
+           as: :turbo_stream
+    end
+
+    assert_response :success
+  end
+
+  test "update with invalid params via turbo_stream re-renders form" do
+    patch map_marker_group_path(@map, @group),
+          params: { marker_group: { name: "" } },
+          as: :turbo_stream
+
+    assert_response :success
+  end
+
+  test "update with invalid params via json returns errors" do
+    patch map_marker_group_path(@map, @group),
+          params: { marker_group: { name: "" } },
+          as: :json
+
+    assert_response :unprocessable_entity
+  end
+
+  test "update via turbo_stream" do
+    patch map_marker_group_path(@map, @group),
+          params: { marker_group: { name: "Updated TS" } },
+          as: :turbo_stream
+
+    assert_response :success
+    assert_equal "Updated TS", @group.reload.name
+  end
+
+  test "toggle_visibility via turbo_stream" do
+    assert @group.visible?
+    patch toggle_visibility_map_marker_group_path(@map, @group), as: :turbo_stream
+    assert_response :success
+    assert_not @group.reload.visible?
+  end
+
   test "create requires authentication" do
     sign_out
     post map_marker_groups_path(@map),
