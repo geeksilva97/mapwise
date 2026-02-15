@@ -54,11 +54,31 @@ export default class extends Controller {
       .catch(err => this.#showError("Failed to create marker.", err))
   }
 
-  // Called when a delete button is clicked on a marker item
+  // Show inline delete confirmation for a marker
   deleteMarker(event) {
     event.preventDefault()
     const markerId = event.params.id
-    if (!confirm("Remove this marker?")) return
+    const item = document.getElementById(`marker_${markerId}`)
+    if (!item) return
+
+    item.querySelector('[data-role="content"]').classList.add("hidden")
+    item.querySelector('[data-role="confirm"]').classList.remove("hidden")
+  }
+
+  // Cancel inline delete confirmation
+  cancelDelete(event) {
+    event.preventDefault()
+    const item = event.target.closest('[id^="marker_"]')
+    if (!item) return
+
+    item.querySelector('[data-role="content"]').classList.remove("hidden")
+    item.querySelector('[data-role="confirm"]').classList.add("hidden")
+  }
+
+  // Confirm and execute marker deletion
+  confirmDeleteMarker(event) {
+    event.preventDefault()
+    const markerId = event.params.id
 
     fetch(`/maps/${this.mapIdValue}/markers/${markerId}`, {
       method: "DELETE",
@@ -177,7 +197,11 @@ export default class extends Controller {
 
     const item = document.createElement("div")
     item.id = `marker_${marker.id}`
-    item.className = "flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50 group"
+
+    // Content row
+    const content = document.createElement("div")
+    content.dataset.role = "content"
+    content.className = "flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50 group"
 
     const left = document.createElement("div")
     left.className = "flex items-center gap-2 min-w-0"
@@ -212,8 +236,39 @@ export default class extends Controller {
     right.appendChild(editLink)
     right.appendChild(deleteLink)
 
-    item.appendChild(left)
-    item.appendChild(right)
+    content.appendChild(left)
+    content.appendChild(right)
+
+    // Confirm bar
+    const confirm = document.createElement("div")
+    confirm.dataset.role = "confirm"
+    confirm.className = "hidden flex items-center justify-between px-3 py-2 bg-red-50 rounded-md"
+
+    const confirmText = document.createElement("span")
+    confirmText.className = "text-sm text-red-700 font-medium"
+    confirmText.textContent = "Delete marker?"
+
+    const confirmButtons = document.createElement("div")
+    confirmButtons.className = "flex gap-2"
+
+    const cancelBtn = document.createElement("button")
+    cancelBtn.dataset.action = "click->marker-editor#cancelDelete"
+    cancelBtn.className = "text-xs font-medium text-gray-600 hover:text-gray-800 cursor-pointer"
+    cancelBtn.textContent = "Cancel"
+
+    const deleteBtn = document.createElement("button")
+    deleteBtn.dataset.action = "click->marker-editor#confirmDeleteMarker"
+    deleteBtn.dataset.markerEditorIdParam = marker.id
+    deleteBtn.className = "text-xs font-medium text-white bg-red-600 hover:bg-red-500 rounded-md px-2.5 py-1 cursor-pointer"
+    deleteBtn.textContent = "Delete"
+
+    confirmButtons.appendChild(cancelBtn)
+    confirmButtons.appendChild(deleteBtn)
+    confirm.appendChild(confirmText)
+    confirm.appendChild(confirmButtons)
+
+    item.appendChild(content)
+    item.appendChild(confirm)
     list.appendChild(item)
   }
 

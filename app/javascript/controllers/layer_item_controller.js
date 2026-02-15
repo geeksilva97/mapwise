@@ -10,6 +10,34 @@ export default class extends Controller {
     this.displayTarget.classList.toggle("hidden")
   }
 
+  deleteLayer(event) {
+    event.preventDefault()
+    const contentEl = this.displayTarget.querySelector('[data-role="content"]')
+    const confirmEl = this.displayTarget.querySelector('[data-role="confirm"]')
+    if (contentEl && confirmEl) {
+      contentEl.classList.add("hidden")
+      confirmEl.classList.remove("hidden")
+    }
+  }
+
+  cancelDelete(event) {
+    event.preventDefault()
+    const contentEl = this.displayTarget.querySelector('[data-role="content"]')
+    const confirmEl = this.displayTarget.querySelector('[data-role="confirm"]')
+    if (contentEl && confirmEl) {
+      contentEl.classList.remove("hidden")
+      confirmEl.classList.add("hidden")
+    }
+  }
+
+  confirmDeleteLayer(event) {
+    event.preventDefault()
+    const drawingEl = document.querySelector("[data-controller='drawing']")
+    if (!drawingEl) return
+    const drawingCtrl = this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
+    if (drawingCtrl) drawingCtrl.deleteLayerById(this.layerIdValue)
+  }
+
   save(event) {
     event.preventDefault()
 

@@ -6,6 +6,10 @@ export default class extends Controller {
   static targets = ["content", "chevron"]
 
   toggleCollapse() {
+    // Don't collapse while delete confirmation is showing
+    const confirmEl = this.element.querySelector('[data-role="confirm"]')
+    if (confirmEl && !confirmEl.classList.contains("hidden")) return
+
     if (!this.hasContentTarget) return
     this.contentTarget.classList.toggle("hidden")
     if (this.hasChevronTarget) {
@@ -77,7 +81,28 @@ export default class extends Controller {
   deleteGroup(event) {
     event.preventDefault()
     if (!this.idValue || !this.mapIdValue) return
-    if (!confirm("Delete this group? Markers will become ungrouped.")) return
+
+    const contentEl = this.element.querySelector('[data-role="content"]')
+    const confirmEl = this.element.querySelector('[data-role="confirm"]')
+    if (contentEl && confirmEl) {
+      contentEl.classList.add("hidden")
+      confirmEl.classList.remove("hidden")
+    }
+  }
+
+  cancelDelete(event) {
+    event.preventDefault()
+    const contentEl = this.element.querySelector('[data-role="content"]')
+    const confirmEl = this.element.querySelector('[data-role="confirm"]')
+    if (contentEl && confirmEl) {
+      contentEl.classList.remove("hidden")
+      confirmEl.classList.add("hidden")
+    }
+  }
+
+  confirmDeleteGroup(event) {
+    event.preventDefault()
+    if (!this.idValue || !this.mapIdValue) return
 
     fetch(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}`, {
       method: "DELETE",

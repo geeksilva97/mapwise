@@ -233,22 +233,25 @@ Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId
 
 ---
 
-## Phase 2 — Data & Customization (Outline)
+## Phase 2 — Data & Customization (DONE)
 
-1. **CSV/Excel import** — `roo` gem for .xlsx; upload → column mapping UI → `CsvImportJob` (Solid Queue) → `GeocodeJob` for address-only rows
-2. **Marker clustering** — pin `@googlemaps/markerclusterer` via importmap; toggle in map settings
-3. **Marker grouping** — `MarkerGroup` model; collapsible sidebar sections; group visibility toggle
-4. **Info window customization** — `custom_info_html` on markers; sanitized HTML editor; render via `google.maps.InfoWindow`
-5. **Geometric shapes/layers** — Terra Draw integration; `Layer` model with JSON geometry; `drawing_controller.js`
+1. **CSV/Excel import** — `roo` gem for .xlsx; upload → column mapping UI → `ImportService`; random group colors with palette; import section in Markers tab
+2. **Marker clustering** — `@googlemaps/markerclusterer` via importmap; toggle in map settings; works with both Advanced and legacy markers
+3. **Marker grouping** — `MarkerGroup` model; collapsible sidebar sections; group visibility toggle; circle selection for bulk assignment; ungroup action
+4. **Info window customization** — `custom_info_html` on markers; render via `google.maps.InfoWindow` in readonly mode
+5. **Geometric shapes/layers** — Terra Draw integration (`drawing_controller.js`); `Layer` model with JSON geometry; inline collapsible editing (name + stroke/fill colors via `layer_item_controller.js`); layers render on preview/embed via Google Maps Data layer (readonly skips Terra Draw)
+6. **Multi-marker placement** — persistent placement mode; every click adds a marker until Cancel
 
-**New routes**: `resources :marker_groups`, `resources :layers` (nested under maps)
+**Routes**: `resources :marker_groups` (with `assign` + circle selection), `resources :layers`, `resources :imports` (nested under maps); `ungroup` member route on markers
+
+**Tests**: 244 tests, 655 assertions
 
 ---
 
 ## Phase 3 — Polish (Outline)
 
-1. **Custom JSON style editor** — textarea for Snazzy Maps JSON; validate + save as user style
-2. **Street View** — `street_view_controller.js`; split-view panorama; toggle per map
+1. **(DEFER)Custom JSON style editor** — textarea for Snazzy Maps JSON; validate + save as user style
+2. **(DEFER)Street View** — `street_view_controller.js`; split-view panorama; toggle per map
 3. **Address autocomplete** — `autocomplete_controller.js`; `google.maps.places.Autocomplete` in marker creation flow
 
 ---
