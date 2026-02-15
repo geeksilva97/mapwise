@@ -79,4 +79,53 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
         params: { lat: 40.7128, lng: -74.0060 }
     end
   end
+
+  test "should return 422 for missing lat" do
+    post webhook_tracking_path(@vehicle.webhook_token),
+      params: { lng: -74.0060 }
+    assert_response :unprocessable_entity
+  end
+
+  test "should return 422 for missing lng" do
+    post webhook_tracking_path(@vehicle.webhook_token),
+      params: { lat: 40.7128 }
+    assert_response :unprocessable_entity
+  end
+
+  test "should return 422 for invalid speed" do
+    post webhook_tracking_path(@vehicle.webhook_token),
+      params: { lat: 40.7128, lng: -74.0060, speed: -5 }
+    assert_response :unprocessable_entity
+  end
+
+  test "should return 422 for invalid heading" do
+    post webhook_tracking_path(@vehicle.webhook_token),
+      params: { lat: 40.7128, lng: -74.0060, heading: 999 }
+    assert_response :unprocessable_entity
+  end
+
+  test "error response includes error messages" do
+    post webhook_tracking_path(@vehicle.webhook_token),
+      params: { lat: 999, lng: -74.0060 }
+    assert_response :unprocessable_entity
+    data = JSON.parse(response.body)
+    assert data["errors"].present?
+  end
+
+  test "404 response includes error message" do
+    post webhook_tracking_path("nonexistent"),
+      params: { lat: 40.7128, lng: -74.0060 }
+    assert_response :not_found
+    data = JSON.parse(response.body)
+    assert_equal "Vehicle not found", data["error"]
+  end
+
+  test "410 response includes error message" do
+    vehicle = tracked_vehicles(:inactive_van)
+    post webhook_tracking_path(vehicle.webhook_token),
+      params: { lat: 40.7128, lng: -74.0060 }
+    assert_response :gone
+    data = JSON.parse(response.body)
+    assert_equal "Vehicle is inactive", data["error"]
+  end
 end

@@ -7,7 +7,7 @@ export default class extends Controller {
     vehicleId: Number,
     hasPlannedPath: { type: Boolean, default: false }
   }
-  static targets = ["details", "chevron", "confirmDelete", "webhookUrl"]
+  static targets = ["details", "chevron", "confirmDelete", "webhookUrl", "thresholdInput"]
 
   toggleDetails() {
     this.detailsTarget.classList.toggle("hidden")
@@ -54,6 +54,30 @@ export default class extends Controller {
     }).then(html => {
       document.documentElement.insertAdjacentHTML("beforeend", html)
     }).catch(err => console.error("Failed to clear points:", err))
+  }
+
+  saveThreshold() {
+    const value = this.thresholdInputTarget.value
+    const threshold = value === "" ? null : parseFloat(value)
+
+    fetch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken(),
+        "Accept": "text/vnd.turbo-stream.html"
+      },
+      body: JSON.stringify({ tracked_vehicle: { deviation_threshold_meters: threshold } })
+    }).then(resp => {
+      if (!resp.ok) throw new Error("Failed to save threshold")
+      return resp.text()
+    }).then(html => {
+      document.documentElement.insertAdjacentHTML("beforeend", html)
+    }).catch(err => console.error("Failed to save threshold:", err))
+  }
+
+  clearPlannedPath() {
+    this.#savePlannedPath(null)
   }
 
   drawPlannedPath() {

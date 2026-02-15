@@ -39,17 +39,81 @@
         </div>
       </div>
 
-      <%# Info %>
+      <%# Vehicle info %>
       <div class="text-xs text-gray-500 space-y-1">
-        <p>Color: <span class="inline-block w-3 h-3 rounded align-middle" style="background-color: <%= vehicle.color %>"></span> <%= vehicle.color %></p>
-        <% if vehicle.deviation_threshold_meters %>
-          <p>Deviation threshold: <%= vehicle.deviation_threshold_meters %>m</p>
-        <% end %>
-        <p>Planned path: <%= vehicle.planned_path.present? ? "Set" : "Not set" %></p>
         <% if (last = vehicle.last_tracking_point) %>
           <p>Last seen: <%= time_ago_in_words(last.recorded_at) %> ago (<%= last.lat.round(4) %>, <%= last.lng.round(4) %>)</p>
         <% end %>
         <p>Points: <%= vehicle.tracking_points.count %></p>
+      </div>
+
+      <%# Deviation alerts config %>
+      <div class="rounded-lg border border-gray-200 bg-white p-2.5 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-medium text-gray-700">Deviation Alerts</p>
+          <% if vehicle.deviation_detection_enabled? %>
+            <span class="inline-flex items-center gap-1 rounded-full bg-green-50 border border-green-200 px-2 py-0.5 text-xs font-medium text-green-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+              Active
+            </span>
+          <% else %>
+            <span class="inline-flex items-center gap-1 rounded-full bg-gray-50 border border-gray-200 px-2 py-0.5 text-xs font-medium text-gray-500">
+              Off
+            </span>
+          <% end %>
+        </div>
+
+        <%# Threshold input %>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Threshold (meters)</label>
+          <div class="flex gap-1">
+            <input type="number"
+                   data-vehicle-item-target="thresholdInput"
+                   value="<%= vehicle.deviation_threshold_meters %>"
+                   placeholder="e.g. 100"
+                   min="1" step="1"
+                   class="block w-full rounded-md border-gray-300 bg-gray-50 text-xs focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+            <button type="button" data-action="click->vehicle-item#saveThreshold"
+                    class="shrink-0 rounded-md px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium cursor-pointer">
+              Save
+            </button>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Alert when vehicle strays further than this from the planned path.</p>
+        </div>
+
+        <%# Planned path status + actions %>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Planned path</label>
+          <% if vehicle.planned_path.present? %>
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs text-green-600 font-medium">Path set</span>
+              <span class="text-gray-300">&middot;</span>
+              <button type="button" data-action="click->vehicle-item#drawPlannedPath"
+                      class="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer">Redraw</button>
+              <span class="text-gray-300">&middot;</span>
+              <button type="button" data-action="click->vehicle-item#clearPlannedPath"
+                      class="text-xs text-red-500 hover:text-red-700 font-medium cursor-pointer">Remove</button>
+            </div>
+          <% else %>
+            <button type="button" data-action="click->vehicle-item#drawPlannedPath"
+                    class="inline-flex items-center gap-1 rounded-md px-2 py-1 border border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-xs font-medium text-gray-600 hover:text-blue-600 cursor-pointer transition-colors">
+              <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75l16.5 16.5" />
+              </svg>
+              Draw planned path
+            </button>
+            <p class="text-xs text-gray-400 mt-1">Draw the expected route on the map.</p>
+          <% end %>
+        </div>
+
+        <% if vehicle.deviation_detection_enabled? %>
+          <% unacked = vehicle.deviation_alerts.unacknowledged.count %>
+          <% if unacked > 0 %>
+            <div class="rounded-md bg-amber-50 border border-amber-200 px-2 py-1.5">
+              <p class="text-xs font-medium text-amber-700"><%= unacked %> unacknowledged alert<%= unacked > 1 ? 's' : '' %></p>
+            </div>
+          <% end %>
+        <% end %>
       </div>
 
       <%# Actions %>
@@ -57,10 +121,6 @@
         <button type="button" data-action="click->vehicle-item#toggleActive"
                 class="rounded-md px-2 py-1 border border-gray-300 hover:bg-gray-50 text-xs font-medium cursor-pointer">
           <%= vehicle.active? ? "Deactivate" : "Activate" %>
-        </button>
-        <button type="button" data-action="click->vehicle-item#drawPlannedPath"
-                class="rounded-md px-2 py-1 border border-gray-300 hover:bg-gray-50 text-xs font-medium cursor-pointer">
-          Draw Path
         </button>
         <% if vehicle.tracking_points.any? %>
           <button type="button" data-action="click->vehicle-item#clearPoints"

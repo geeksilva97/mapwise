@@ -44,4 +44,19 @@ class DeviationAlertTest < ActiveSupport::TestCase
     @alert.acknowledge!
     assert @alert.reload.acknowledged?
   end
+
+  test "acknowledge! is idempotent" do
+    alert = deviation_alerts(:old_alert)
+    assert alert.acknowledged?
+    assert_nothing_raised { alert.acknowledge! }
+    assert alert.reload.acknowledged?
+  end
+
+  test "deleting tracking point nullifies alert reference" do
+    alert = deviation_alerts(:bike_deviation)
+    assert_not_nil alert.tracking_point
+    alert.tracking_point.destroy!
+    assert_nil alert.reload.tracking_point_id
+    assert alert.valid?
+  end
 end

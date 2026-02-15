@@ -109,6 +109,66 @@ class TrackedVehiclesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, data.length
   end
 
+  # SAVE PLANNED PATH - clear
+  test "should clear planned path with null" do
+    vehicle = tracked_vehicles(:courier_bike)
+    assert vehicle.planned_path.present?
+    patch save_planned_path_map_tracked_vehicle_path(@map, vehicle),
+      params: { planned_path: nil },
+      as: :json
+    assert_response :success
+    assert_nil vehicle.reload.planned_path
+  end
+
+  # POINTS - empty
+  test "should return empty array when no points" do
+    vehicle = tracked_vehicles(:inactive_van)
+    get points_map_tracked_vehicle_path(@map, vehicle), as: :json
+    assert_response :success
+    data = JSON.parse(response.body)
+    assert_equal [], data
+  end
+
+  # CLEAR POINTS - empty vehicle
+  test "should handle clear points on vehicle with no points" do
+    vehicle = tracked_vehicles(:inactive_van)
+    delete clear_points_map_tracked_vehicle_path(@map, vehicle), as: :json
+    assert_response :no_content
+  end
+
+  # CROSS-USER SECURITY
+  test "should not update vehicle on other user map" do
+    other_vehicle = tracked_vehicles(:other_vehicle)
+    other_map = maps(:two)
+    patch map_tracked_vehicle_path(other_map, other_vehicle),
+      params: { tracked_vehicle: { name: "Hacked" } },
+      as: :json
+    assert_response :not_found
+  end
+
+  test "should not destroy vehicle on other user map" do
+    other_vehicle = tracked_vehicles(:other_vehicle)
+    other_map = maps(:two)
+    assert_no_difference "TrackedVehicle.count" do
+      delete map_tracked_vehicle_path(other_map, other_vehicle), as: :json
+    end
+    assert_response :not_found
+  end
+
+  test "should not toggle active on other user vehicle" do
+    other_vehicle = tracked_vehicles(:other_vehicle)
+    other_map = maps(:two)
+    patch toggle_active_map_tracked_vehicle_path(other_map, other_vehicle), as: :json
+    assert_response :not_found
+  end
+
+  test "should not access points on other user vehicle" do
+    other_vehicle = tracked_vehicles(:other_vehicle)
+    other_map = maps(:two)
+    get points_map_tracked_vehicle_path(other_map, other_vehicle), as: :json
+    assert_response :not_found
+  end
+
   # AUTH
   test "should require authentication" do
     sign_out

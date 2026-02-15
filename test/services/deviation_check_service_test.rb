@@ -83,4 +83,53 @@ class DeviationCheckServiceTest < ActiveSupport::TestCase
     dist = DeviationCheckService.cross_track_distance(0.5, 0.5, seg_start, seg_end)
     assert_in_delta 55_600, dist, 500
   end
+
+  test "check handles invalid JSON in planned_path" do
+    @vehicle.update_column(:planned_path, "not json at all")
+    point = @vehicle.tracking_points.create!(
+      lat: 50.0, lng: 0.0, recorded_at: Time.current
+    )
+    result = DeviationCheckService.check(point)
+    assert_nil result
+  end
+
+  test "check handles path with null geometry" do
+    @vehicle.update_column(:planned_path, '{"type":"Feature","geometry":null}')
+    point = @vehicle.tracking_points.create!(
+      lat: 50.0, lng: 0.0, recorded_at: Time.current
+    )
+    result = DeviationCheckService.check(point)
+    assert_nil result
+  end
+
+  test "minimum_distance_to_path handles duplicate consecutive points" do
+    path = [[-74.006, 40.7128], [-74.006, 40.7128], [-73.98, 40.73]]
+    dist = DeviationCheckService.minimum_distance_to_path(40.7128, -74.006, path)
+    assert_in_delta 0, dist, 1.0
+  end
+
+  test "minimum_distance_to_path for point at mid-segment endpoint" do
+    path = [[-74.006, 40.7128], [-73.99, 40.72], [-73.98, 40.73]]
+    # Point exactly at second coordinate
+    dist = DeviationCheckService.minimum_distance_to_path(40.72, -73.99, path)
+    assert_in_delta 0, dist, 1.0
+  end
+
+  test "check handles bare LineString type (not wrapped in Feature)" do
+    @vehicle.update!(planned_path: '{"type":"LineString","coordinates":[[-74.006,40.7128],[-73.99,40.72],[-73.98,40.73]]}')
+    point = @vehicle.tracking_points.create!(
+      lat: 40.7128, lng: -74.006, recorded_at: Time.current
+    )
+    result = DeviationCheckService.check(point)
+    assert_nil result
+  end
+
+  test "alert message includes distance and units" do
+    point = @vehicle.tracking_points.create!(
+      lat: 40.80, lng: -73.90, recorded_at: Time.current
+    )
+    alert = DeviationCheckService.check(point)
+    assert_match(/\d+\.\d+m/, alert.message)
+    assert_match(/deviated/, alert.message.downcase)
+  end
 end
