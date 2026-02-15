@@ -4,7 +4,14 @@ export default class extends Controller {
   static targets = ["tab", "panel"]
 
   connect() {
-    this.showTab(0)
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get("tab")
+    if (tab) {
+      const index = this.tabTargets.findIndex(t => t.textContent.trim().toLowerCase() === tab.toLowerCase())
+      this.showTab(index >= 0 ? index : 0)
+    } else {
+      this.showTab(0)
+    }
   }
 
   select(event) {

@@ -1,0 +1,17 @@
+user_message:
+  map: one
+  role: user
+  content: Add 3 restaurants in Manhattan
+  created_at: <%= 2.minutes.ago %>
+
+assistant_message:
+  map: one
+  role: assistant
+  content: I've added 3 restaurant markers in Manhattan for you.
+  created_at: <%= 1.minute.ago %>
+
+other_map_message:
+  map: two
+  role: user
+  content: Add a marker in London
+  created_at: <%= 1.minute.ago %>

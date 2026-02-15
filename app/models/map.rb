@@ -5,6 +5,7 @@ class Map < ApplicationRecord
   has_many :imports, dependent: :destroy
   has_many :layers, dependent: :destroy
   has_many :tracked_vehicles, dependent: :destroy
+  has_many :chat_messages, dependent: :destroy
 
   attribute :center_lat, :float, default: 39.8283
   attribute :center_lng, :float, default: -98.5795

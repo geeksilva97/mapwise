@@ -23,7 +23,13 @@ bin/rails db:seed
 # Set your Google Maps platform API key
 EDITOR="vim" bin/rails credentials:edit
 # Add: google_maps_api_key: YOUR_KEY_HERE
+
+# Set your Anthropic API key (required for AI chat)
+EDITOR="vim" bin/rails credentials:edit
+# Add: anthropic_api_key: YOUR_KEY_HERE
 ```
+
+Get an Anthropic API key at https://console.anthropic.com/settings/keys. The AI chat feature uses Claude Sonnet to interpret natural language requests and modify maps via tool use.
 
 ## Running
 
@@ -65,8 +71,24 @@ Public maps can be embedded with:
 
 The editor is a full-screen split view with a sidebar and map canvas:
 
-- **Markers tab**: Add, edit, drag, and delete markers on the map.
-- **Settings tab**: Edit title, description, starting position (lat/lng/zoom), and map style. Use the "Use current view" button to capture the map's current position. Settings save inline via Turbo Stream. Style changes apply immediately.
+- **Markers tab**: Add, edit, drag, and delete markers on the map. Import from CSV/Excel. Organize with groups and layers.
+- **Settings tab**: Edit title, description, starting position (lat/lng/zoom), and map style. Settings save inline via Turbo Stream. Style changes apply immediately.
+- **Tracking tab**: Manage tracked vehicles with webhooks, planned paths, and deviation alerts.
+- **AI tab**: Chat with an AI assistant to create and modify your map using natural language. Powered by Claude (Anthropic).
+
+### AI Chat
+
+The AI tab lets you describe map changes in plain English. Examples:
+
+- "Add 5 coffee shops in downtown Manhattan"
+- "Change the style to Night"
+- "Create a group called Hotels and add 3 hotels near Times Square"
+- "Delete the first marker"
+- "What markers are on this map?"
+
+The AI assistant uses Claude Sonnet with tool use to execute map operations (create/update/delete markers, apply styles, create groups, etc.). Changes appear on the map in real-time via Action Cable.
+
+**Setup**: Add your Anthropic API key to credentials (see Setup section above). Without the key, the AI tab will not function.
 
 ## UI & Layouts
 
@@ -84,4 +106,5 @@ Auth pages (sign in, sign up) hide the navbar for a clean, centered card design.
 - Tailwind CSS
 - SQLite with Solid Queue, Solid Cache, Solid Cable
 - Google Maps JavaScript API (dual-mode: AdvancedMarkerElement with cloud Map ID, or legacy Marker with JSON styles)
+- Anthropic Claude API (AI chat with tool use)
 - Importmap (no bundler), Propshaft

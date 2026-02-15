@@ -27,6 +27,9 @@ Rails.application.routes.draw do
     resources :deviation_alerts, only: [] do
       member { patch :acknowledge }
     end
+    resources :chat_messages, only: [:create] do
+      collection { delete :clear }
+    end
     member { get :tracking }
   end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_14_230200) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_15_172855) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -46,6 +46,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_14_230200) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_api_keys_on_user_id"
+  end
+
+  create_table "chat_messages", force: :cascade do |t|
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.integer "map_id", null: false
+    t.string "role", null: false
+    t.json "tool_calls"
+    t.datetime "updated_at", null: false
+    t.index ["map_id", "created_at"], name: "index_chat_messages_on_map_id_and_created_at"
+    t.index ["map_id"], name: "index_chat_messages_on_map_id"
   end
 
   create_table "deviation_alerts", force: :cascade do |t|
@@ -210,6 +221,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_14_230200) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "api_keys", "users"
+  add_foreign_key "chat_messages", "maps"
   add_foreign_key "deviation_alerts", "tracked_vehicles"
   add_foreign_key "deviation_alerts", "tracking_points"
   add_foreign_key "imports", "maps"

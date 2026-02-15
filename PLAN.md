@@ -267,33 +267,32 @@ Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId
 
 ---
 
-## Phase 5 — Create with AI (Outline)
+## Phase 5 — Create with AI (DONE)
 
-**Problem**: Creating complex maps manually is tedious — users must add markers one by one, configure settings, apply styles. Power users want a faster way.
+A chat tab in the editor sidebar where users describe what they want in natural language. Claude interprets the request and executes map operations via tool use. Results appear on the map in real-time via Action Cable broadcasts.
 
-**Solution**: A chat tab in the editor sidebar where users describe what they want in natural language. Claude interprets the request and executes map operations via tool use.
+### Setup
+
+Add your Anthropic API key to Rails credentials:
+
+```bash
+EDITOR="vim" bin/rails credentials:edit
+# Add: anthropic_api_key: YOUR_KEY_HERE
+```
+
+Get a key at https://console.anthropic.com/settings/keys.
 
 ### Architecture
-- **Anthropic Claude** as AI provider, platform API key in `credentials.yml.enc`
+- **Anthropic Claude Sonnet** (`claude-sonnet-4-5-20250929`) as AI provider, API key in `credentials.yml.enc`
 - **Background job** (`AiChatJob`) for async API calls via Solid Queue
-- **Turbo Streams over Action Cable** (Solid Cable) for real-time response delivery
-- **Tool use loop** in `AiChatService` — Claude calls tools, service executes them, returns results, repeats until final text
-- **Map sync via Turbo Stream** — after AI makes changes, broadcast updated map data that Stimulus picks up
+- **Action Cable** (`AiChatChannel`) for real-time response delivery (streams `ai_chat_map_{id}`)
+- **Tool use loop** in `AiChatService` — Claude calls tools, service executes them directly via models, returns results, repeats until final text (max 10 rounds)
+- **Map sync** — after AI makes changes, broadcast updated markers/groups JSON that Stimulus picks up via `markersValue`/`groupsValue` setters
+- **Chat UI** — `chat_controller.js` uses `fetch` POST + Action Cable subscription (no Turbo Stream forms)
 
 ### Data Model
-- `ChatMessage` — belongs_to map, role (user/assistant/system), content (text), tool_calls (JSON)
-
-### Implementation Steps
-1. Add `gem "anthropic"` + credentials
-2. `ChatMessage` model + migration
-3. `ChatMessagesController` — create action, nested under maps
-4. `AiChatJob` + `AiChatService` with Anthropic API tool loop
-5. AI tool classes under `app/services/ai_tools/`: `CreateMarker`, `UpdateMarker`, `DeleteMarker`, `ListMarkers`, `UpdateMap`, `ApplyStyle`
-6. Turbo Stream broadcasts — append assistant bubble + broadcast map state sync
-7. Editor UI — third tab: [Markers] [Settings] [AI Chat]
-8. Stimulus `chat_controller.js` — form submission, auto-scroll, typing indicator, map sync
-9. System prompt design with current map state + available tools
-10. Tests — model, controller, service (mocked API), job
+- `ChatMessage` — belongs_to map, role (user/assistant), content (text), tool_calls (JSON, nullable)
+- Index on `[map_id, created_at]`
 
 ### AI Tools
 
@@ -304,9 +303,53 @@ Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId
 | `delete_marker` | Remove marker | marker_id |
 | `list_markers` | Get all markers on map | — |
 | `update_map` | Change title, description, center, zoom | title, description, center_lat, center_lng, zoom |
-| `apply_style` | Apply a map style by name | style_name |
+| `apply_style` | Apply a map style by name | style_name (Default, Silver, Night, Retro, Aubergine, Minimal) |
+| `create_group` | Create marker group | name, color |
+| `assign_to_group` | Add markers to group | marker_ids, group_name |
 
-Tools expanded incrementally as Phase 2–4 features land (CSV import, layers, clustering, etc.).
+Tools operate directly on models — no HTTP calls, simpler and transactional.
+
+### Files
+
+**New files:**
+- `app/models/chat_message.rb` — model
+- `app/controllers/chat_messages_controller.rb` — JSON create action
+- `app/channels/ai_chat_channel.rb` — Action Cable channel
+- `app/services/ai_chat_service.rb` — Anthropic API + tool loop
+- `app/jobs/ai_chat_job.rb` — async processing + broadcast
+- `app/services/ai_tools/base.rb` + 8 tool classes
+- `app/javascript/controllers/chat_controller.js` — chat UI Stimulus controller
+- `app/views/chat_messages/_chat_panel.html.erb` — chat tab content
+- `app/views/chat_messages/_chat_message.html.erb` — message bubble partial
+
+**Modified files:**
+- `Gemfile` — added `gem "anthropic"`
+- `app/models/map.rb` — `has_many :chat_messages`
+- `config/routes.rb` — `resources :chat_messages, only: [:create]`
+- `app/views/maps/edit.html.erb` — 4th "AI" tab + chat panel
+
+### Editor UI
+
+4 tabs: **[Markers] [Settings] [Tracking] [AI]**
+
+The AI panel has a message history area with auto-scroll, user bubbles (blue) and assistant bubbles (gray), a thinking indicator (animated dots), and an input form.
+
+### Broadcast Payload
+
+```ruby
+ActionCable.server.broadcast("ai_chat_map_#{map.id}", {
+  type: "assistant_message",
+  html: rendered_message_html,
+  markers_json: map.markers.to_json,
+  markers_html: rendered_sidebar_items,
+  marker_count: map.markers.count,
+  groups_json: map.marker_groups.to_json
+})
+```
+
+### Tests
+- 463 tests, 1126 assertions (up from 321/827 in Phase 4)
+- Model tests, controller tests, service tests (webmock stubs), job tests, channel tests, all 8 tool tests
 
 ### Deferred
 - Voice input
@@ -315,7 +358,7 @@ Tools expanded incrementally as Phase 2–4 features land (CSV import, layers, c
 - Token usage tracking / rate limiting
 - "Create with AI" button on dashboard
 
-**New routes**: `resources :chat_messages, only: :create` (nested under maps)
+**Routes**: `resources :chat_messages, only: :create` (nested under maps)
 
 ---
 
@@ -324,6 +367,18 @@ Tools expanded incrementally as Phase 2–4 features land (CSV import, layers, c
 - Phase 2: `roo` (~> 2.10) for Excel parsing
 - Phase 5: `anthropic` for Claude API
 - Phase 1 needs **no extra gems** — Rails 8 provides everything
+
+## Credentials
+
+Two API keys stored in `config/credentials.yml.enc`:
+
+```yaml
+google_maps_api_key: YOUR_GOOGLE_MAPS_KEY
+anthropic_api_key: YOUR_ANTHROPIC_KEY
+```
+
+- **Google Maps API key**: Required. Powers all maps in the app.
+- **Anthropic API key**: Required for AI chat feature. Get one at https://console.anthropic.com/settings/keys.
 
 ## Importmap Pins (Added as Needed)
 
