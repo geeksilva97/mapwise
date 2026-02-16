@@ -99,15 +99,24 @@ export default class extends Controller {
   }
 
   cancel() {
-    // Replace import area with upload form
-    location.reload()
+    const dialogEl = this.element.closest("[data-controller='import-dialog']")
+    if (dialogEl) {
+      const dialogCtrl = this.application.getControllerForElementAndIdentifier(dialogEl, "import-dialog")
+      if (dialogCtrl) dialogCtrl.close()
+    }
   }
 
   reload() {
-    location.reload()
+    this.#closeDialogAndReload()
   }
 
   newImport() {
+    this.#closeDialogAndReload()
+  }
+
+  #closeDialogAndReload() {
+    const dialog = this.element.closest("dialog")
+    if (dialog) dialog.close()
     location.reload()
   }
 }

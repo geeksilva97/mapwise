@@ -379,4 +379,37 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[data-action='click->confirm-dialog#open'][data-confirm-form='#clear_chat_#{@map.id}']"
     assert_select "form#clear_chat_#{@map.id}[class='hidden']"
   end
+
+  test "editor renders import button in markers header" do
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "button[data-action='click->import-dialog#open']", text: "Import"
+  end
+
+  test "editor renders import dialog with upload form" do
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "dialog[data-import-dialog-target='dialog']" do
+      assert_select "h3", text: "Import Markers"
+      assert_select "div[data-import-dialog-target='body']" do
+        assert_select "form[data-action='submit->import#upload']"
+        assert_select "input[type='file'][accept='.csv,.xlsx,.xls']"
+      end
+    end
+  end
+
+  test "editor import dialog has template for reset" do
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "template[data-import-dialog-target='initialContent']"
+  end
+
+  test "editor does not render old inline import section" do
+    get edit_map_path(@map)
+    assert_response :success
+    # The old import section had an "Import" heading inside a border-t section at the bottom
+    assert_select "div[data-tabs-target='panel']" do
+      assert_select "p.uppercase", text: "Import", count: 0
+    end
+  end
 end

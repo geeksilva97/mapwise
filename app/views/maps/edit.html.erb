@@ -50,14 +50,21 @@
       </nav>
 
       <%# Markers panel %>
-      <div data-tabs-target="panel" class="flex-1 overflow-y-auto p-4">
+      <div data-tabs-target="panel" class="flex-1 overflow-y-auto p-4"
+           data-controller="import-dialog">
         <div class="flex items-center justify-between mb-4">
           <h2 class="font-bold text-lg">Markers (<span data-marker-editor-target="count"><%= @map.markers.count %></span>)</h2>
-          <button data-marker-editor-target="addButton"
-                  data-action="click->marker-editor#togglePlacementMode"
-                  class="rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer">
-            + Add
-          </button>
+          <div class="flex items-center gap-2">
+            <button data-action="click->import-dialog#open"
+                    class="rounded-md px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-sm font-medium cursor-pointer transition-colors">
+              Import
+            </button>
+            <button data-marker-editor-target="addButton"
+                    data-action="click->marker-editor#togglePlacementMode"
+                    class="rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer">
+              + Add
+            </button>
+          </div>
         </div>
 
         <div data-marker-editor-target="placementBanner" class="hidden mb-3 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
@@ -121,11 +128,7 @@
           <% end %>
         </div>
 
-        <%# Import section %>
-        <div class="border-t border-gray-200 pt-4 mt-4">
-          <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Import</p>
-          <%= render "imports/upload", map: @map %>
-        </div>
+        <%= render "imports/import_dialog", map: @map %>
       </div>
 
       <%# Settings panel %>
