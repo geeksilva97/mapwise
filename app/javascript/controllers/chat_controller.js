@@ -69,7 +69,14 @@ export default class extends Controller {
   }
 
   #handleMessage(data) {
+    if (data.type === "tool_update") {
+      this.#syncMapState(data)
+      return
+    }
+
     if (data.type !== "assistant_message") return
+
+    this.#syncMapState(data)
 
     // Remove thinking indicator
     this.#removeThinking()
@@ -77,7 +84,13 @@ export default class extends Controller {
     // Append assistant message
     this.messagesTarget.insertAdjacentHTML("beforeend", data.html)
 
-    // Update markers data on the map controller
+    this.#setInputEnabled(true)
+    this.inputTarget.focus()
+    this.#scrollToBottom()
+  }
+
+  #syncMapState(data) {
+    // Update markers and groups on the map controller
     const mapCanvas = document.getElementById("map-canvas")
     if (mapCanvas) {
       const mapController = this.application.getControllerForElementAndIdentifier(mapCanvas, "map")
@@ -86,7 +99,13 @@ export default class extends Controller {
           mapController.markersValue = JSON.parse(data.markers_json)
         }
         if (data.groups_json) {
-          mapController.groupsValue = data.groups_json
+          mapController.groupsValue = JSON.parse(data.groups_json)
+        }
+        if (data.style_json) {
+          mapController.applyStyle(data.style_json)
+        }
+        if (data.center_lat && data.center_lng) {
+          mapController.panTo(data.center_lat, data.center_lng, data.zoom)
         }
       }
     }
@@ -108,10 +127,6 @@ export default class extends Controller {
     if (emptyMsg && data.marker_count > 0) {
       emptyMsg.remove()
     }
-
-    this.#setInputEnabled(true)
-    this.inputTarget.focus()
-    this.#scrollToBottom()
   }
 
   #setInputEnabled(enabled) {

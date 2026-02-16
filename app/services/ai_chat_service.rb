@@ -12,6 +12,8 @@ class AiChatService
     AiTools::AssignToGroup
   ].freeze
 
+  READ_ONLY_TOOLS = %w[list_markers].freeze
+
   def initialize(map)
     @map = map
     @client = Anthropic::Client.new(api_key: Rails.application.credentials.anthropic_api_key)
@@ -31,7 +33,10 @@ class AiChatService
       )
 
       if response.stop_reason.to_s == "tool_use"
+        @mutated = false
+        snapshot = map_snapshot
         tool_results = execute_tools(response.content)
+        broadcast_round_update(snapshot) if @mutated
         messages << { role: "assistant", content: serialize_content(response.content) }
         messages << { role: "user", content: tool_results }
         rounds += 1
@@ -98,6 +103,7 @@ class AiChatService
 
       tool_name = block_value(block, :name)
       tool_class = TOOLS.find { |t| t.tool_name == tool_name }
+      @mutated = true unless READ_ONLY_TOOLS.include?(tool_name)
       input = block_value(block, :input)
       input = input.is_a?(Hash) ? stringify_keys(input) : input
 
@@ -117,6 +123,38 @@ class AiChatService
         content: result.to_json
       }
     end
+  end
+
+  def map_snapshot
+    { center_lat: @map.center_lat, center_lng: @map.center_lng, zoom: @map.zoom, style_json: @map.style_json }
+  end
+
+  def broadcast_round_update(prev)
+    @map.reload
+
+    payload = {
+      type: "tool_update",
+      markers_json: @map.markers.select(:id, :lat, :lng, :title, :description, :color, :marker_group_id).to_json,
+      markers_html: ApplicationController.render(
+        partial: "markers/marker_item",
+        collection: @map.markers.where(marker_group_id: nil).order(:position),
+        as: :marker
+      ),
+      marker_count: @map.markers.count,
+      groups_json: @map.marker_groups.ordered.to_json(only: [ :id, :name, :color, :visible ])
+    }
+
+    if @map.style_json != prev[:style_json]
+      payload[:style_json] = @map.style_json
+    end
+
+    if @map.center_lat != prev[:center_lat] || @map.center_lng != prev[:center_lng] || @map.zoom != prev[:zoom]
+      payload[:center_lat] = @map.center_lat
+      payload[:center_lng] = @map.center_lng
+      payload[:zoom] = @map.zoom
+    end
+
+    ActionCable.server.broadcast("ai_chat_map_#{@map.id}", payload)
   end
 
   def extract_text(content_blocks)
