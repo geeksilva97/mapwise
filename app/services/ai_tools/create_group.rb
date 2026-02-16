@@ -1,24 +1,17 @@
 module AiTools
-  class CreateGroup < Base
-    def self.definition
-      {
-        name: "create_group",
-        description: "Create a new marker group for organizing markers.",
-        input_schema: {
-          type: "object",
-          properties: {
-            name: { type: "string", description: "Group name" },
-            color: { type: "string", description: "Hex color code for the group" }
-          },
-          required: ["name"]
-        }
-      }
-    end
+  class CreateGroup < RubyLLM::Tool
+    description "Create a new marker group for organizing markers."
+    def name = "create_group"
 
-    def self.execute(map, params)
+    param :map_id, desc: "ID of the current map", required: true
+    param :name, desc: "Group name", required: true
+    param :color, desc: "Hex color code for the group", required: false
+
+    def execute(map_id:, name:, color: nil)
+      map = Map.find(map_id)
       group = map.marker_groups.create!(
-        name: params["name"],
-        color: params["color"].presence || "#6B7280"
+        name: name,
+        color: color.presence || "#6B7280"
       )
       { success: true, group_id: group.id, name: group.name }
     end

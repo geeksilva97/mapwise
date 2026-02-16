@@ -1,5 +1,4 @@
 require "test_helper"
-require "webmock/minitest"
 
 class AiChatJobTest < ActiveSupport::TestCase
   include ActiveJob::TestHelper
@@ -11,10 +10,10 @@ class AiChatJobTest < ActiveSupport::TestCase
   end
 
   test "creates assistant message" do
-    stub_anthropic_simple_response("I've added a marker in NYC.")
-
-    assert_difference("ChatMessage.count") do
-      AiChatJob.perform_now(@map.id, @message.id)
+    mock_service_call("I've added a marker in NYC.") do
+      assert_difference("ChatMessage.count") do
+        AiChatJob.perform_now(@map.id, @message.id)
+      end
     end
 
     assistant = ChatMessage.last
@@ -23,19 +22,18 @@ class AiChatJobTest < ActiveSupport::TestCase
   end
 
   test "broadcasts to correct channel" do
-    stub_anthropic_simple_response("Done!")
-
-    assert_broadcasts("ai_chat_map_#{@map.id}", 1) do
-      AiChatJob.perform_now(@map.id, @message.id)
+    mock_service_call("Done!") do
+      assert_broadcasts("ai_chat_map_#{@map.id}", 1) do
+        AiChatJob.perform_now(@map.id, @message.id)
+      end
     end
   end
 
-  test "handles API errors gracefully" do
-    stub_request(:post, "https://api.anthropic.com/v1/messages")
-      .to_raise(StandardError.new("API down"))
-
-    assert_difference("ChatMessage.count") do
-      AiChatJob.perform_now(@map.id, @message.id)
+  test "handles errors gracefully" do
+    mock_service_call_raises("API down") do
+      assert_difference("ChatMessage.count") do
+        AiChatJob.perform_now(@map.id, @message.id)
+      end
     end
 
     error_message = ChatMessage.last
@@ -45,14 +43,29 @@ class AiChatJobTest < ActiveSupport::TestCase
 
   private
 
-  def stub_anthropic_simple_response(text)
-    stub_request(:post, "https://api.anthropic.com/v1/messages")
-      .to_return(status: 200, body: {
-        id: "msg_test",
-        type: "message",
-        role: "assistant",
-        stop_reason: "end_turn",
-        content: [{ "type" => "text", "text" => text }]
-      }.to_json, headers: { "Content-Type" => "application/json" })
+  def mock_service_call(response_text, &block)
+    original_new = AiChatService.method(:new)
+    AiChatService.define_singleton_method(:new) do |*args|
+      service = original_new.call(*args)
+      service.define_singleton_method(:call) { |_| response_text }
+      service
+    end
+
+    block.call
+  ensure
+    AiChatService.define_singleton_method(:new, original_new)
+  end
+
+  def mock_service_call_raises(error_message, &block)
+    original_new = AiChatService.method(:new)
+    AiChatService.define_singleton_method(:new) do |*args|
+      service = original_new.call(*args)
+      service.define_singleton_method(:call) { |_| raise StandardError, error_message }
+      service
+    end
+
+    block.call
+  ensure
+    AiChatService.define_singleton_method(:new, original_new)
   end
 end

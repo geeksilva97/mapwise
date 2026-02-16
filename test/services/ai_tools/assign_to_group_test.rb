@@ -8,10 +8,11 @@ class AiTools::AssignToGroupTest < ActiveSupport::TestCase
 
   test "assigns markers to existing group" do
     group = marker_groups(:hotels)
-    result = AiTools::AssignToGroup.execute(@map, {
-      "marker_ids" => [@marker.id],
-      "group_name" => "Hotels"
-    })
+    result = AiTools::AssignToGroup.new.execute(
+      map_id: @map.id,
+      marker_ids: [ @marker.id ],
+      group_name: "Hotels"
+    )
 
     assert result[:success]
     assert_equal group.id, result[:group_id]
@@ -21,20 +22,22 @@ class AiTools::AssignToGroupTest < ActiveSupport::TestCase
 
   test "creates new group if not found" do
     assert_difference("MarkerGroup.count") do
-      result = AiTools::AssignToGroup.execute(@map, {
-        "marker_ids" => [@marker.id],
-        "group_name" => "New Group"
-      })
+      result = AiTools::AssignToGroup.new.execute(
+        map_id: @map.id,
+        marker_ids: [ @marker.id ],
+        group_name: "New Group"
+      )
       assert result[:success]
     end
   end
 
   test "ignores marker IDs from other maps" do
     other_marker = markers(:on_other_map)
-    result = AiTools::AssignToGroup.execute(@map, {
-      "marker_ids" => [other_marker.id],
-      "group_name" => "Hotels"
-    })
+    result = AiTools::AssignToGroup.new.execute(
+      map_id: @map.id,
+      marker_ids: [ other_marker.id ],
+      group_name: "Hotels"
+    )
 
     assert result[:success]
     assert_equal 0, result[:assigned_count]

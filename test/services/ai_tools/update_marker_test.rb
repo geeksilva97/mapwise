@@ -7,7 +7,7 @@ class AiTools::UpdateMarkerTest < ActiveSupport::TestCase
   end
 
   test "updates marker title" do
-    result = AiTools::UpdateMarker.execute(@map, { "marker_id" => @marker.id, "title" => "New Title" })
+    result = AiTools::UpdateMarker.new.execute(map_id: @map.id, marker_id: @marker.id, title: "New Title")
 
     assert result[:success]
     @marker.reload
@@ -15,9 +15,9 @@ class AiTools::UpdateMarkerTest < ActiveSupport::TestCase
   end
 
   test "updates multiple fields" do
-    result = AiTools::UpdateMarker.execute(@map, {
-      "marker_id" => @marker.id, "title" => "Updated", "color" => "#00FF00", "lat" => 41.0
-    })
+    result = AiTools::UpdateMarker.new.execute(
+      map_id: @map.id, marker_id: @marker.id, title: "Updated", color: "#00FF00", lat: 41.0
+    )
 
     assert result[:success]
     @marker.reload
@@ -29,7 +29,7 @@ class AiTools::UpdateMarkerTest < ActiveSupport::TestCase
   test "raises for marker on other map" do
     other_marker = markers(:on_other_map)
     assert_raises(ActiveRecord::RecordNotFound) do
-      AiTools::UpdateMarker.execute(@map, { "marker_id" => other_marker.id, "title" => "Hack" })
+      AiTools::UpdateMarker.new.execute(map_id: @map.id, marker_id: other_marker.id, title: "Hack")
     end
   end
 end

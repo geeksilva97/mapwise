@@ -6,7 +6,7 @@ class AiTools::UpdateMapTest < ActiveSupport::TestCase
   end
 
   test "updates map title" do
-    result = AiTools::UpdateMap.execute(@map, { "title" => "New Title" })
+    result = AiTools::UpdateMap.new.execute(map_id: @map.id, title: "New Title")
 
     assert result[:success]
     @map.reload
@@ -14,7 +14,7 @@ class AiTools::UpdateMapTest < ActiveSupport::TestCase
   end
 
   test "updates center and zoom" do
-    result = AiTools::UpdateMap.execute(@map, { "center_lat" => 51.5, "center_lng" => -0.12, "zoom" => 15 })
+    result = AiTools::UpdateMap.new.execute(map_id: @map.id, center_lat: 51.5, center_lng: -0.12, zoom: 15)
 
     assert result[:success]
     @map.reload

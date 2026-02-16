@@ -1,17 +1,12 @@
 module AiTools
-  class ListMarkers < Base
-    def self.definition
-      {
-        name: "list_markers",
-        description: "Get all markers currently on the map.",
-        input_schema: {
-          type: "object",
-          properties: {}
-        }
-      }
-    end
+  class ListMarkers < RubyLLM::Tool
+    description "Get all markers currently on the map."
+    def name = "list_markers"
 
-    def self.execute(map, _params)
+    param :map_id, desc: "ID of the current map", required: true
+
+    def execute(map_id:)
+      map = Map.find(map_id)
       markers = map.markers.order(:position).map do |m|
         {
           id: m.id,

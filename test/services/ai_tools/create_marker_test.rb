@@ -6,7 +6,7 @@ class AiTools::CreateMarkerTest < ActiveSupport::TestCase
   end
 
   test "creates marker with required params" do
-    result = AiTools::CreateMarker.execute(@map, { "lat" => 40.7, "lng" => -74.0 })
+    result = AiTools::CreateMarker.new.execute(map_id: @map.id, lat: 40.7, lng: -74.0)
 
     assert result[:success]
     assert result[:marker_id]
@@ -17,19 +17,15 @@ class AiTools::CreateMarkerTest < ActiveSupport::TestCase
   end
 
   test "creates marker with all params" do
-    result = AiTools::CreateMarker.execute(@map, {
-      "lat" => 40.7, "lng" => -74.0,
-      "title" => "Cafe", "description" => "Nice place", "color" => "#3B82F6"
-    })
+    result = AiTools::CreateMarker.new.execute(
+      map_id: @map.id, lat: 40.7, lng: -74.0,
+      title: "Cafe", description: "Nice place", color: "#3B82F6"
+    )
 
     assert result[:success]
     marker = Marker.find(result[:marker_id])
     assert_equal "Cafe", marker.title
     assert_equal "Nice place", marker.description
     assert_equal "#3B82F6", marker.color
-  end
-
-  test "definition has correct name" do
-    assert_equal "create_marker", AiTools::CreateMarker.definition[:name]
   end
 end

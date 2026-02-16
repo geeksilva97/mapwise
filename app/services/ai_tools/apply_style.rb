@@ -1,21 +1,13 @@
 module AiTools
-  class ApplyStyle < Base
-    def self.definition
-      {
-        name: "apply_style",
-        description: "Apply a map style by name. Available styles: Default, Silver, Night, Retro, Aubergine, Minimal.",
-        input_schema: {
-          type: "object",
-          properties: {
-            style_name: { type: "string", description: "Name of the style to apply" }
-          },
-          required: ["style_name"]
-        }
-      }
-    end
+  class ApplyStyle < RubyLLM::Tool
+    description "Apply a map style by name. Available styles: Default, Silver, Night, Retro, Aubergine, Minimal."
+    def name = "apply_style"
 
-    def self.execute(map, params)
-      style_name = params["style_name"]
+    param :map_id, desc: "ID of the current map", required: true
+    param :style_name, desc: "Name of the style to apply", required: true
+
+    def execute(map_id:, style_name:)
+      map = Map.find(map_id)
 
       if style_name.downcase == "default"
         map.update!(style_json: nil, google_map_id: nil)

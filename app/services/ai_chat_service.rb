@@ -1,7 +1,7 @@
 class AiChatService
-  MAX_ROUNDS = 10
+  MAX_TOOL_CALLS = 30
 
-  TOOLS = [
+  TOOL_CLASSES = [
     AiTools::CreateMarker,
     AiTools::UpdateMarker,
     AiTools::DeleteMarker,
@@ -16,42 +16,55 @@ class AiChatService
 
   def initialize(map)
     @map = map
-    @client = Anthropic::Client.new(api_key: Rails.application.credentials.anthropic_api_key)
   end
 
   def call(user_message)
-    messages = build_messages(user_message)
-    rounds = 0
+    @snapshot = map_snapshot
+    @last_tool_mutating = false
+    @tool_call_count = 0
 
-    loop do
-      response = @client.messages.create(
-        model: "claude-sonnet-4-5-20250929",
-        max_tokens: 4096,
-        system: system_prompt,
-        tools: tool_definitions,
-        messages: messages
-      )
+    chat = build_chat
 
-      if response.stop_reason.to_s == "tool_use"
-        @mutated = false
-        snapshot = map_snapshot
-        tool_results = execute_tools(response.content)
-        broadcast_round_update(snapshot) if @mutated
-        messages << { role: "assistant", content: serialize_content(response.content) }
-        messages << { role: "user", content: tool_results }
-        rounds += 1
-        break extract_text(response.content) if rounds >= MAX_ROUNDS
-      else
-        break extract_text(response.content)
-      end
+    @map.chat_messages.ordered.last(20).each do |msg|
+      chat.add_message(role: msg.role.to_sym, content: msg.content)
     end
+
+    response = chat.ask(user_message)
+    response.content.presence || "Done!"
   end
 
   private
 
+  def build_chat
+    RubyLLM.chat(model: model_id)
+      .with_instructions(system_prompt)
+      .with_tools(*TOOL_CLASSES)
+      .on_tool_call { |tc| handle_tool_call(tc) }
+      .on_tool_result { |_result| handle_tool_result }
+  end
+
+  def model_id
+    ENV.fetch("RUBY_LLM_MODEL", "claude-sonnet-4-5-20250929")
+  end
+
+  def handle_tool_call(tool_call)
+    @tool_call_count += 1
+    raise "Tool call limit exceeded (#{MAX_TOOL_CALLS})" if @tool_call_count > MAX_TOOL_CALLS
+    @last_tool_mutating = !READ_ONLY_TOOLS.include?(tool_call.name)
+  end
+
+  def handle_tool_result
+    return unless @last_tool_mutating
+
+    @map.reload
+    broadcast_round_update(@snapshot)
+    @snapshot = map_snapshot
+    @last_tool_mutating = false
+  end
+
   def system_prompt
     markers_info = @map.markers.includes(:marker_group).order(:position).map do |m|
-      parts = ["ID:#{m.id}", m.title.presence || "Untitled", "(#{m.lat}, #{m.lng})", "color:#{m.color}"]
+      parts = [ "ID:#{m.id}", m.title.presence || "Untitled", "(#{m.lat}, #{m.lng})", "color:#{m.color}" ]
       parts << "group:#{m.marker_group.name}" if m.marker_group
       parts.join(" | ")
     end
@@ -62,6 +75,9 @@ class AiChatService
 
     <<~PROMPT
       You are a helpful map assistant for MapWise. You help users create and modify maps by using the available tools.
+
+      Current map ID: #{@map.id}
+      Always pass this map_id when using tools.
 
       Current map: "#{@map.title}"
       #{@map.description.present? ? "Description: #{@map.description}" : ""}
@@ -82,47 +98,6 @@ class AiChatService
       - Be concise in your responses.
       - If the user asks something that doesn't require tools (like a question), just answer directly.
     PROMPT
-  end
-
-  def build_messages(user_message)
-    recent = @map.chat_messages.ordered.last(20)
-    messages = recent.map do |msg|
-      { role: msg.role, content: msg.content }
-    end
-    messages << { role: "user", content: user_message }
-    messages
-  end
-
-  def tool_definitions
-    TOOLS.map(&:definition)
-  end
-
-  def execute_tools(content_blocks)
-    content_blocks.filter_map do |block|
-      next unless block_type(block) == "tool_use"
-
-      tool_name = block_value(block, :name)
-      tool_class = TOOLS.find { |t| t.tool_name == tool_name }
-      @mutated = true unless READ_ONLY_TOOLS.include?(tool_name)
-      input = block_value(block, :input)
-      input = input.is_a?(Hash) ? stringify_keys(input) : input
-
-      result = if tool_class
-        begin
-          tool_class.execute(@map, input)
-        rescue => e
-          { error: e.message }
-        end
-      else
-        { error: "Unknown tool: #{tool_name}" }
-      end
-
-      {
-        type: "tool_result",
-        tool_use_id: block_value(block, :id),
-        content: result.to_json
-      }
-    end
   end
 
   def map_snapshot
@@ -155,35 +130,5 @@ class AiChatService
     end
 
     ActionCable.server.broadcast("ai_chat_map_#{@map.id}", payload)
-  end
-
-  def extract_text(content_blocks)
-    content_blocks.filter_map do |block|
-      block_value(block, :text) if block_type(block) == "text"
-    end.join("\n").presence || "Done!"
-  end
-
-  def serialize_content(content_blocks)
-    content_blocks.map do |block|
-      block.respond_to?(:to_h) ? block.to_h : block
-    end
-  end
-
-  # Unified accessor: works with both objects (gem response) and hashes (test stubs)
-  def block_type(block)
-    val = block.respond_to?(:type) ? block.type : block["type"]
-    val.to_s
-  end
-
-  def block_value(block, key)
-    if block.respond_to?(key)
-      block.send(key)
-    else
-      block[key.to_s] || block[key]
-    end
-  end
-
-  def stringify_keys(hash)
-    hash.transform_keys(&:to_s)
   end
 end

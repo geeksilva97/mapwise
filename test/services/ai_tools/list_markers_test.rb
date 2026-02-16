@@ -6,7 +6,7 @@ class AiTools::ListMarkersTest < ActiveSupport::TestCase
   end
 
   test "returns all markers on map" do
-    result = AiTools::ListMarkers.execute(@map, {})
+    result = AiTools::ListMarkers.new.execute(map_id: @map.id)
 
     assert result[:success]
     assert_equal @map.markers.count, result[:count]
@@ -14,7 +14,7 @@ class AiTools::ListMarkersTest < ActiveSupport::TestCase
   end
 
   test "includes marker details" do
-    result = AiTools::ListMarkers.execute(@map, {})
+    result = AiTools::ListMarkers.new.execute(map_id: @map.id)
     marker_data = result[:markers].find { |m| m[:id] == markers(:one).id }
 
     assert_equal "New York City", marker_data[:title]

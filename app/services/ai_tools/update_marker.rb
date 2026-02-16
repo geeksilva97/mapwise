@@ -1,27 +1,20 @@
 module AiTools
-  class UpdateMarker < Base
-    def self.definition
-      {
-        name: "update_marker",
-        description: "Update an existing marker's properties.",
-        input_schema: {
-          type: "object",
-          properties: {
-            marker_id: { type: "integer", description: "ID of the marker to update" },
-            title: { type: "string", description: "New title" },
-            description: { type: "string", description: "New description" },
-            color: { type: "string", description: "New hex color code" },
-            lat: { type: "number", description: "New latitude" },
-            lng: { type: "number", description: "New longitude" }
-          },
-          required: ["marker_id"]
-        }
-      }
-    end
+  class UpdateMarker < RubyLLM::Tool
+    description "Update an existing marker's properties."
+    def name = "update_marker"
 
-    def self.execute(map, params)
-      marker = map.markers.find(params["marker_id"])
-      updates = params.slice("title", "description", "color", "lat", "lng").compact
+    param :map_id, desc: "ID of the current map", required: true
+    param :marker_id, type: :integer, desc: "ID of the marker to update", required: true
+    param :title, desc: "New title", required: false
+    param :description, desc: "New description", required: false
+    param :color, desc: "New hex color code", required: false
+    param :lat, type: :number, desc: "New latitude", required: false
+    param :lng, type: :number, desc: "New longitude", required: false
+
+    def execute(map_id:, marker_id:, title: nil, description: nil, color: nil, lat: nil, lng: nil)
+      map = Map.find(map_id)
+      marker = map.markers.find(marker_id)
+      updates = { title: title, description: description, color: color, lat: lat, lng: lng }.compact
       marker.update!(updates)
       { success: true, marker_id: marker.id }
     end

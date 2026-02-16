@@ -6,7 +6,7 @@ class AiTools::ApplyStyleTest < ActiveSupport::TestCase
   end
 
   test "applies Night style" do
-    result = AiTools::ApplyStyle.execute(@map, { "style_name" => "Night" })
+    result = AiTools::ApplyStyle.new.execute(map_id: @map.id, style_name: "Night")
 
     assert result[:success]
     @map.reload
@@ -16,7 +16,7 @@ class AiTools::ApplyStyleTest < ActiveSupport::TestCase
 
   test "applies Default style clears style_json" do
     @map.update!(style_json: "[{}]")
-    result = AiTools::ApplyStyle.execute(@map, { "style_name" => "Default" })
+    result = AiTools::ApplyStyle.new.execute(map_id: @map.id, style_name: "Default")
 
     assert result[:success]
     @map.reload
@@ -25,14 +25,14 @@ class AiTools::ApplyStyleTest < ActiveSupport::TestCase
   end
 
   test "returns error for unknown style" do
-    result = AiTools::ApplyStyle.execute(@map, { "style_name" => "Unknown" })
+    result = AiTools::ApplyStyle.new.execute(map_id: @map.id, style_name: "Unknown")
 
     assert_not result[:success]
     assert_includes result[:error], "not found"
   end
 
   test "case-insensitive style matching" do
-    result = AiTools::ApplyStyle.execute(@map, { "style_name" => "night" })
+    result = AiTools::ApplyStyle.new.execute(map_id: @map.id, style_name: "night")
 
     assert result[:success]
     assert_equal "Night", result[:style]

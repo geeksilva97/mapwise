@@ -8,7 +8,7 @@ class AiTools::DeleteMarkerTest < ActiveSupport::TestCase
 
   test "deletes marker" do
     assert_difference("Marker.count", -1) do
-      result = AiTools::DeleteMarker.execute(@map, { "marker_id" => @marker.id })
+      result = AiTools::DeleteMarker.new.execute(map_id: @map.id, marker_id: @marker.id)
       assert result[:success]
     end
   end
@@ -16,7 +16,7 @@ class AiTools::DeleteMarkerTest < ActiveSupport::TestCase
   test "raises for marker on other map" do
     other_marker = markers(:on_other_map)
     assert_raises(ActiveRecord::RecordNotFound) do
-      AiTools::DeleteMarker.execute(@map, { "marker_id" => other_marker.id })
+      AiTools::DeleteMarker.new.execute(map_id: @map.id, marker_id: other_marker.id)
     end
   end
 end

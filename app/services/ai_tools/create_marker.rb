@@ -1,30 +1,23 @@
 module AiTools
-  class CreateMarker < Base
-    def self.definition
-      {
-        name: "create_marker",
-        description: "Add a new marker to the map at the specified coordinates.",
-        input_schema: {
-          type: "object",
-          properties: {
-            lat: { type: "number", description: "Latitude (-90 to 90)" },
-            lng: { type: "number", description: "Longitude (-180 to 180)" },
-            title: { type: "string", description: "Marker title" },
-            description: { type: "string", description: "Marker description" },
-            color: { type: "string", description: "Hex color code (e.g. #FF0000)" }
-          },
-          required: ["lat", "lng"]
-        }
-      }
-    end
+  class CreateMarker < RubyLLM::Tool
+    description "Add a new marker to the map at the specified coordinates."
+    def name = "create_marker"
 
-    def self.execute(map, params)
+    param :map_id, desc: "ID of the current map", required: true
+    param :lat, type: :number, desc: "Latitude (-90 to 90)", required: true
+    param :lng, type: :number, desc: "Longitude (-180 to 180)", required: true
+    param :title, desc: "Marker title", required: false
+    param :description, desc: "Marker description", required: false
+    param :color, desc: "Hex color code (e.g. #FF0000)", required: false
+
+    def execute(map_id:, lat:, lng:, title: nil, description: nil, color: nil)
+      map = Map.find(map_id)
       marker = map.markers.create!(
-        lat: params["lat"],
-        lng: params["lng"],
-        title: params["title"],
-        description: params["description"],
-        color: params["color"].presence || "#FF0000"
+        lat: lat,
+        lng: lng,
+        title: title,
+        description: description,
+        color: color.presence || "#FF0000"
       )
       { success: true, marker_id: marker.id, title: marker.title }
     end

@@ -6,7 +6,7 @@ class AiTools::CreateGroupTest < ActiveSupport::TestCase
   end
 
   test "creates group with name" do
-    result = AiTools::CreateGroup.execute(@map, { "name" => "Cafes" })
+    result = AiTools::CreateGroup.new.execute(map_id: @map.id, name: "Cafes")
 
     assert result[:success]
     group = MarkerGroup.find(result[:group_id])
@@ -15,7 +15,7 @@ class AiTools::CreateGroupTest < ActiveSupport::TestCase
   end
 
   test "creates group with custom color" do
-    result = AiTools::CreateGroup.execute(@map, { "name" => "Parks", "color" => "#22C55E" })
+    result = AiTools::CreateGroup.new.execute(map_id: @map.id, name: "Parks", color: "#22C55E")
 
     assert result[:success]
     group = MarkerGroup.find(result[:group_id])
