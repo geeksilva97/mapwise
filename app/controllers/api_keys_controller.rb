@@ -1,34 +1,32 @@
 class ApiKeysController < ApplicationController
   before_action :set_api_key, only: %i[ update destroy ]
 
-  def index
-    @api_keys = Current.user.api_keys
-    @api_key = ApiKey.new
-  end
-
   def create
     @api_key = Current.user.api_keys.build(api_key_params)
 
     if @api_key.save
-      redirect_to api_keys_path, notice: "API key saved."
+      redirect_to settings_path(tab: "api keys"), notice: "API key saved."
     else
+      @user = Current.user
       @api_keys = Current.user.api_keys.reload
-      render :index, status: :unprocessable_entity
+      @api_key = @api_key
+      render "settings/show", status: :unprocessable_entity
     end
   end
 
   def update
     if @api_key.update(api_key_params)
-      redirect_to api_keys_path, notice: "API key updated."
+      redirect_to settings_path(tab: "api keys"), notice: "API key updated."
     else
+      @user = Current.user
       @api_keys = Current.user.api_keys
-      render :index, status: :unprocessable_entity
+      render "settings/show", status: :unprocessable_entity
     end
   end
 
   def destroy
     @api_key.destroy
-    redirect_to api_keys_path, notice: "API key removed."
+    redirect_to settings_path(tab: "api keys"), notice: "API key removed."
   end
 
   private

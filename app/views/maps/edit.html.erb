@@ -138,7 +138,7 @@
              data-style-picker-map-id-value="<%= @map.id %>">
           <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Map style</p>
           <%= render "map_styles/picker", styles: MapStyle.for_user(Current.user), map: @map %>
-          <p class="text-xs text-gray-400 mt-2">Applies immediately. <% if MapStyle.for_user(Current.user).where(system_default: false).any? %>Manage styles in <%= link_to "Map Styles", map_styles_path, class: "text-blue-600 hover:text-blue-800 underline" %>.<% end %></p>
+          <p class="text-xs text-gray-400 mt-2">Applies immediately. <% if MapStyle.for_user(Current.user).where(system_default: false).any? %>Manage styles in <%= link_to "Settings", settings_path, class: "text-blue-600 hover:text-blue-800 underline" %>.<% end %></p>
         </div>
 
         <div class="border-t border-gray-200 pt-4 mt-4"
@@ -189,7 +189,7 @@
               </div>
             <% else %>
               <div class="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5">
-                <p class="text-sm text-amber-800">To enable embedding, add a Google Maps API key in <%= link_to "API Keys", api_keys_path, class: "font-medium text-amber-900 underline" %>.</p>
+                <p class="text-sm text-amber-800">To enable embedding, add a Google Maps API key in <%= link_to "Settings", settings_path(tab: "api keys"), class: "font-medium text-amber-900 underline" %>.</p>
               </div>
             <% end %>
           </div>

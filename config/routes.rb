@@ -2,8 +2,9 @@ Rails.application.routes.draw do
   resource :session
   resource :registration, only: %i[ new create ]
   resources :passwords, param: :token
-  resources :api_keys, only: %i[ index create update destroy ]
-  resources :map_styles, only: %i[ index create destroy ]
+  resource :settings, only: %i[ show update ], controller: "settings"
+  resources :api_keys, only: %i[ create update destroy ]
+  resources :map_styles, only: %i[ create destroy ]
 
   resources :maps do
     resources :markers, except: %i[ index show ] do

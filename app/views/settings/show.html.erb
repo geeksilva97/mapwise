@@ -1,0 +1,78 @@
+<div class="max-w-2xl mx-auto" data-controller="tabs">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
+  </div>
+
+  <%# Tabs %>
+  <div class="border-b border-gray-200 mb-6">
+    <nav class="flex gap-4 -mb-px">
+      <button data-tabs-target="tab" data-action="click->tabs#select"
+              class="px-1 pb-3 text-sm font-medium border-b-2 cursor-pointer">
+        Profile
+      </button>
+      <button data-tabs-target="tab" data-action="click->tabs#select"
+              class="px-1 pb-3 text-sm font-medium border-b-2 cursor-pointer">
+        API Keys
+      </button>
+    </nav>
+  </div>
+
+  <%# Profile tab %>
+  <div data-tabs-target="panel">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <h2 class="font-bold text-lg mb-4">Profile</h2>
+
+      <%= form_with model: @user, url: settings_path, method: :patch do |form| %>
+        <% if @user.errors.any? %>
+          <div class="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <ul class="list-disc ml-5">
+              <% @user.errors.each do |error| %>
+                <li><%= error.full_message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="space-y-4">
+          <div>
+            <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= form.text_field :name, class: "block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none" %>
+          </div>
+
+          <div>
+            <%= form.label :email_address, "Email", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= form.email_field :email_address, class: "block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none" %>
+          </div>
+
+          <%= form.submit "Save Changes", class: "rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# API Keys tab %>
+  <div data-tabs-target="panel" class="hidden">
+    <p class="text-gray-600 mb-4 text-sm">Add your Google Maps API key to enable map embedding on external sites. Maps inside MapWise work without a key.</p>
+
+    <% if @api_keys.any? %>
+      <div class="space-y-3 mb-6">
+        <% @api_keys.each do |api_key| %>
+          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center justify-between">
+            <div>
+              <p class="font-medium"><%= api_key.label %></p>
+              <p class="text-sm text-gray-500 font-mono"><%= api_key.google_maps_key.first(8) %>...<%= api_key.google_maps_key.last(4) %></p>
+            </div>
+            <%= button_to "Remove", api_key_path(api_key), method: :delete,
+                class: "text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer",
+                data: { turbo_confirm: "Are you sure?" } %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <h2 class="font-bold text-lg mb-4">Add API Key</h2>
+      <%= render "api_keys/form", api_key: @api_key %>
+    </div>
+  </div>
+</div>

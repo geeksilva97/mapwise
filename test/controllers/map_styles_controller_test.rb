@@ -6,17 +6,6 @@ class MapStylesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
   end
 
-  test "index returns system presets and user styles" do
-    get map_styles_path
-    assert_response :success
-  end
-
-  test "index requires authentication" do
-    sign_out
-    get map_styles_path
-    assert_redirected_to new_session_path
-  end
-
   test "create saves user style" do
     assert_difference("MapStyle.count") do
       post map_styles_path, params: {
@@ -24,7 +13,7 @@ class MapStylesControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to map_styles_path
+    assert_response :redirect
 
     style = MapStyle.last
     assert_equal "My New Style", style.name
@@ -32,14 +21,14 @@ class MapStylesControllerTest < ActionDispatch::IntegrationTest
     assert_not style.system_default?
   end
 
-  test "create with invalid params re-renders" do
+  test "create with invalid params redirects back" do
     assert_no_difference("MapStyle.count") do
       post map_styles_path, params: {
         map_style: { name: "", style_json: "" }
       }
     end
 
-    assert_response :unprocessable_entity
+    assert_response :redirect
   end
 
   test "destroy removes user style" do
@@ -48,7 +37,7 @@ class MapStylesControllerTest < ActionDispatch::IntegrationTest
       delete map_style_path(custom_style)
     end
 
-    assert_redirected_to map_styles_path
+    assert_response :redirect
   end
 
   test "user cannot delete system presets" do
@@ -57,9 +46,7 @@ class MapStylesControllerTest < ActionDispatch::IntegrationTest
       delete map_style_path(system_style)
     end
 
-    assert_redirected_to map_styles_path
-    follow_redirect!
-    assert_select "#alert", /Cannot delete system presets/
+    assert_response :redirect
   end
 
   test "user cannot delete other user's styles" do

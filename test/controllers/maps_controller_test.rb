@@ -206,7 +206,7 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     get edit_map_path(public_map)
     assert_response :success
     assert_select "[data-share-target='embedSection']" do
-      assert_select "a[href='#{api_keys_path}']"
+      assert_select "a[href='#{settings_path(tab: "api keys")}']"
     end
   end
 

@@ -6,18 +6,6 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@user)
   end
 
-  test "index lists user's api keys" do
-    get api_keys_path
-    assert_response :success
-    assert_select "p.font-medium", api_keys(:one).label
-  end
-
-  test "index requires authentication" do
-    sign_out
-    get api_keys_path
-    assert_redirected_to new_session_path
-  end
-
   test "create saves encrypted api key" do
     assert_difference("ApiKey.count") do
       post api_keys_path, params: {
@@ -25,7 +13,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
       }
     end
 
-    assert_redirected_to api_keys_path
+    assert_redirected_to settings_path(tab: "api keys")
 
     key = ApiKey.last
     assert_equal "AIzaSyBrandNewKey123", key.google_maps_key
@@ -49,7 +37,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
       api_key: { google_maps_key: "AIzaSyUpdatedKey456" }
     }
 
-    assert_redirected_to api_keys_path
+    assert_redirected_to settings_path(tab: "api keys")
     api_key.reload
     assert_equal "AIzaSyUpdatedKey456", api_key.google_maps_key
   end
@@ -60,7 +48,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
       delete api_key_path(api_key)
     end
 
-    assert_redirected_to api_keys_path
+    assert_redirected_to settings_path(tab: "api keys")
   end
 
   test "user cannot access other user's api key" do
@@ -92,7 +80,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     patch api_key_path(api_key), params: {
       api_key: { label: "Renamed Key" }
     }
-    assert_redirected_to api_keys_path
+    assert_redirected_to settings_path(tab: "api keys")
     assert_equal "Renamed Key", api_key.reload.label
   end
 end
