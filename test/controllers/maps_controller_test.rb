@@ -365,4 +365,18 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
       assert_equal layer.id.to_s, el["data-layer-id"]
     end
   end
+
+  test "editor renders global confirm dialog" do
+    get edit_map_path(@map)
+    assert_response :success
+    assert_select "dialog[data-confirm-dialog-target='dialog']"
+  end
+
+  test "editor chat clear button uses confirm dialog" do
+    get edit_map_path(@map)
+    assert_response :success
+
+    assert_select "button[data-action='click->confirm-dialog#open'][data-confirm-form='#clear_chat_#{@map.id}']"
+    assert_select "form#clear_chat_#{@map.id}[class='hidden']"
+  end
 end

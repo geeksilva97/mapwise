@@ -34,4 +34,13 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     patch settings_path, params: { user: { name: "" } }
     assert_response :unprocessable_entity
   end
+
+  test "api key remove button uses confirm dialog" do
+    get settings_path
+    assert_response :success
+
+    api_key = api_keys(:one)
+    assert_select "button[data-action='click->confirm-dialog#open'][data-confirm-form='#delete_api_key_#{api_key.id}']"
+    assert_select "form#delete_api_key_#{api_key.id}[class='hidden']"
+  end
 end

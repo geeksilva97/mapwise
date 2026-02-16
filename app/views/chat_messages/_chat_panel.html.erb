@@ -2,10 +2,17 @@
   <%# Header with clear button %>
   <% if map.chat_messages.any? %>
     <div class="flex items-center justify-end px-4 pt-2">
-      <%= button_to "Clear chat", clear_map_chat_messages_path(map),
-            method: :delete,
-            class: "text-xs text-gray-400 hover:text-red-500 transition-colors cursor-pointer",
-            data: { turbo_confirm: "Clear all chat messages?" } %>
+      <button type="button"
+              data-action="click->confirm-dialog#open"
+              data-confirm-title="Clear chat"
+              data-confirm-message="Clear all chat messages? This cannot be undone."
+              data-confirm-form="#clear_chat_<%= map.id %>"
+              class="text-xs text-gray-400 hover:text-red-500 transition-colors cursor-pointer">
+        Clear chat
+      </button>
+
+      <%= form_with url: clear_map_chat_messages_path(map), method: :delete, id: "clear_chat_#{map.id}", class: "hidden" do %>
+      <% end %>
     </div>
   <% end %>
 

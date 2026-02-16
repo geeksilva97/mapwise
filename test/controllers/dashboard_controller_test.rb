@@ -48,4 +48,22 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_redirected_to new_session_path
   end
+
+  test "dashboard renders global confirm dialog" do
+    get dashboard_path
+    assert_response :success
+    assert_select "dialog[data-confirm-dialog-target='dialog']"
+    assert_select "[data-confirm-dialog-target='title']"
+    assert_select "[data-confirm-dialog-target='message']"
+  end
+
+  test "map cards have delete button wired to confirm dialog" do
+    get dashboard_path
+    assert_response :success
+
+    @user.maps.each do |map|
+      assert_select "button[data-action='click->confirm-dialog#open'][data-confirm-form='#delete_map_#{map.id}']"
+      assert_select "form#delete_map_#{map.id}[class='hidden']"
+    end
+  end
 end

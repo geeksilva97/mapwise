@@ -1,0 +1,28 @@
+<dialog data-confirm-dialog-target="dialog"
+        data-action="click->confirm-dialog#backdropClick"
+        style="margin: auto"
+        class="rounded-xl border border-gray-200 shadow-xl p-0 backdrop:bg-black/40 max-w-sm w-full">
+  <div class="p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="flex items-center justify-center w-10 h-10 rounded-full bg-red-100">
+        <svg class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+        </svg>
+      </div>
+      <h3 data-confirm-dialog-target="title" class="text-lg font-bold text-gray-900"></h3>
+    </div>
+    <p data-confirm-dialog-target="message" class="text-sm text-gray-600 mb-6"></p>
+    <div class="flex justify-end gap-3">
+      <button type="button"
+              data-action="click->confirm-dialog#cancel"
+              class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 cursor-pointer transition-colors">
+        Cancel
+      </button>
+      <button type="button"
+              data-action="click->confirm-dialog#confirm"
+              class="rounded-lg px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-500 cursor-pointer transition-colors">
+        Confirm
+      </button>
+    </div>
+  </div>
+</dialog>

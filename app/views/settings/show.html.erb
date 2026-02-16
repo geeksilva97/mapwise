@@ -62,9 +62,16 @@
               <p class="font-medium"><%= api_key.label %></p>
               <p class="text-sm text-gray-500 font-mono"><%= api_key.google_maps_key.first(8) %>...<%= api_key.google_maps_key.last(4) %></p>
             </div>
-            <%= button_to "Remove", api_key_path(api_key), method: :delete,
-                class: "text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer",
-                data: { turbo_confirm: "Are you sure?" } %>
+            <button type="button"
+                    data-action="click->confirm-dialog#open"
+                    data-confirm-title="Remove API key"
+                    data-confirm-message="Remove this API key? Maps using it for embedding will stop working."
+                    data-confirm-form="#delete_api_key_<%= api_key.id %>"
+                    class="text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer">
+              Remove
+            </button>
+            <%= form_with url: api_key_path(api_key), method: :delete, id: "delete_api_key_#{api_key.id}", class: "hidden" do %>
+            <% end %>
           </div>
         <% end %>
       </div>
