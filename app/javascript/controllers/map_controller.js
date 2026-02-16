@@ -91,6 +91,7 @@ export default class extends Controller {
 
   persistMapState() {
     if (!this.idValue) return
+    if (this._skipPersist) { this._skipPersist = false; return }
 
     const center = this.map.getCenter()
 
@@ -329,8 +330,10 @@ export default class extends Controller {
   }
 
   // Pan the map to given coordinates and optionally set zoom
-  panTo(lat, lng, zoom) {
+  // Pass { persist: false } to skip saving the new position
+  panTo(lat, lng, zoom, { persist = true } = {}) {
     if (!this.map) return
+    if (!persist) this._skipPersist = true
     this.map.panTo({ lat, lng })
     if (zoom !== undefined) this.map.setZoom(zoom)
   }

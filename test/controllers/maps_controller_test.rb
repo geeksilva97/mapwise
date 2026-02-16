@@ -339,4 +339,30 @@ class MapsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :not_found
   end
+
+  # Double-click focus wiring
+
+  test "editor marker items have dblclick focus action and select-none" do
+    get edit_map_path(@map)
+    assert_response :success
+
+    marker = markers(:two_on_one)
+    assert_select "#marker_#{marker.id} [data-action='dblclick->marker-editor#focusMarker']" do |elements|
+      el = elements.first
+      assert_includes el["class"], "select-none"
+      assert_equal marker.id.to_s, el["data-marker-id"]
+    end
+  end
+
+  test "editor layer items have dblclick focus action and select-none" do
+    get edit_map_path(@map)
+    assert_response :success
+
+    layer = layers(:polygon_layer)
+    assert_select "#layer_#{layer.id} [data-action='dblclick->marker-editor#focusLayer']" do |elements|
+      el = elements.first
+      assert_includes el["class"], "select-none"
+      assert_equal layer.id.to_s, el["data-layer-id"]
+    end
+  end
 end

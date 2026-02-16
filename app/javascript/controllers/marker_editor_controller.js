@@ -170,6 +170,36 @@ export default class extends Controller {
     }
   }
 
+  // Pan the map to a marker on double-click
+  focusMarker(event) {
+    const markerId = Number(event.currentTarget.dataset.markerId)
+    const mapCtrl = this.#mapController()
+    if (!mapCtrl) return
+
+    const marker = (mapCtrl.markersValue || []).find(m => m.id === markerId)
+    if (marker) mapCtrl.panTo(marker.lat, marker.lng, undefined, { persist: false })
+  }
+
+  // Pan the map to a layer's center on double-click
+  focusLayer(event) {
+    const layerId = Number(event.currentTarget.dataset.layerId)
+    const drawingCtrl = this.#drawingController()
+    if (!drawingCtrl) return
+
+    const layer = (drawingCtrl.layersValue || []).find(l => l.id === layerId)
+    if (!layer || !layer.geometry_data) return
+
+    const geojson = typeof layer.geometry_data === "string"
+      ? JSON.parse(layer.geometry_data)
+      : layer.geometry_data
+
+    const center = this.#geojsonCenter(geojson)
+    if (center) {
+      const mapCtrl = this.#mapController()
+      if (mapCtrl) mapCtrl.panTo(center.lat, center.lng, undefined, { persist: false })
+    }
+  }
+
   // --- Private ---
 
   #enterPlacementMode(mapCtrl) {
@@ -201,7 +231,9 @@ export default class extends Controller {
     // Content row
     const content = document.createElement("div")
     content.dataset.role = "content"
-    content.className = "flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50 group"
+    content.dataset.action = "dblclick->marker-editor#focusMarker"
+    content.dataset.markerId = marker.id
+    content.className = "flex items-center justify-between px-3 py-2 rounded-md hover:bg-gray-50 group cursor-pointer select-none"
 
     const left = document.createElement("div")
     left.className = "flex items-center gap-2 min-w-0"
@@ -289,5 +321,34 @@ export default class extends Controller {
   #drawingController() {
     const drawingEl = document.querySelector("[data-controller='drawing']")
     return this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
+  }
+
+  #geojsonCenter(geojson) {
+    const coords = []
+
+    const collect = (geometry) => {
+      if (!geometry) return
+      switch (geometry.type) {
+        case "Point":
+          coords.push(geometry.coordinates)
+          break
+        case "LineString":
+          geometry.coordinates.forEach(c => coords.push(c))
+          break
+        case "Polygon":
+          geometry.coordinates[0]?.forEach(c => coords.push(c))
+          break
+        case "Feature":
+          collect(geometry.geometry)
+          break
+      }
+    }
+
+    collect(geojson)
+    if (coords.length === 0) return null
+
+    const sumLng = coords.reduce((s, c) => s + c[0], 0)
+    const sumLat = coords.reduce((s, c) => s + c[1], 0)
+    return { lat: sumLat / coords.length, lng: sumLng / coords.length }
   }
 }
