@@ -1,5 +1,5 @@
 module AiTools
-  class ListMarkers < RubyLLM::Tool
+  class ListMarkers < ::RubyLLM::Tool
     description "Get all markers currently on the map."
     def name = "list_markers"
 

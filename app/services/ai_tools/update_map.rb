@@ -1,5 +1,5 @@
 module AiTools
-  class UpdateMap < RubyLLM::Tool
+  class UpdateMap < ::RubyLLM::Tool
     description "Change map settings like title, description, center position, or zoom level."
     def name = "update_map"
 

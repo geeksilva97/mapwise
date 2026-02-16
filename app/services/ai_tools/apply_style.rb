@@ -1,5 +1,5 @@
 module AiTools
-  class ApplyStyle < RubyLLM::Tool
+  class ApplyStyle < ::RubyLLM::Tool
     description "Apply a map style by name. Available styles: Default, Silver, Night, Retro, Aubergine, Minimal."
     def name = "apply_style"
 

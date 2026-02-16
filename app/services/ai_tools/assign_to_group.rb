@@ -1,5 +1,5 @@
 module AiTools
-  class AssignToGroup < RubyLLM::Tool
+  class AssignToGroup < ::RubyLLM::Tool
     description "Assign markers to a group by group name. Creates the group if it doesn't exist."
     def name = "assign_to_group"
 

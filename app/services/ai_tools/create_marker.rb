@@ -1,5 +1,5 @@
 module AiTools
-  class CreateMarker < RubyLLM::Tool
+  class CreateMarker < ::RubyLLM::Tool
     description "Add a new marker to the map at the specified coordinates."
     def name = "create_marker"
 

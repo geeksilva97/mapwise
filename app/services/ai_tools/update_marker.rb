@@ -1,5 +1,5 @@
 module AiTools
-  class UpdateMarker < RubyLLM::Tool
+  class UpdateMarker < ::RubyLLM::Tool
     description "Update an existing marker's properties."
     def name = "update_marker"
 

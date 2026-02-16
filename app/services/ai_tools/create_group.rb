@@ -1,5 +1,5 @@
 module AiTools
-  class CreateGroup < RubyLLM::Tool
+  class CreateGroup < ::RubyLLM::Tool
     description "Create a new marker group for organizing markers."
     def name = "create_group"
 

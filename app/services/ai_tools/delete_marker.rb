@@ -1,5 +1,5 @@
 module AiTools
-  class DeleteMarker < RubyLLM::Tool
+  class DeleteMarker < ::RubyLLM::Tool
     description "Remove a marker from the map."
     def name = "delete_marker"
 
