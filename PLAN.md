@@ -235,7 +235,7 @@ Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId
 
 ## Phase 2 — Data & Customization (DONE)
 
-1. **CSV/Excel import** — `roo` gem for .xlsx; upload → column mapping UI → `ImportService`; random group colors with palette; import section in Markers tab
+1. **CSV/Excel import** — `roo` gem for .xlsx; upload → column mapping UI → `ImportService`; random group colors with palette; import runs in a `<dialog>` modal triggered from "Import" button in Markers header (`import_dialog_controller.js` handles open/close/reset, blocks close during active polling)
 2. **Marker clustering** — `@googlemaps/markerclusterer` via importmap; toggle in map settings; works with both Advanced and legacy markers
 3. **Marker grouping** — `MarkerGroup` model; collapsible sidebar sections; group visibility toggle; circle selection for bulk assignment; ungroup action
 4. **Info window customization** — `custom_info_html` on markers; render via `google.maps.InfoWindow` in readonly mode
@@ -353,7 +353,7 @@ ActionCable.server.broadcast("ai_chat_map_#{map.id}", {
 ```
 
 ### Tests
-- 464 tests, 1137 assertions (up from 321/827 in Phase 4)
+- 476 tests, 1187 assertions (up from 321/827 in Phase 4)
 - Model tests, controller tests, service tests (RubyLLM mock objects), job tests, channel tests, all 8 tool tests
 
 ### Deferred
