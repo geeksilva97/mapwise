@@ -273,20 +273,24 @@ A chat tab in the editor sidebar where users describe what they want in natural 
 
 ### Setup
 
-Add your Anthropic API key to Rails credentials:
+Add your LLM provider API key(s) to Rails credentials:
 
 ```bash
 EDITOR="vim" bin/rails credentials:edit
-# Add: anthropic_api_key: YOUR_KEY_HERE
+# Add one or more:
+#   anthropic_api_key: YOUR_KEY_HERE
+#   openai_api_key: YOUR_KEY_HERE
+#   gemini_api_key: YOUR_KEY_HERE
 ```
 
-Get a key at https://console.anthropic.com/settings/keys.
+Optionally set `RUBY_LLM_MODEL` env var to choose a model (defaults to `claude-sonnet-4-5-20250929`).
 
 ### Architecture
-- **Anthropic Claude Sonnet** (`claude-sonnet-4-5-20250929`) as AI provider, API key in `credentials.yml.enc`
+- **RubyLLM** gem for multi-provider LLM support (Anthropic, OpenAI, Gemini) — API keys in `credentials.yml.enc`, model via `ENV["RUBY_LLM_MODEL"]`
 - **Background job** (`AiChatJob`) for async API calls via Solid Queue
 - **Action Cable** (`AiChatChannel`) for real-time response delivery (streams `ai_chat_map_{id}`)
-- **Tool use loop** in `AiChatService` — Claude calls tools, service executes them directly via models, returns results, repeats until final text (max 10 rounds)
+- **Automatic tool loop** — RubyLLM handles tool call/result cycles internally; `on_tool_call`/`on_tool_result` callbacks trigger per-tool map broadcasts; max 30 tool calls guard via callback
+- **Map context via tool param** — each tool receives `map_id` as a required parameter; system prompt includes "Current map ID: #{map.id}"; tool does `Map.find(map_id)` internally
 - **Map sync** — after AI makes changes, broadcast updated markers/groups JSON that Stimulus picks up via `markersValue`/`groupsValue` setters
 - **Chat UI** — `chat_controller.js` uses `fetch` POST + Action Cable subscription (no Turbo Stream forms)
 
@@ -307,7 +311,7 @@ Get a key at https://console.anthropic.com/settings/keys.
 | `create_group` | Create marker group | name, color |
 | `assign_to_group` | Add markers to group | marker_ids, group_name |
 
-Tools operate directly on models — no HTTP calls, simpler and transactional.
+Tools are `RubyLLM::Tool` subclasses with `param` DSL. Each receives `map_id` and operates directly on models — no HTTP calls, simpler and transactional.
 
 ### Files
 
@@ -315,15 +319,16 @@ Tools operate directly on models — no HTTP calls, simpler and transactional.
 - `app/models/chat_message.rb` — model
 - `app/controllers/chat_messages_controller.rb` — JSON create action
 - `app/channels/ai_chat_channel.rb` — Action Cable channel
-- `app/services/ai_chat_service.rb` — Anthropic API + tool loop
+- `app/services/ai_chat_service.rb` — RubyLLM chat + automatic tool loop + callbacks
 - `app/jobs/ai_chat_job.rb` — async processing + broadcast
-- `app/services/ai_tools/base.rb` + 8 tool classes
+- `app/services/ai_tools/*.rb` — 8 `RubyLLM::Tool` subclasses (no base class needed)
+- `config/initializers/ruby_llm.rb` — multi-provider API key config
 - `app/javascript/controllers/chat_controller.js` — chat UI Stimulus controller
 - `app/views/chat_messages/_chat_panel.html.erb` — chat tab content
 - `app/views/chat_messages/_chat_message.html.erb` — message bubble partial
 
 **Modified files:**
-- `Gemfile` — added `gem "anthropic"`
+- `Gemfile` — added `gem "ruby_llm"`
 - `app/models/map.rb` — `has_many :chat_messages`
 - `config/routes.rb` — `resources :chat_messages, only: [:create]`
 - `app/views/maps/edit.html.erb` — 4th "AI" tab + chat panel
@@ -348,8 +353,8 @@ ActionCable.server.broadcast("ai_chat_map_#{map.id}", {
 ```
 
 ### Tests
-- 463 tests, 1126 assertions (up from 321/827 in Phase 4)
-- Model tests, controller tests, service tests (webmock stubs), job tests, channel tests, all 8 tool tests
+- 464 tests, 1137 assertions (up from 321/827 in Phase 4)
+- Model tests, controller tests, service tests (RubyLLM mock objects), job tests, channel tests, all 8 tool tests
 
 ### Deferred
 - Voice input
@@ -365,20 +370,22 @@ ActionCable.server.broadcast("ai_chat_map_#{map.id}", {
 ## Gems (Beyond Rails 8 Defaults)
 
 - Phase 2: `roo` (~> 2.10) for Excel parsing
-- Phase 5: `anthropic` for Claude API
+- Phase 5: `ruby_llm` for multi-provider LLM support (Anthropic, OpenAI, Gemini)
 - Phase 1 needs **no extra gems** — Rails 8 provides everything
 
 ## Credentials
 
-Two API keys stored in `config/credentials.yml.enc`:
+API keys stored in `config/credentials.yml.enc`:
 
 ```yaml
 google_maps_api_key: YOUR_GOOGLE_MAPS_KEY
-anthropic_api_key: YOUR_ANTHROPIC_KEY
+anthropic_api_key: YOUR_ANTHROPIC_KEY    # and/or:
+openai_api_key: YOUR_OPENAI_KEY
+gemini_api_key: YOUR_GEMINI_KEY
 ```
 
 - **Google Maps API key**: Required. Powers all maps in the app.
-- **Anthropic API key**: Required for AI chat feature. Get one at https://console.anthropic.com/settings/keys.
+- **LLM API key**: At least one required for AI chat. Anthropic recommended. Set `RUBY_LLM_MODEL` env var to switch models (default: `claude-sonnet-4-5-20250929`).
 
 ## Importmap Pins (Added as Needed)
 

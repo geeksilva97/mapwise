@@ -24,12 +24,15 @@ bin/rails db:seed
 EDITOR="vim" bin/rails credentials:edit
 # Add: google_maps_api_key: YOUR_KEY_HERE
 
-# Set your Anthropic API key (required for AI chat)
+# Set your LLM API key(s) (required for AI chat)
 EDITOR="vim" bin/rails credentials:edit
-# Add: anthropic_api_key: YOUR_KEY_HERE
+# Add one or more:
+#   anthropic_api_key: YOUR_KEY_HERE
+#   openai_api_key: YOUR_KEY_HERE
+#   gemini_api_key: YOUR_KEY_HERE
 ```
 
-Get an Anthropic API key at https://console.anthropic.com/settings/keys. The AI chat feature uses Claude Sonnet to interpret natural language requests and modify maps via tool use.
+The AI chat feature uses [RubyLLM](https://rubyllm.com) for multi-provider support. By default it uses Claude Sonnet — set `RUBY_LLM_MODEL` env var to switch models (e.g. `gpt-4o`, `gemini-2.0-flash`).
 
 ## Running
 
@@ -74,7 +77,7 @@ The editor is a full-screen split view with a sidebar and map canvas:
 - **Markers tab**: Add, edit, drag, and delete markers on the map. Import from CSV/Excel. Organize with groups and layers.
 - **Settings tab**: Edit title, description, starting position (lat/lng/zoom), and map style. Settings save inline via Turbo Stream. Style changes apply immediately.
 - **Tracking tab**: Manage tracked vehicles with webhooks, planned paths, and deviation alerts.
-- **AI tab**: Chat with an AI assistant to create and modify your map using natural language. Powered by Claude (Anthropic).
+- **AI tab**: Chat with an AI assistant to create and modify your map using natural language. Powered by RubyLLM (Anthropic, OpenAI, Gemini).
 
 ### AI Chat
 
@@ -86,9 +89,9 @@ The AI tab lets you describe map changes in plain English. Examples:
 - "Delete the first marker"
 - "What markers are on this map?"
 
-The AI assistant uses Claude Sonnet with tool use to execute map operations (create/update/delete markers, apply styles, create groups, etc.). Changes appear on the map in real-time via Action Cable.
+The AI assistant uses LLM tool use to execute map operations (create/update/delete markers, apply styles, create groups, etc.). Changes appear on the map in real-time via Action Cable.
 
-**Setup**: Add your Anthropic API key to credentials (see Setup section above). Without the key, the AI tab will not function.
+**Setup**: Add at least one LLM API key to credentials (see Setup section above). Without a key, the AI tab will not function.
 
 ## UI & Layouts
 
@@ -106,5 +109,5 @@ Auth pages (sign in, sign up) hide the navbar for a clean, centered card design.
 - Tailwind CSS
 - SQLite with Solid Queue, Solid Cache, Solid Cable
 - Google Maps JavaScript API (dual-mode: AdvancedMarkerElement with cloud Map ID, or legacy Marker with JSON styles)
-- Anthropic Claude API (AI chat with tool use)
+- RubyLLM (multi-provider AI: Anthropic, OpenAI, Gemini)
 - Importmap (no bundler), Propshaft
