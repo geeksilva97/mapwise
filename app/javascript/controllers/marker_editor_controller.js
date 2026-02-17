@@ -204,9 +204,9 @@ export default class extends Controller {
 
   #enterPlacementMode(mapCtrl) {
     mapCtrl.enterPlacementMode()
-    this.addButtonTarget.textContent = "Cancel"
-    this.addButtonTarget.classList.replace("bg-blue-600", "bg-gray-500")
-    this.addButtonTarget.classList.replace("hover:bg-blue-500", "hover:bg-gray-400")
+    this.addButtonTarget.textContent = "Done"
+    this.addButtonTarget.classList.replace("bg-blue-600", "bg-green-600")
+    this.addButtonTarget.classList.replace("hover:bg-blue-500", "hover:bg-green-500")
     this.placementBannerTarget.classList.remove("hidden")
   }
 
@@ -216,8 +216,8 @@ export default class extends Controller {
       mapCtrl.element.style.cursor = ""
     }
     this.addButtonTarget.textContent = "+ Add"
-    this.addButtonTarget.classList.replace("bg-gray-500", "bg-blue-600")
-    this.addButtonTarget.classList.replace("hover:bg-gray-400", "hover:bg-blue-500")
+    this.addButtonTarget.classList.replace("bg-green-600", "bg-blue-600")
+    this.addButtonTarget.classList.replace("hover:bg-green-500", "hover:bg-blue-500")
     this.placementBannerTarget.classList.add("hidden")
   }
 
