@@ -1,0 +1,11 @@
+<p>Hi <%= @user.name %>,</p>
+
+<p>
+  Please verify your email address by clicking the link below:
+</p>
+
+<p>
+  <%= link_to "Verify my email", email_verification_url(@user.generate_token_for(:email_verification)) %>
+</p>
+
+<p>This link will expire in 3 days.</p>

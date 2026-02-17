@@ -1,0 +1,18 @@
+<% if Current.user && !Current.user.email_verified? %>
+  <% days_left = ((Current.user.email_verification_deadline - Time.current) / 1.day).ceil %>
+  <% expired = Current.user.email_verification_expired? %>
+
+  <div class="flex items-center justify-center gap-3 px-4 py-2.5 text-sm font-medium <%= expired ? 'bg-red-50 border-b border-red-200 text-red-700' : 'bg-amber-50 border-b border-amber-200 text-amber-700' %>">
+    <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+    </svg>
+
+    <% if expired %>
+      <span>Your email verification has expired. Please verify your email to continue using MapWise.</span>
+    <% else %>
+      <span>Please verify your email within <%= pluralize(days_left, "day") %>.</span>
+    <% end %>
+
+    <%= button_to "Resend verification email", resend_email_verification_path, method: :post, class: "underline hover:no-underline whitespace-nowrap" %>
+  </div>
+<% end %>

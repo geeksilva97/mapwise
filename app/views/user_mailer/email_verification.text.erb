@@ -1,0 +1,7 @@
+Hi <%= @user.name %>,
+
+Please verify your email address by visiting the link below:
+
+<%= email_verification_url(@user.generate_token_for(:email_verification)) %>
+
+This link will expire in 3 days.

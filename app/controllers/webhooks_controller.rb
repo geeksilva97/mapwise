@@ -1,5 +1,6 @@
 class WebhooksController < ApplicationController
   allow_unauthenticated_access
+  skip_before_action :check_email_verification_deadline
   skip_before_action :verify_authenticity_token
 
   def tracking

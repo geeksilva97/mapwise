@@ -2,6 +2,9 @@ Rails.application.routes.draw do
   resource :session
   resource :registration, only: %i[ new create ]
   resources :passwords, param: :token
+
+  get "email_verification/:token", to: "email_verifications#show", as: :email_verification
+  post "email_verification/resend", to: "email_verifications#create", as: :resend_email_verification
   resource :settings, only: %i[ show update ], controller: "settings"
   resources :api_keys, only: %i[ create update destroy ]
   resources :map_styles, only: %i[ create destroy ]
@@ -38,6 +41,8 @@ Rails.application.routes.draw do
 
   get "embed/:token", to: "embeds#show", as: :embed
   get "dashboard", to: "dashboard#index", as: :dashboard
+
+  mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   get "up" => "rails/health#show", as: :rails_health_check

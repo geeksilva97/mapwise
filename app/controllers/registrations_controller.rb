@@ -1,5 +1,6 @@
 class RegistrationsController < ApplicationController
   allow_unauthenticated_access only: %i[ new create ]
+  skip_before_action :check_email_verification_deadline
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to new_registration_path, alert: "Try again later." }
 
   def new
@@ -11,7 +12,8 @@ class RegistrationsController < ApplicationController
 
     if @user.save
       start_new_session_for(@user)
-      redirect_to root_path, notice: "Welcome to MapWise!"
+      EmailVerifications::Send.call(@user)
+      redirect_to root_path, notice: "Welcome to MapWise! Please check your email to verify your account."
     else
       render :new, status: :unprocessable_entity
     end

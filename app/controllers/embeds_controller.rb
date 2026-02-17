@@ -1,5 +1,6 @@
 class EmbedsController < ApplicationController
   allow_unauthenticated_access
+  skip_before_action :check_email_verification_deadline
 
   layout "embed"
 

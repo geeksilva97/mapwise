@@ -24,6 +24,20 @@ class RegistrationsControllerTest < ActionDispatch::IntegrationTest
 
     user = User.find_by(email_address: "new@example.com")
     assert_equal "New User", user.name
+    assert_not user.email_verified?
+  end
+
+  test "create sends verification email" do
+    assert_enqueued_emails(1) do
+      post registration_path, params: {
+        user: {
+          name: "New User",
+          email_address: "verify@example.com",
+          password: "password123",
+          password_confirmation: "password123"
+        }
+      }
+    end
   end
 
   test "create with invalid params re-renders form with errors" do
