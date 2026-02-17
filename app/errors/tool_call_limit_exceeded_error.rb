@@ -1,0 +1,1 @@
+class ToolCallLimitExceededError < AiChatError; end

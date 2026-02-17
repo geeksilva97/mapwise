@@ -16,8 +16,8 @@ class AiChatJob < ApplicationJob
     )
 
     broadcast_response(map, assistant_message, snapshot)
-  rescue => e
-    Rails.logger.error("AiChatJob failed: #{e.message}")
+  rescue StandardError => e
+    Rails.error.report(e, handled: true, context: { map_id: map_id, message_id: message_id }, source: "ai_chat_job")
     error_message = map.chat_messages.create!(
       role: "assistant",
       content: "Sorry, something went wrong. Please try again."

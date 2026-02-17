@@ -19,9 +19,9 @@ class ImportService
       status: "completed",
       error_log: @errors.presence
     )
-  rescue => e
+  rescue StandardError => e
     @import.update!(status: "failed", error_log: [ { row: 0, message: e.message } ])
-    raise
+    raise ImportError.new(e.message, context: { import_id: @import.id })
   end
 
   private
@@ -39,7 +39,7 @@ class ImportService
           Hash[headers.zip(spreadsheet.row(i))]
         end
       else
-        raise "Unsupported file format: #{ext}"
+        raise UnsupportedFileFormatError.new("Unsupported file format: #{ext}", context: { import_id: @import.id, extension: ext })
       end
     end
   end
@@ -93,7 +93,7 @@ class ImportService
     end
 
     @import.increment!(:processed_rows)
-  rescue => e
+  rescue StandardError => e
     record_error(row_number, e.message)
     @import.increment!(:processed_rows)
   end

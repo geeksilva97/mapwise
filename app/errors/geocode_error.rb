@@ -1,0 +1,1 @@
+class GeocodeError < MapwiseError; end

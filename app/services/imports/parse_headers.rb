@@ -12,8 +12,8 @@ class Imports::ParseHeaders
         []
       end
     end
-  rescue => e
-    Rails.logger.error "Failed to parse headers: #{e.message}"
+  rescue StandardError => e
+    Rails.error.report(e, handled: true, context: { import_id: import.id, file_name: import.file_name }, source: "imports/parse_headers")
     []
   end
 end

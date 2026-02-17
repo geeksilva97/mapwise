@@ -25,7 +25,8 @@ class GeocodeService
     else
       { success: false, error: "Geocoding failed: #{data['status']}" }
     end
-  rescue => e
+  rescue StandardError => e
+    Rails.error.report(e, handled: true, context: { address: address }, source: "geocode_service")
     { success: false, error: e.message }
   end
 end

@@ -49,7 +49,7 @@ class AiChatService
 
   def handle_tool_call(tool_call)
     @tool_call_count += 1
-    raise "Tool call limit exceeded (#{MAX_TOOL_CALLS})" if @tool_call_count > MAX_TOOL_CALLS
+    raise ToolCallLimitExceededError.new("Tool call limit exceeded (#{MAX_TOOL_CALLS})", context: { map_id: @map.id }) if @tool_call_count > MAX_TOOL_CALLS
     @last_tool_mutating = !READ_ONLY_TOOLS.include?(tool_call.name)
   end
 

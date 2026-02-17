@@ -1,0 +1,1 @@
+class AiChatError < MapwiseError; end

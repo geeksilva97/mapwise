@@ -1,0 +1,1 @@
+class UnsupportedFileFormatError < ImportError; end

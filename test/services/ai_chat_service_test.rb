@@ -100,7 +100,7 @@ class AiChatServiceTest < ActiveSupport::TestCase
       kwargs = tool_call.arguments.transform_keys(&:to_sym)
       begin
         result = tool_class.new.execute(**kwargs)
-      rescue => e
+      rescue StandardError => e
         result = { error: e.message }
       end
 

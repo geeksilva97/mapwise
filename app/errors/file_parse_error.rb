@@ -1,0 +1,1 @@
+class FileParseError < MapwiseError; end
