@@ -3,13 +3,13 @@ class MapsController < ApplicationController
   before_action :set_map, only: %i[ show edit update destroy tracking ]
 
   def new
-    @map = Current.user.maps.build
+    @map = Maps::Build.call(Current.user)
   end
 
   def create
-    @map = Current.user.maps.build(map_params)
+    @map = Maps::Create.call(Current.user, map_params)
 
-    if @map.save
+    if @map.persisted?
       redirect_to edit_map_path(@map)
     else
       render :new, status: :unprocessable_entity
@@ -26,7 +26,7 @@ class MapsController < ApplicationController
   end
 
   def update
-    if @map.update(map_params)
+    if Maps::Update.call(@map, map_params)
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: turbo_stream.update("settings_feedback") {
@@ -49,14 +49,14 @@ class MapsController < ApplicationController
   end
 
   def destroy
-    @map.destroy
+    Maps::Destroy.call(@map)
     redirect_to root_path, notice: "Map deleted.", status: :see_other
   end
 
   private
 
   def set_map
-    @map = Current.user.maps.find(params[:id])
+    @map = Maps::Find.call(Current.user, params[:id])
   end
 
   def map_params

@@ -52,6 +52,21 @@ User (auth generator + name)
 - **Style picker**: Select dropdown (was buttons), uses Stimulus `application.getControllerForElementAndIdentifier` to communicate with the map controller on a sibling element
 - **Design tokens**: Cards use `bg-white rounded-xl border border-gray-200 shadow-sm`, inputs use `rounded-lg border-gray-300 bg-gray-50` with blue focus ring, page background `bg-gray-50`
 
+## Starting the Application
+
+```bash
+# Full stack (recommended) — runs Puma, Tailwind watcher, and Solid Queue worker:
+bin/dev
+
+# Or manually in separate terminals:
+bin/rails server   # web server
+bin/jobs            # Solid Queue worker (required for AI chat, CSV import, geocoding, deviation checks)
+```
+
+`Procfile.dev` defines three processes: `web`, `css`, `jobs`. The Solid Queue worker (`bin/jobs`) is **required** — without it, background jobs (AI chat, CSV import, geocoding, deviation checks) will be enqueued but never executed.
+
+---
+
 ## Architecture
 
 - **Google Maps loading**: Script tag injected by Stimulus controller; API key passed via `data-` attribute
@@ -364,6 +379,61 @@ ActionCable.server.broadcast("ai_chat_map_#{map.id}", {
 - "Create with AI" button on dashboard
 
 **Routes**: `resources :chat_messages, only: :create` (nested under maps)
+
+---
+
+## Service Layer (DONE)
+
+Controllers never talk to the database directly — all ActiveRecord operations go through namespaced service classes using the `.call` pattern (one action per class).
+
+**Excluded**: Auth controllers (`SessionsController`, `PasswordsController`, `RegistrationsController`) stay as-is. `SettingsController#update` (user update) and `ImportsController#set_import` (import lookup) are documented exceptions.
+
+### Pattern
+
+```ruby
+# app/services/markers/create.rb
+class Markers::Create
+  def self.call(map, params)
+    marker = map.markers.build(params)
+    marker.save
+    marker
+  end
+end
+
+# Controller usage:
+@marker = Markers::Create.call(@map, marker_params)
+```
+
+### Service Namespaces
+
+| Namespace | Services | Covers |
+|-----------|----------|--------|
+| `Maps::` | List, Find, FindPublicByToken, Build, Create, Update, Destroy | MapsController, DashboardController, EmbedsController |
+| `Markers::` | Find, Create, Update, Ungroup, Destroy | MarkersController |
+| `MarkerGroups::` | Find, Create, Update, Destroy, AssignMarkers, ToggleVisibility | MarkerGroupsController |
+| `Layers::` | Find, Create, Update, Destroy, ToggleVisibility | LayersController |
+| `Tracking::` | FindVehicle, CreateVehicle, UpdateVehicle, DestroyVehicle, ToggleActive, ClearPoints, SavePlannedPath, QueryPoints, FindVehicleByToken, CreateTrackingPoint, AcknowledgeAlert | TrackedVehiclesController, WebhooksController, DeviationAlertsController |
+| `Chat::` | CreateMessage, Clear | ChatMessagesController |
+| `ApiKeys::` | Find, List, Create, Update, Destroy | ApiKeysController, SettingsController |
+| `MapStyles::` | Create, Destroy | MapStylesController |
+| `Imports::` | CreateFromUpload, StartProcessing, ParseHeaders | ImportsController |
+
+`ImportService` (instance-based, used by `CsvImportJob` for row processing) remains as a separate file at `app/services/import_service.rb`.
+
+### Zeitwerk Note
+
+When referencing a top-level constant inside a namespaced service, **always use the `::` prefix** to prevent Zeitwerk from trying to resolve it within the namespace:
+
+```ruby
+# Inside Tracking::FindVehicleByToken
+::TrackedVehicle.find_by(webhook_token: token)  # correct
+TrackedVehicle.find_by(webhook_token: token)     # may fail — Zeitwerk looks for Tracking::TrackedVehicle
+```
+
+Constants that currently need `::`: `::Map` (in `Maps::`), `::TrackedVehicle` (in `Tracking::`), `::MapStyle` (in `MapStyles::`), `::CsvImportJob` (in `Imports::`).
+
+### Tests
+- 476 tests, 1204 assertions — all existing controller integration tests pass unchanged (services are tested indirectly)
 
 ---
 

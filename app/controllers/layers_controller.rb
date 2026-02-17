@@ -3,9 +3,9 @@ class LayersController < ApplicationController
   before_action :set_layer, only: %i[ update destroy toggle_visibility ]
 
   def create
-    @layer = @map.layers.build(layer_params)
+    @layer = Layers::Create.call(@map, layer_params)
 
-    if @layer.save
+    if @layer.persisted?
       respond_to do |format|
         format.turbo_stream
         format.json { render json: @layer }
@@ -19,7 +19,7 @@ class LayersController < ApplicationController
   end
 
   def update
-    if @layer.update(layer_params)
+    if Layers::Update.call(@layer, layer_params)
       respond_to do |format|
         format.turbo_stream
         format.json { render json: @layer }
@@ -33,7 +33,7 @@ class LayersController < ApplicationController
   end
 
   def destroy
-    @layer.destroy
+    Layers::Destroy.call(@layer)
     respond_to do |format|
       format.turbo_stream
       format.json { head :no_content }
@@ -41,7 +41,7 @@ class LayersController < ApplicationController
   end
 
   def toggle_visibility
-    @layer.update!(visible: !@layer.visible)
+    Layers::ToggleVisibility.call(@layer)
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("layer_#{@layer.id}", partial: "layers/layer_item", locals: { layer: @layer }) }
       format.json { render json: @layer }
@@ -51,11 +51,11 @@ class LayersController < ApplicationController
   private
 
   def set_map
-    @map = Current.user.maps.find(params[:map_id])
+    @map = Maps::Find.call(Current.user, params[:map_id])
   end
 
   def set_layer
-    @layer = @map.layers.find(params[:id])
+    @layer = Layers::Find.call(@map, params[:id])
   end
 
   def layer_params

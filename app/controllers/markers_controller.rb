@@ -3,9 +3,9 @@ class MarkersController < ApplicationController
   before_action :set_marker, only: %i[ edit update destroy ungroup ]
 
   def create
-    @marker = @map.markers.build(marker_params)
+    @marker = Markers::Create.call(@map, marker_params)
 
-    if @marker.save
+    if @marker.persisted?
       respond_to do |format|
         format.turbo_stream
         format.json { render json: @marker }
@@ -22,7 +22,7 @@ class MarkersController < ApplicationController
   end
 
   def update
-    if @marker.update(marker_params)
+    if Markers::Update.call(@marker, marker_params)
       respond_to do |format|
         format.turbo_stream
         format.json { render json: @marker }
@@ -36,14 +36,14 @@ class MarkersController < ApplicationController
   end
 
   def ungroup
-    @marker.update!(marker_group_id: nil, color: "#FF0000")
+    Markers::Ungroup.call(@marker)
     respond_to do |format|
       format.json { render json: @marker }
     end
   end
 
   def destroy
-    @marker.destroy
+    Markers::Destroy.call(@marker)
     respond_to do |format|
       format.turbo_stream
       format.json { head :no_content }
@@ -53,11 +53,11 @@ class MarkersController < ApplicationController
   private
 
   def set_map
-    @map = Current.user.maps.find(params[:map_id])
+    @map = Maps::Find.call(Current.user, params[:map_id])
   end
 
   def set_marker
-    @marker = @map.markers.find(params[:id])
+    @marker = Markers::Find.call(@map, params[:id])
   end
 
   def marker_params

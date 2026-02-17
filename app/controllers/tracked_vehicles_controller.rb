@@ -3,9 +3,9 @@ class TrackedVehiclesController < ApplicationController
   before_action :set_vehicle, only: %i[ edit update destroy toggle_active clear_points save_planned_path points ]
 
   def create
-    @vehicle = @map.tracked_vehicles.build(vehicle_params)
+    @vehicle = Tracking::CreateVehicle.call(@map, vehicle_params)
 
-    if @vehicle.save
+    if @vehicle.persisted?
       respond_to do |format|
         format.turbo_stream
         format.json { render json: vehicle_json(@vehicle), status: :created }
@@ -26,7 +26,7 @@ class TrackedVehiclesController < ApplicationController
   end
 
   def update
-    if @vehicle.update(vehicle_params)
+    if Tracking::UpdateVehicle.call(@vehicle, vehicle_params)
       respond_to do |format|
         format.turbo_stream
         format.json { render json: vehicle_json(@vehicle) }
@@ -40,7 +40,7 @@ class TrackedVehiclesController < ApplicationController
   end
 
   def destroy
-    @vehicle.destroy
+    Tracking::DestroyVehicle.call(@vehicle)
     respond_to do |format|
       format.turbo_stream
       format.json { head :no_content }
@@ -48,7 +48,7 @@ class TrackedVehiclesController < ApplicationController
   end
 
   def toggle_active
-    @vehicle.update!(active: !@vehicle.active?)
+    Tracking::ToggleActive.call(@vehicle)
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("vehicle_#{@vehicle.id}", partial: "tracked_vehicles/vehicle_item", locals: { vehicle: @vehicle, map: @map }) }
       format.json { render json: vehicle_json(@vehicle) }
@@ -56,7 +56,7 @@ class TrackedVehiclesController < ApplicationController
   end
 
   def clear_points
-    @vehicle.tracking_points.delete_all
+    Tracking::ClearPoints.call(@vehicle)
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("vehicle_#{@vehicle.id}", partial: "tracked_vehicles/vehicle_item", locals: { vehicle: @vehicle, map: @map }) }
       format.json { head :no_content }
@@ -64,7 +64,7 @@ class TrackedVehiclesController < ApplicationController
   end
 
   def save_planned_path
-    if @vehicle.update(planned_path: params[:planned_path])
+    if Tracking::SavePlannedPath.call(@vehicle, params[:planned_path])
       respond_to do |format|
         format.turbo_stream { render turbo_stream: turbo_stream.replace("vehicle_#{@vehicle.id}", partial: "tracked_vehicles/vehicle_item", locals: { vehicle: @vehicle, map: @map }) }
         format.json { render json: vehicle_json(@vehicle) }
@@ -80,18 +80,18 @@ class TrackedVehiclesController < ApplicationController
     from = params[:from] ? Time.zone.parse(params[:from]) : 24.hours.ago
     to = params[:to] ? Time.zone.parse(params[:to]) : Time.current
 
-    points = @vehicle.tracking_points.in_range(from, to).chronological
+    points = Tracking::QueryPoints.call(@vehicle, from: from, to: to)
     render json: points.select(:id, :lat, :lng, :speed, :heading, :recorded_at)
   end
 
   private
 
   def set_map
-    @map = Current.user.maps.find(params[:map_id])
+    @map = Maps::Find.call(Current.user, params[:map_id])
   end
 
   def set_vehicle
-    @vehicle = @map.tracked_vehicles.find(params[:id])
+    @vehicle = Tracking::FindVehicle.call(@map, params[:id])
   end
 
   def vehicle_params

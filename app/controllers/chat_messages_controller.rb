@@ -3,9 +3,9 @@ class ChatMessagesController < ApplicationController
 
   def create
     content = params.dig(:chat_message, :content).to_s.strip
-    @message = @map.chat_messages.build(role: "user", content: content)
+    @message = Chat::CreateMessage.call(@map, content)
 
-    if @message.save
+    if @message.persisted?
       AiChatJob.perform_later(@map.id, @message.id)
       head :ok
     else
@@ -14,13 +14,13 @@ class ChatMessagesController < ApplicationController
   end
 
   def clear
-    @map.chat_messages.destroy_all
+    Chat::Clear.call(@map)
     redirect_to edit_map_path(@map, tab: "ai"), notice: "Chat cleared"
   end
 
   private
 
   def set_map
-    @map = Current.user.maps.find(params[:map_id])
+    @map = Maps::Find.call(Current.user, params[:map_id])
   end
 end

@@ -11,15 +11,17 @@ class ImportsController < ApplicationController
       end
     end
 
-    file = params[:file]
-    @import = @map.imports.build(
-      file_name: file.original_filename,
-      status: "mapping"
-    )
-    @import.file.attach(file)
+    result = Imports::CreateFromUpload.call(@map, params[:file])
 
-    if @import.save
-      headers = parse_headers(@import)
+    if result[:error]
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("import_area", partial: "imports/upload", locals: { map: @map, error: "Failed to save import." }) }
+        format.json { render json: result[:error], status: :unprocessable_entity }
+        format.html { redirect_to edit_map_path(@map), alert: "Failed to upload file." }
+      end
+    else
+      @import = result[:import]
+      headers = result[:headers]
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: turbo_stream.replace("import_area",
@@ -28,12 +30,6 @@ class ImportsController < ApplicationController
         end
         format.json { render json: { id: @import.id, headers: headers } }
         format.html { redirect_to edit_map_path(@map), notice: "File uploaded. Map your columns." }
-      end
-    else
-      respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("import_area", partial: "imports/upload", locals: { map: @map, error: "Failed to save import." }) }
-        format.json { render json: @import.errors, status: :unprocessable_entity }
-        format.html { redirect_to edit_map_path(@map), alert: "Failed to upload file." }
       end
     end
   end
@@ -67,9 +63,7 @@ class ImportsController < ApplicationController
 
   def update
     mapping = params.require(:column_mapping).permit(:lat, :lng, :address, :title, :description, :color, :group)
-    @import.update!(column_mapping: mapping.to_h, status: "processing")
-
-    CsvImportJob.perform_later(@import.id)
+    Imports::StartProcessing.call(@import, mapping.to_h)
 
     respond_to do |format|
       format.turbo_stream do
@@ -84,28 +78,10 @@ class ImportsController < ApplicationController
   private
 
   def set_map
-    @map = Current.user.maps.find(params[:map_id])
+    @map = Maps::Find.call(Current.user, params[:map_id])
   end
 
   def set_import
     @import = @map.imports.find(params[:id])
-  end
-
-  def parse_headers(import)
-    import.file.blob.open do |tempfile|
-      ext = File.extname(import.file_name).downcase
-      case ext
-      when ".csv"
-        CSV.read(tempfile.path, headers: true).headers
-      when ".xlsx", ".xls"
-        spreadsheet = Roo::Spreadsheet.open(tempfile.path, extension: ext.delete("."))
-        spreadsheet.row(1)
-      else
-        []
-      end
-    end
-  rescue => e
-    Rails.logger.error "Failed to parse headers: #{e.message}"
-    []
   end
 end

@@ -3,7 +3,7 @@ class WebhooksController < ApplicationController
   skip_before_action :verify_authenticity_token
 
   def tracking
-    vehicle = TrackedVehicle.find_by(webhook_token: params[:token])
+    vehicle = Tracking::FindVehicleByToken.call(params[:token])
 
     unless vehicle
       render json: { error: "Vehicle not found" }, status: :not_found
@@ -15,15 +15,9 @@ class WebhooksController < ApplicationController
       return
     end
 
-    point = vehicle.tracking_points.build(
-      lat: params[:lat],
-      lng: params[:lng],
-      speed: params[:speed],
-      heading: params[:heading],
-      recorded_at: params[:recorded_at] || Time.current
-    )
+    point = Tracking::CreateTrackingPoint.call(vehicle, params)
 
-    if point.save
+    if point.persisted?
       TrackingBroadcastJob.perform_later(point.id)
       DeviationCheckJob.perform_later(point.id) if vehicle.deviation_detection_enabled?
       render json: { point_id: point.id }, status: :ok

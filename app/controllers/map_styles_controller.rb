@@ -1,8 +1,8 @@
 class MapStylesController < ApplicationController
   def create
-    @map_style = Current.user.map_styles.build(map_style_params)
+    @map_style = MapStyles::Create.call(Current.user, map_style_params)
 
-    if @map_style.save
+    if @map_style.persisted?
       redirect_back fallback_location: root_path, notice: "Style created."
     else
       redirect_back fallback_location: root_path, alert: "Could not create style."
@@ -10,12 +10,11 @@ class MapStylesController < ApplicationController
   end
 
   def destroy
-    @map_style = MapStyle.for_user(Current.user).find(params[:id])
+    result = MapStyles::Destroy.call(Current.user, params[:id])
 
-    if @map_style.system_default?
-      redirect_back fallback_location: root_path, alert: "Cannot delete system presets."
+    if result.is_a?(Hash) && result[:error]
+      redirect_back fallback_location: root_path, alert: result[:error]
     else
-      @map_style.destroy
       redirect_back fallback_location: root_path, notice: "Style deleted."
     end
   end

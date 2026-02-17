@@ -1,5 +1,5 @@
 class DashboardController < ApplicationController
   def index
-    @maps = Current.user.maps.order(updated_at: :desc)
+    @maps = Maps::List.call(Current.user)
   end
 end
