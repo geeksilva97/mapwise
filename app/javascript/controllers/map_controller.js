@@ -5,6 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 //   Without google_map_id → no mapId → legacy Marker with SVG icons, JSON styles
 
 export default class extends Controller {
+  static targets = ["markerSync"]
   static values = {
     centerLat: { type: Number, default: 0 },
     centerLng: { type: Number, default: 0 },
@@ -28,6 +29,11 @@ export default class extends Controller {
   }
 
   disconnect() {
+  }
+
+  markerSyncTargetConnected(el) {
+    this.markersValue = JSON.parse(el.dataset.markers)
+    el.remove()
   }
 
   waitForGoogleMaps() {

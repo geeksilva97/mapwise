@@ -6,8 +6,8 @@
   <turbo-frame id="marker_form"></turbo-frame>
 <% end %>
 
-<%= turbo_stream.replace "markers_data" do %>
-  <script type="application/json" id="markers-data" data-map-target="markersData">
-    <%= @map.markers.select(:id, :lat, :lng, :title, :description, :color).to_json.html_safe %>
-  </script>
+<%= turbo_stream.append "map-canvas" do %>
+  <template data-map-target="markerSync"
+            data-markers="<%= @map.markers.select(:id, :lat, :lng, :title, :description, :color, :marker_group_id, :custom_info_html).to_json %>">
+  </template>
 <% end %>
