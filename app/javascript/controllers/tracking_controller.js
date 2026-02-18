@@ -60,9 +60,11 @@ export default class extends Controller {
     }
 
     this.map = new Map(this.mapTarget, mapOptions)
+    this._hasFitted = false
 
     // Render initial vehicles (planned paths + last known position)
-    this.vehiclesValue.forEach(v => this.#initVehicle(v))
+    const inits = this.vehiclesValue.map(v => this.#initVehicle(v))
+    Promise.all(inits).then(() => this.#fitToAllVehicles())
 
     // Subscribe to Action Cable
     this.#subscribe()
@@ -202,6 +204,23 @@ export default class extends Controller {
     }
   }
 
+  #fitToAllVehicles() {
+    const bounds = new google.maps.LatLngBounds()
+    let hasPoints = false
+
+    this.vehicleTrails.forEach(trail => {
+      trail.getPath().forEach(p => { bounds.extend(p); hasPoints = true })
+    })
+    this.vehicleMarkers.forEach(marker => {
+      bounds.extend(marker.getPosition()); hasPoints = true
+    })
+
+    if (hasPoints) {
+      this.map.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 })
+      this._hasFitted = true
+    }
+  }
+
   #updateVehiclePosition(data) {
     const { vehicle_id, vehicle_color, point } = data
     const position = { lat: point.lat, lng: point.lng }
@@ -224,6 +243,15 @@ export default class extends Controller {
     const trail = this.vehicleTrails.get(vehicle_id)
     if (trail) {
       trail.getPath().push(new google.maps.LatLng(point.lat, point.lng))
+    }
+
+    // Auto-zoom on first real-time point, then pan to follow
+    if (!this._hasFitted) {
+      this.map.setCenter(position)
+      this.map.setZoom(15)
+      this._hasFitted = true
+    } else if (!this.map.getBounds()?.contains(position)) {
+      this.map.panTo(position)
     }
 
     // Update sidebar live vehicle list

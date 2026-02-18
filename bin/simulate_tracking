@@ -1,0 +1,288 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Standalone tracking simulator — no Rails dependency.
+# Sends realistic GPS coordinates to the webhook endpoint so you can
+# demo vehicle movement on the live tracking page.
+#
+# Usage:
+#   bin/simulate_tracking <WEBHOOK_TOKEN>
+#   bin/simulate_tracking <WEBHOOK_TOKEN> --route highway_drive --interval 1
+#   bin/simulate_tracking <WEBHOOK_TOKEN> --loop
+#   bin/simulate_tracking --list
+
+require "net/http"
+require "json"
+require "uri"
+require "optparse"
+
+# ---------------------------------------------------------------------------
+# Predefined routes: arrays of [lat, lng, speed_kmh]
+# ---------------------------------------------------------------------------
+ROUTES = {
+  "nyc_taxi" => {
+    description: "Cab through Manhattan: Times Square → Central Park → Upper East Side → East Village",
+    waypoints: [
+      [40.7580, -73.9855, 15],  # Times Square
+      [40.7590, -73.9845, 25],
+      [40.7614, -73.9818, 30],
+      [40.7641, -73.9794, 35],
+      [40.7668, -73.9763, 30],  # Heading toward Central Park
+      [40.7695, -73.9740, 25],
+      [40.7712, -73.9742, 20],
+      [40.7735, -73.9755, 15],  # Central Park South
+      [40.7751, -73.9712, 20],
+      [40.7790, -73.9680, 30],
+      [40.7812, -73.9650, 35],  # Inside Central Park area
+      [40.7835, -73.9620, 30],
+      [40.7815, -73.9590, 25],  # Turning east
+      [40.7790, -73.9560, 30],
+      [40.7770, -73.9540, 35],  # Upper East Side
+      [40.7740, -73.9560, 30],
+      [40.7700, -73.9590, 35],  # Heading south
+      [40.7650, -73.9620, 30],
+      [40.7600, -73.9650, 25],
+      [40.7550, -73.9680, 20],
+      [40.7500, -73.9700, 15],  # East Village
+      [40.7480, -73.9720, 10],
+    ]
+  },
+  "highway_drive" => {
+    description: "I-95 NJ/NY stretch at highway speeds",
+    waypoints: [
+      [40.7280, -74.0780, 40],   # Newark approach
+      [40.7310, -74.0720, 60],
+      [40.7350, -74.0650, 80],
+      [40.7400, -74.0580, 100],
+      [40.7460, -74.0500, 110],  # Highway cruising
+      [40.7530, -74.0420, 115],
+      [40.7610, -74.0340, 120],
+      [40.7700, -74.0260, 115],
+      [40.7780, -74.0190, 110],
+      [40.7850, -74.0130, 100],  # Approaching GWB area
+      [40.7920, -74.0080, 80],
+      [40.8000, -74.0030, 60],
+      [40.8080, -73.9970, 50],
+      [40.8150, -73.9920, 40],
+      [40.8200, -73.9880, 30],   # Slowing down
+    ]
+  },
+  "delivery_route" => {
+    description: "Local neighborhood delivery loop with stops (Brooklyn)",
+    waypoints: [
+      [40.6892, -73.9857, 0],   # Stop 1 — Warehouse
+      [40.6895, -73.9850, 10],
+      [40.6905, -73.9835, 20],
+      [40.6920, -73.9815, 25],
+      [40.6935, -73.9800, 20],
+      [40.6945, -73.9790, 0],   # Stop 2 — Delivery
+      [40.6945, -73.9790, 10],
+      [40.6960, -73.9775, 20],
+      [40.6978, -73.9760, 25],
+      [40.6995, -73.9745, 20],
+      [40.7005, -73.9738, 0],   # Stop 3 — Delivery
+      [40.7005, -73.9738, 10],
+      [40.7020, -73.9750, 20],
+      [40.7035, -73.9768, 25],
+      [40.7050, -73.9785, 20],
+      [40.7060, -73.9795, 0],   # Stop 4 — Delivery
+      [40.7060, -73.9795, 10],
+      [40.7045, -73.9810, 20],
+      [40.7025, -73.9825, 25],
+      [40.7005, -73.9840, 20],
+      [40.6985, -73.9850, 15],
+      [40.6960, -73.9855, 20],
+      [40.6935, -73.9858, 15],
+      [40.6910, -73.9860, 10],
+      [40.6892, -73.9857, 0],   # Back to warehouse
+    ]
+  }
+}.freeze
+
+# ---------------------------------------------------------------------------
+# Geo math
+# ---------------------------------------------------------------------------
+DEG_TO_RAD = Math::PI / 180.0
+RAD_TO_DEG = 180.0 / Math::PI
+EARTH_RADIUS_M = 6_371_000.0
+
+def haversine_distance(lat1, lng1, lat2, lng2)
+  dlat = (lat2 - lat1) * DEG_TO_RAD
+  dlng = (lng2 - lng1) * DEG_TO_RAD
+  a = Math.sin(dlat / 2)**2 +
+      Math.cos(lat1 * DEG_TO_RAD) * Math.cos(lat2 * DEG_TO_RAD) *
+      Math.sin(dlng / 2)**2
+  2.0 * EARTH_RADIUS_M * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+end
+
+def bearing(lat1, lng1, lat2, lng2)
+  dl = (lng2 - lng1) * DEG_TO_RAD
+  la1 = lat1 * DEG_TO_RAD
+  la2 = lat2 * DEG_TO_RAD
+  x = Math.sin(dl) * Math.cos(la2)
+  y = Math.cos(la1) * Math.sin(la2) - Math.sin(la1) * Math.cos(la2) * Math.cos(dl)
+  (Math.atan2(x, y) * RAD_TO_DEG + 360) % 360
+end
+
+# ---------------------------------------------------------------------------
+# Interpolation — expand waypoints into ~step_meters apart points
+# ---------------------------------------------------------------------------
+def interpolate(waypoints, step_meters = 50)
+  points = []
+
+  waypoints.each_cons(2) do |(lat1, lng1, spd1), (lat2, lng2, spd2)|
+    dist = haversine_distance(lat1, lng1, lat2, lng2)
+    steps = [1, (dist / step_meters).ceil].max
+
+    steps.times do |i|
+      t = i.to_f / steps
+      lat = lat1 + (lat2 - lat1) * t
+      lng = lng1 + (lng2 - lng1) * t
+      spd = spd1 + (spd2 - spd1) * t
+      points << { lat: lat.round(6), lng: lng.round(6), speed: spd.round(1) }
+    end
+  end
+
+  # Add the final waypoint
+  last = waypoints.last
+  points << { lat: last[0].round(6), lng: last[1].round(6), speed: last[2].round(1) }
+
+  # Compute headings from consecutive points
+  points.each_cons(2) do |a, b|
+    a[:heading] = bearing(a[:lat], a[:lng], b[:lat], b[:lng]).round(1)
+  end
+  points.last[:heading] = points[-2][:heading] if points.size > 1
+  points.last[:heading] ||= 0.0
+
+  points
+end
+
+# ---------------------------------------------------------------------------
+# HTTP
+# ---------------------------------------------------------------------------
+def send_point(uri, point)
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = (uri.scheme == "https")
+  http.open_timeout = 5
+  http.read_timeout = 5
+
+  body = {
+    lat: point[:lat],
+    lng: point[:lng],
+    speed: point[:speed],
+    heading: point[:heading],
+    recorded_at: Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+  }.to_json
+
+  request = Net::HTTP::Post.new(uri.path)
+  request["Content-Type"] = "application/json"
+  request.body = body
+
+  response = http.request(request)
+  response.code.to_i
+rescue StandardError => e
+  "ERR: #{e.message}"
+end
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+options = {
+  route: "nyc_taxi",
+  interval: 2.0,
+  host: "localhost:3000",
+  loop: false,
+  list: false,
+  scheme: "http"
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/simulate_tracking [TOKEN] [options]"
+  opts.separator ""
+  opts.separator "Sends simulated GPS points to a MapWise tracking webhook."
+  opts.separator ""
+
+  opts.on("--route ROUTE", "Route to simulate (default: nyc_taxi)") { |v| options[:route] = v }
+  opts.on("--interval SECS", Float, "Seconds between points (default: 2)") { |v| options[:interval] = v }
+  opts.on("--host HOST", "Target host:port (default: localhost:3000)") { |v| options[:host] = v }
+  opts.on("--https", "Use HTTPS instead of HTTP") { options[:scheme] = "https" }
+  opts.on("--loop", "Loop the route continuously") { options[:loop] = true }
+  opts.on("--list", "List available routes and exit") { options[:list] = true }
+  opts.on("-h", "--help", "Show this help") do
+    puts opts
+    exit
+  end
+end
+
+parser.parse!
+
+# --list: show routes and exit
+if options[:list]
+  puts "Available routes:"
+  puts ""
+  ROUTES.each do |id, route|
+    points = interpolate(route[:waypoints])
+    puts "  %-18s %s (%d points)" % [id, route[:description], points.size]
+  end
+  puts ""
+  puts "Usage: bin/simulate_tracking <TOKEN> --route <ROUTE_ID>"
+  exit
+end
+
+# Token is the first positional argument
+token = ARGV.shift
+unless token
+  puts parser.banner
+  puts "Error: webhook token is required. Pass -h for help."
+  exit 1
+end
+
+route_data = ROUTES[options[:route]]
+unless route_data
+  puts "Error: unknown route '#{options[:route]}'. Use --list to see available routes."
+  exit 1
+end
+
+points = interpolate(route_data[:waypoints])
+url = "#{options[:scheme]}://#{options[:host]}/webhooks/tracking/#{token}"
+uri = URI.parse(url)
+
+puts "Tracking simulator started"
+puts "  Route:    #{options[:route]} (#{points.size} points)"
+puts "  Target:   #{url}"
+puts "  Interval: #{options[:interval]}s"
+puts "  Loop:     #{options[:loop] ? "yes" : "no"}"
+puts ""
+
+sent = 0
+
+begin
+  loop do
+    points.each_with_index do |point, i|
+      sent += 1
+      status = send_point(uri, point)
+
+      printf " #%-4d %9.4f, %9.4f  %5.1f km/h  heading %5.1f°  → %s\n",
+             sent, point[:lat], point[:lng], point[:speed], point[:heading], status
+
+      if status.is_a?(Integer) && status == 404
+        puts "\nError: vehicle not found. Check that the webhook token is correct."
+        exit 1
+      end
+
+      if status.is_a?(Integer) && status == 410
+        puts "\nError: vehicle is inactive. Enable tracking for this vehicle first."
+        exit 1
+      end
+
+      sleep options[:interval] unless i == points.size - 1 && !options[:loop]
+    end
+
+    break unless options[:loop]
+    puts "\n  ↻ Looping route...\n\n"
+  end
+rescue Interrupt
+  # Ctrl+C
+end
+
+puts "\nStopped. Sent #{sent}/#{options[:loop] ? '∞' : points.size} points."
