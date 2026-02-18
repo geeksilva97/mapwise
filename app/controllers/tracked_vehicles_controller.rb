@@ -79,8 +79,9 @@ class TrackedVehiclesController < ApplicationController
   def points
     from = params[:from] ? Time.zone.parse(params[:from]) : 24.hours.ago
     to = params[:to] ? Time.zone.parse(params[:to]) : Time.current
+    limit = params[:limit] ? params[:limit].to_i.clamp(1, 10_000) : nil
 
-    points = Tracking::QueryPoints.call(@vehicle, from: from, to: to)
+    points = Tracking::QueryPoints.call(@vehicle, from: from, to: to, limit: limit)
     render json: points.select(:id, :lat, :lng, :speed, :heading, :recorded_at)
   end
 

@@ -109,6 +109,15 @@ class TrackedVehiclesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, data.length
   end
 
+  test "should limit points with limit parameter" do
+    get points_map_tracked_vehicle_path(@map, @vehicle),
+      params: { limit: 2 },
+      as: :json
+    assert_response :success
+    data = JSON.parse(response.body)
+    assert_equal 2, data.length
+  end
+
   # SAVE PLANNED PATH - clear
   test "should clear planned path with null" do
     vehicle = tracked_vehicles(:courier_bike)
