@@ -47,7 +47,7 @@ class EmailVerificationsControllerTest < ActionDispatch::IntegrationTest
   test "create resends verification email" do
     sign_in_as(@user)
 
-    assert_enqueued_email_with UserMailer, :email_verification, args: [@user] do
+    assert_enqueued_email_with UserMailer, :email_verification, args: [ @user ] do
       post resend_email_verification_path
     end
 
@@ -64,7 +64,7 @@ class EmailVerificationsControllerTest < ActionDispatch::IntegrationTest
     @user.update!(created_at: 10.days.ago)
     sign_in_as(@user)
 
-    assert_enqueued_email_with UserMailer, :email_verification, args: [@user] do
+    assert_enqueued_email_with UserMailer, :email_verification, args: [ @user ] do
       post resend_email_verification_path
     end
 

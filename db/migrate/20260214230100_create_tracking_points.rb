@@ -11,6 +11,6 @@ class CreateTrackingPoints < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :tracking_points, [:tracked_vehicle_id, :recorded_at]
+    add_index :tracking_points, [ :tracked_vehicle_id, :recorded_at ]
   end
 end

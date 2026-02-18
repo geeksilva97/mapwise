@@ -20,13 +20,13 @@ class DeviationCheckServiceTest < ActiveSupport::TestCase
 
   test "minimum_distance_to_path for point on path" do
     # Point right on the path start
-    path = [[-74.006, 40.7128], [-73.99, 40.72]]
+    path = [ [ -74.006, 40.7128 ], [ -73.99, 40.72 ] ]
     dist = DeviationCheckService.minimum_distance_to_path(40.7128, -74.006, path)
     assert_in_delta 0, dist, 1.0  # within 1m
   end
 
   test "minimum_distance_to_path for distant point" do
-    path = [[-74.006, 40.7128], [-73.99, 40.72]]
+    path = [ [ -74.006, 40.7128 ], [ -73.99, 40.72 ] ]
     # Point far from path
     dist = DeviationCheckService.minimum_distance_to_path(40.80, -73.90, path)
     assert dist > 1000  # should be > 1km away
@@ -77,8 +77,8 @@ class DeviationCheckServiceTest < ActiveSupport::TestCase
 
   test "cross_track_distance returns correct distance for perpendicular point" do
     # A simple east-west line and a point offset north
-    seg_start = [0.0, 0.0]  # [lng, lat]
-    seg_end = [1.0, 0.0]
+    seg_start = [ 0.0, 0.0 ]  # [lng, lat]
+    seg_end = [ 1.0, 0.0 ]
     # Point at (0, 0.5) — should be ~55.6km north
     dist = DeviationCheckService.cross_track_distance(0.5, 0.5, seg_start, seg_end)
     assert_in_delta 55_600, dist, 500
@@ -103,13 +103,13 @@ class DeviationCheckServiceTest < ActiveSupport::TestCase
   end
 
   test "minimum_distance_to_path handles duplicate consecutive points" do
-    path = [[-74.006, 40.7128], [-74.006, 40.7128], [-73.98, 40.73]]
+    path = [ [ -74.006, 40.7128 ], [ -74.006, 40.7128 ], [ -73.98, 40.73 ] ]
     dist = DeviationCheckService.minimum_distance_to_path(40.7128, -74.006, path)
     assert_in_delta 0, dist, 1.0
   end
 
   test "minimum_distance_to_path for point at mid-segment endpoint" do
-    path = [[-74.006, 40.7128], [-73.99, 40.72], [-73.98, 40.73]]
+    path = [ [ -74.006, 40.7128 ], [ -73.99, 40.72 ], [ -73.98, 40.73 ] ]
     # Point exactly at second coordinate
     dist = DeviationCheckService.minimum_distance_to_path(40.72, -73.99, path)
     assert_in_delta 0, dist, 1.0

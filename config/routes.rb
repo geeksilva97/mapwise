@@ -20,7 +20,7 @@ Rails.application.routes.draw do
     resources :layers, only: %i[ create update destroy ] do
       member { patch :toggle_visibility }
     end
-    resources :tracked_vehicles, except: [:show] do
+    resources :tracked_vehicles, except: [ :show ] do
       member do
         patch :toggle_active
         delete :clear_points
@@ -31,7 +31,7 @@ Rails.application.routes.draw do
     resources :deviation_alerts, only: [] do
       member { patch :acknowledge }
     end
-    resources :chat_messages, only: [:create] do
+    resources :chat_messages, only: [ :create ] do
       collection { delete :clear }
     end
     member { get :tracking }

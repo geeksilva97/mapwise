@@ -10,6 +10,6 @@ class CreateDeviationAlerts < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :deviation_alerts, [:tracked_vehicle_id, :acknowledged]
+    add_index :deviation_alerts, [ :tracked_vehicle_id, :acknowledged ]
   end
 end

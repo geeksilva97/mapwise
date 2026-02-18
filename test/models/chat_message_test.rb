@@ -50,7 +50,7 @@ class ChatMessageTest < ActiveSupport::TestCase
       map: maps(:one),
       role: "assistant",
       content: "Done",
-      tool_calls: [{ "name" => "create_marker", "input" => { "lat" => 40.7 } }]
+      tool_calls: [ { "name" => "create_marker", "input" => { "lat" => 40.7 } } ]
     )
     message.reload
     assert_equal "create_marker", message.tool_calls.first["name"]

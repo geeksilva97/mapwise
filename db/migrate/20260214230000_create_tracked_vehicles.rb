@@ -15,6 +15,6 @@ class CreateTrackedVehicles < ActiveRecord::Migration[8.1]
     end
 
     add_index :tracked_vehicles, :webhook_token, unique: true
-    add_index :tracked_vehicles, [:map_id, :position]
+    add_index :tracked_vehicles, [ :map_id, :position ]
   end
 end

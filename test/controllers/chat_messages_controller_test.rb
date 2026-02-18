@@ -21,7 +21,7 @@ class ChatMessagesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Add 3 restaurants", message.content
     assert_equal @map, message.map
 
-    assert_enqueued_with(job: AiChatJob, args: [@map.id, message.id])
+    assert_enqueued_with(job: AiChatJob, args: [ @map.id, message.id ])
   end
 
   test "create with blank content returns error" do
