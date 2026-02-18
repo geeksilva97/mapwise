@@ -1,6 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import consumer from "channels/consumer"
 import { request } from "utils/http"
+import { findMapController } from "utils/controllers"
 
 export default class extends Controller {
   static values = { mapId: Number }
@@ -92,22 +93,19 @@ export default class extends Controller {
 
   #syncMapState(data) {
     // Update markers and groups on the map controller
-    const mapCanvas = document.getElementById("map-canvas")
-    if (mapCanvas) {
-      const mapController = this.application.getControllerForElementAndIdentifier(mapCanvas, "map")
-      if (mapController) {
-        if (data.markers_json) {
-          mapController.markersValue = JSON.parse(data.markers_json)
-        }
-        if (data.groups_json) {
-          mapController.groupsValue = JSON.parse(data.groups_json)
-        }
-        if (data.style_json) {
-          mapController.applyStyle(data.style_json)
-        }
-        if (data.center_lat && data.center_lng) {
-          mapController.panTo(data.center_lat, data.center_lng, data.zoom)
-        }
+    const mapController = findMapController(this.application)
+    if (mapController) {
+      if (data.markers_json) {
+        mapController.markersValue = JSON.parse(data.markers_json)
+      }
+      if (data.groups_json) {
+        mapController.groupsValue = JSON.parse(data.groups_json)
+      }
+      if (data.style_json) {
+        mapController.applyStyle(data.style_json)
+      }
+      if (data.center_lat && data.center_lng) {
+        mapController.panTo(data.center_lat, data.center_lng, data.zoom)
       }
     }
 

@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { turboPatch, turboDelete, turboPost, patchJSON } from "utils/http"
+import { findMapController } from "utils/controllers"
+import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = { id: Number, mapId: Number }
@@ -36,7 +38,7 @@ export default class extends Controller {
         // Apply turbo stream to update the eye icon
         Turbo.renderStreamMessage(html)
       })
-      .catch(err => console.error("Failed to toggle group visibility:", err))
+      .catch(err => showError("Failed to toggle group visibility.", err))
   }
 
   pickMarkers(event) {
@@ -51,9 +53,62 @@ export default class extends Controller {
 
       patchJSON(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}/assign_markers`, { marker_ids: markerIds })
         .then(() => {
-          window.location.reload()
+          const group = (mapCtrl.groupsValue || []).find(g => g.id === this.idValue)
+          const groupColor = group?.color || "#6B7280"
+
+          // Update map markers data
+          const markerIdSet = new Set(markerIds)
+          mapCtrl.markersValue = mapCtrl.markersValue.map(m =>
+            markerIdSet.has(m.id)
+              ? { ...m, marker_group_id: this.idValue, color: groupColor }
+              : m
+          )
+
+          const groupContent = this.element.querySelector('[data-group-target="content"]')
+          if (!groupContent) return
+
+          // Remove "No markers" placeholder
+          const placeholder = groupContent.querySelector('p.text-xs.text-gray-400')
+          if (placeholder) placeholder.remove()
+
+          // Track source groups for count updates
+          const affectedGroups = new Set()
+
+          markerIds.forEach(id => {
+            const item = document.getElementById(`marker_${id}`)
+            if (!item) return
+
+            // Track source group before moving
+            const sourceGroup = item.closest('[id^="group_"]')
+            if (sourceGroup && sourceGroup !== this.element) affectedGroups.add(sourceGroup)
+
+            // Update color dot
+            const dot = item.querySelector('.w-3.h-3.rounded-full')
+            if (dot) dot.style.backgroundColor = groupColor
+
+            // Add "Ungroup" link if not present
+            const actions = item.querySelector('.flex.items-center.gap-2.shrink-0')
+            if (actions && !actions.querySelector('[data-action*="ungroupMarker"]')) {
+              const ungroupLink = document.createElement("a")
+              ungroupLink.href = "#"
+              ungroupLink.dataset.action = "click->marker-editor#ungroupMarker"
+              ungroupLink.dataset.markerEditorIdParam = id
+              ungroupLink.className = "text-gray-500 hover:text-gray-700 text-xs font-medium cursor-pointer"
+              ungroupLink.title = "Remove from group"
+              ungroupLink.textContent = "Ungroup"
+              actions.insertBefore(ungroupLink, actions.firstChild)
+            }
+
+            groupContent.appendChild(item)
+          })
+
+          // Update target group count
+          this.#updateGroupCount(this.element)
+
+          // Update source group counts
+          affectedGroups.forEach(groupEl => this.#updateGroupCount(groupEl))
         })
-        .catch(err => console.error("Failed to assign markers:", err))
+        .catch(err => showError("Failed to assign markers.", err))
     })
   }
 
@@ -100,7 +155,7 @@ export default class extends Controller {
         // Apply turbo stream to remove the DOM element
         Turbo.renderStreamMessage(html)
       })
-      .catch(err => console.error("Failed to delete group:", err))
+      .catch(err => showError("Failed to delete group.", err))
   }
 
   showNewForm() {
@@ -167,11 +222,19 @@ export default class extends Controller {
           // The groups data attribute doesn't need immediate update since visibility is true by default
         }
       })
-      .catch(err => console.error("Failed to create group:", err))
+      .catch(err => showError("Failed to create group.", err))
   }
 
   #mapController() {
-    const mapEl = document.getElementById("map-canvas")
-    return this.application.getControllerForElementAndIdentifier(mapEl, "map")
+    return findMapController(this.application)
+  }
+
+  #updateGroupCount(groupEl) {
+    const content = groupEl.querySelector('[data-group-target="content"]')
+    const countSpan = groupEl.querySelector('span.text-xs.text-gray-400')
+    if (countSpan && content) {
+      const count = content.querySelectorAll('[id^="marker_"]').length
+      countSpan.textContent = `(${count})`
+    }
   }
 }

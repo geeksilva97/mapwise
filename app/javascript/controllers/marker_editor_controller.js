@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { postJSON, patchJSON, request } from "utils/http"
+import { findMapController, findDrawingController } from "utils/controllers"
+import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = { mapId: Number }
@@ -26,7 +28,9 @@ export default class extends Controller {
       .then(marker => {
         // Update sidebar
         this.#appendMarkerToSidebar(marker)
-        this.countTarget.textContent = parseInt(this.countTarget.textContent) + 1
+        if (this.hasCountTarget) {
+          this.countTarget.textContent = parseInt(this.countTarget.textContent) + 1
+        }
         const empty = document.getElementById("markers_empty")
         if (empty) empty.remove()
 
@@ -39,7 +43,7 @@ export default class extends Controller {
           }]
         }
       })
-      .catch(err => this.#showError("Failed to create marker.", err))
+      .catch(err => showError("Failed to create marker.", err))
   }
 
   // Show inline delete confirmation for a marker
@@ -73,7 +77,9 @@ export default class extends Controller {
         // Remove from sidebar
         const item = document.getElementById(`marker_${markerId}`)
         if (item) item.remove()
-        this.countTarget.textContent = Math.max(0, parseInt(this.countTarget.textContent) - 1)
+        if (this.hasCountTarget) {
+          this.countTarget.textContent = Math.max(0, parseInt(this.countTarget.textContent) - 1)
+        }
 
         // Remove from map
         const mapCtrl = this.#mapController()
@@ -81,7 +87,7 @@ export default class extends Controller {
           mapCtrl.markersValue = (mapCtrl.markersValue || []).filter(m => m.id !== Number(markerId))
         }
       })
-      .catch(err => this.#showError("Failed to delete marker.", err))
+      .catch(err => showError("Failed to delete marker.", err))
   }
 
   // Remove a marker from its group
@@ -90,10 +96,46 @@ export default class extends Controller {
     const markerId = event.params.id
 
     patchJSON(`/maps/${this.mapIdValue}/markers/${markerId}/ungroup`)
-      .then(() => {
-        window.location.reload()
+      .then(marker => {
+        // Update map markers data
+        const mapCtrl = this.#mapController()
+        if (mapCtrl) {
+          mapCtrl.markersValue = mapCtrl.markersValue.map(m =>
+            m.id === marker.id
+              ? { ...m, marker_group_id: null, color: marker.color }
+              : m
+          )
+        }
+
+        const item = document.getElementById(`marker_${marker.id}`)
+        if (!item) return
+
+        // Track source group before moving
+        const groupEl = item.closest('[id^="group_"]')
+
+        // Remove "Ungroup" link
+        const ungroupLink = item.querySelector('[data-action*="ungroupMarker"]')
+        if (ungroupLink) ungroupLink.remove()
+
+        // Update color dot
+        const dot = item.querySelector('.w-3.h-3.rounded-full')
+        if (dot) dot.style.backgroundColor = marker.color
+
+        // Move to ungrouped markers list
+        const markersList = document.getElementById("markers_list")
+        if (markersList) markersList.appendChild(item)
+
+        // Update source group marker count
+        if (groupEl) {
+          const content = groupEl.querySelector('[data-group-target="content"]')
+          const countSpan = groupEl.querySelector('span.text-xs.text-gray-400')
+          if (countSpan && content) {
+            const count = content.querySelectorAll('[id^="marker_"]').length
+            countSpan.textContent = `(${count})`
+          }
+        }
       })
-      .catch(err => this.#showError("Failed to ungroup marker.", err))
+      .catch(err => showError("Failed to ungroup marker.", err))
   }
 
   // Called when the map controller dispatches markerDragged
@@ -101,7 +143,7 @@ export default class extends Controller {
     const { id, lat, lng } = event.detail
 
     patchJSON(`/maps/${this.mapIdValue}/markers/${id}`, { marker: { lat, lng } })
-      .catch(err => this.#showError("Failed to save marker position.", err))
+      .catch(err => showError("Failed to save marker position.", err))
   }
 
   // Capture the current map center/zoom into the settings form and save
@@ -279,23 +321,12 @@ export default class extends Controller {
     list.appendChild(item)
   }
 
-  #showError(message, err) {
-    console.error(message, err)
-    const flash = document.createElement("div")
-    flash.className = "fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm z-50"
-    flash.textContent = message
-    document.body.appendChild(flash)
-    setTimeout(() => flash.remove(), 3000)
-  }
-
   #mapController() {
-    const mapEl = document.getElementById("map-canvas")
-    return this.application.getControllerForElementAndIdentifier(mapEl, "map")
+    return findMapController(this.application)
   }
 
   #drawingController() {
-    const drawingEl = document.querySelector("[data-controller='drawing']")
-    return this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
+    return findDrawingController(this.application)
   }
 
   #geojsonCenter(geojson) {

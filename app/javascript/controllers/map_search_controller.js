@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { findMapController } from "utils/controllers"
 
 export default class extends Controller {
   static values = {
@@ -23,17 +24,14 @@ export default class extends Controller {
   }
 
   waitForMap() {
-    const mapEl = document.getElementById("map-canvas")
-    if (!mapEl) return
-
-    const mapCtrl = this.application.getControllerForElementAndIdentifier(mapEl, "map")
+    const mapCtrl = findMapController(this.application)
     if (mapCtrl?.map) {
       this.mapController = mapCtrl
 
       if (this.modeValue === "places") {
         this.#initPlacesAutocomplete()
       }
-    } else {
+    } else if (document.getElementById("map-canvas")) {
       this._waitTimer = setTimeout(() => this.waitForMap(), 200)
     }
   }
@@ -129,6 +127,8 @@ export default class extends Controller {
         li.appendChild(main)
 
         li.addEventListener("click", () => {
+          if (!this.mapController) return
+
           if (result.geometry.viewport) {
             this.mapController.map.fitBounds(result.geometry.viewport)
           } else {

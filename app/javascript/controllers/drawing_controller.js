@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { request, turboPatch, turboDelete } from "utils/http"
+import { findMapController } from "utils/controllers"
+import { showError } from "utils/flash"
 
 const LAYER_TYPE_MAP = {
   polygon: "polygon",
@@ -58,10 +60,7 @@ export default class extends Controller {
   }
 
   waitForMap() {
-    const mapEl = document.getElementById("map-canvas")
-    if (!mapEl) return
-
-    const mapCtrl = this.application.getControllerForElementAndIdentifier(mapEl, "map")
+    const mapCtrl = findMapController(this.application)
     if (mapCtrl?.map) {
       this.googleMap = mapCtrl.map
       // Use a separate Data layer so Terra Draw's default data layer doesn't interfere
@@ -71,8 +70,8 @@ export default class extends Controller {
       } else {
         this.initTerraDraw()
       }
-    } else {
-      // Retry until map is ready
+    } else if (document.getElementById("map-canvas")) {
+      // Element exists but controller/map not ready yet — retry
       this._waitTimer = setTimeout(() => this.waitForMap(), 200)
     }
   }
@@ -272,7 +271,7 @@ export default class extends Controller {
     })
       .then(resp => resp.text())
       .then(html => Turbo.renderStreamMessage(html))
-      .catch(err => console.error("Failed to save layer:", err))
+      .catch(err => showError("Failed to save layer.", err))
   }
 
   startEditingLayer(layerId) {
@@ -363,7 +362,7 @@ export default class extends Controller {
         // Apply turbo stream response
         document.documentElement.insertAdjacentHTML("beforeend", html)
       })
-      .catch(err => console.error("Failed to toggle layer:", err))
+      .catch(err => showError("Failed to toggle layer.", err))
   }
 
   deleteLayer(event) {
@@ -380,7 +379,7 @@ export default class extends Controller {
         // Apply turbo stream response
         document.documentElement.insertAdjacentHTML("beforeend", html)
       })
-      .catch(err => console.error("Failed to delete layer:", err))
+      .catch(err => showError("Failed to delete layer.", err))
   }
 
 }

@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { patchJSON } from "utils/http"
+import { findDrawingController } from "utils/controllers"
+import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = { mapId: Number, layerId: Number }
@@ -42,9 +44,7 @@ export default class extends Controller {
 
   confirmDeleteLayer(event) {
     event.preventDefault()
-    const drawingEl = document.querySelector("[data-controller='drawing']")
-    if (!drawingEl) return
-    const drawingCtrl = this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
+    const drawingCtrl = findDrawingController(this.application)
     if (drawingCtrl) drawingCtrl.deleteLayerById(this.layerIdValue)
   }
 
@@ -81,7 +81,7 @@ export default class extends Controller {
         if (drawingCtrl) drawingCtrl.finishEditingLayer()
         this.#updateDrawingLayers(layer)
       })
-      .catch(err => console.error("Failed to update layer:", err))
+      .catch(err => showError("Failed to update layer.", err))
   }
 
   #updateDrawingLayers(updatedLayer) {
@@ -96,8 +96,6 @@ export default class extends Controller {
   }
 
   #drawingController() {
-    const drawingEl = document.querySelector("[data-controller='drawing']")
-    if (!drawingEl) return null
-    return this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
+    return findDrawingController(this.application)
   }
 }

@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { getJSON } from "utils/http"
+import { findTrackingController } from "utils/controllers"
+import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = { mapId: Number }
@@ -31,6 +33,7 @@ export default class extends Controller {
     const params = new URLSearchParams()
     if (from) params.set("from", new Date(from).toISOString())
     if (to) params.set("to", new Date(to).toISOString())
+    params.set("limit", "10000")
 
     try {
       this.points = await getJSON(
@@ -56,7 +59,7 @@ export default class extends Controller {
         detail: { vehicleId: parseInt(vehicleId), points: this.points }
       })
     } catch (e) {
-      console.error("Failed to load playback points:", e)
+      showError("Failed to load playback points.", e)
     }
   }
 
@@ -126,11 +129,8 @@ export default class extends Controller {
   }
 
   #renderPlaybackPoint(point) {
-    const trackingEl = document.querySelector("[data-controller~='tracking']")
-    if (!trackingEl) return
-
-    const trackingCtrl = this.application.getControllerForElementAndIdentifier(trackingEl, "tracking")
-    if (!trackingCtrl || !trackingCtrl.map) return
+    const trackingCtrl = findTrackingController(this.application)
+    if (!trackingCtrl?.map) return
 
     const position = { lat: point.lat, lng: point.lng }
 

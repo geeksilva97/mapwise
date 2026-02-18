@@ -1,6 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import consumer from "channels/consumer"
 import { getJSON, turboPatch } from "utils/http"
+import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = {
@@ -109,7 +110,7 @@ export default class extends Controller {
     turboPatch(`/maps/${this.mapIdValue}/deviation_alerts/${alertId}/acknowledge`)
       .then(html => {
         document.documentElement.insertAdjacentHTML("beforeend", html)
-      }).catch(err => console.error("Failed to acknowledge alert:", err))
+      }).catch(err => showError("Failed to acknowledge alert.", err))
   }
 
   // --- Private ---
@@ -147,7 +148,7 @@ export default class extends Controller {
     // Fetch recent historical points and render trail + last position marker
     try {
       const points = await getJSON(
-        `/maps/${this.mapIdValue}/tracked_vehicles/${vehicle.id}/points?from=${new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()}`
+        `/maps/${this.mapIdValue}/tracked_vehicles/${vehicle.id}/points?from=${new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()}&limit=5000`
       )
       const trailPath = points.map(p => ({ lat: p.lat, lng: p.lng }))
 

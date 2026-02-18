@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { fireAndForget } from "utils/http"
+import { findMapController } from "utils/controllers"
 
 export default class extends Controller {
   static values = {
@@ -10,8 +11,7 @@ export default class extends Controller {
     const styleJson = event.currentTarget.value
 
     // Apply style to map via the map controller
-    const mapEl = document.getElementById("map-canvas")
-    const mapController = this.application.getControllerForElementAndIdentifier(mapEl, "map")
+    const mapController = findMapController(this.application)
     if (mapController) {
       mapController.applyStyle(styleJson)
     }

@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { turboPost, turboPatch, getJSON, turboGet } from "utils/http"
+import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = { mapId: Number, importId: Number, polling: { type: Boolean, default: false } }
@@ -24,7 +25,7 @@ export default class extends Controller {
 
     turboPost(`/maps/${this.mapIdValue}/imports`, formData)
       .then(html => Turbo.renderStreamMessage(html))
-      .catch(err => console.error("Upload failed:", err))
+      .catch(err => showError("Upload failed.", err))
   }
 
   submitMapping(event) {
@@ -34,7 +35,7 @@ export default class extends Controller {
 
     turboPatch(`/maps/${this.mapIdValue}/imports/${this.importIdValue}`, new URLSearchParams(formData))
       .then(html => Turbo.renderStreamMessage(html))
-      .catch(err => console.error("Mapping submission failed:", err))
+      .catch(err => showError("Mapping submission failed.", err))
   }
 
   startPolling() {
@@ -67,7 +68,7 @@ export default class extends Controller {
             .then(html => Turbo.renderStreamMessage(html))
         }
       })
-      .catch(err => console.error("Polling failed:", err))
+      .catch(err => showError("Polling failed.", err))
   }
 
   cancel() {

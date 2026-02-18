@@ -1,9 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 import { request } from "utils/http"
+import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = { mapId: Number }
   static targets = ["toggle", "embedSection", "embedCode", "directLink", "status"]
+
+  disconnect() {
+    clearTimeout(this._flashTimeout)
+  }
 
   togglePublic() {
     const isPublic = this.toggleTarget.checked
@@ -18,7 +23,7 @@ export default class extends Controller {
         this.#flash(isPublic ? "Map is now public" : "Map is now private")
       })
       .catch(err => {
-        console.error("Failed to update visibility:", err)
+        showError("Failed to update map visibility.", err)
         this.toggleTarget.checked = !isPublic
         this.embedSectionTarget.classList.toggle("hidden", isPublic)
       })

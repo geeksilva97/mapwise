@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 import { turboPatch, turboDelete, turboGet } from "utils/http"
+import { findDrawingController } from "utils/controllers"
+import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = {
@@ -28,7 +30,7 @@ export default class extends Controller {
     turboPatch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/toggle_active`)
       .then(html => {
         document.documentElement.insertAdjacentHTML("beforeend", html)
-      }).catch(err => console.error("Failed to toggle active:", err))
+      }).catch(err => showError("Failed to toggle active.", err))
   }
 
   clearPoints() {
@@ -37,7 +39,7 @@ export default class extends Controller {
     turboDelete(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/clear_points`)
       .then(html => {
         document.documentElement.insertAdjacentHTML("beforeend", html)
-      }).catch(err => console.error("Failed to clear points:", err))
+      }).catch(err => showError("Failed to clear points.", err))
   }
 
   saveThreshold() {
@@ -49,7 +51,7 @@ export default class extends Controller {
     })
       .then(html => {
         document.documentElement.insertAdjacentHTML("beforeend", html)
-      }).catch(err => console.error("Failed to save threshold:", err))
+      }).catch(err => showError("Failed to save threshold.", err))
   }
 
   clearPlannedPath() {
@@ -57,10 +59,7 @@ export default class extends Controller {
   }
 
   drawPlannedPath() {
-    const drawingEl = document.querySelector("[data-controller~='drawing']")
-    if (!drawingEl) return
-
-    const drawingCtrl = this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
+    const drawingCtrl = findDrawingController(this.application)
     if (!drawingCtrl) return
 
     // Set up a one-time callback to capture the drawn line
@@ -91,7 +90,7 @@ export default class extends Controller {
     turboDelete(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}`)
       .then(html => {
         document.documentElement.insertAdjacentHTML("beforeend", html)
-      }).catch(err => console.error("Failed to delete vehicle:", err))
+      }).catch(err => showError("Failed to delete vehicle.", err))
   }
 
   #savePlannedPath(geojsonString) {
@@ -100,6 +99,6 @@ export default class extends Controller {
     })
       .then(html => {
         document.documentElement.insertAdjacentHTML("beforeend", html)
-      }).catch(err => console.error("Failed to save planned path:", err))
+      }).catch(err => showError("Failed to save planned path.", err))
   }
 }
