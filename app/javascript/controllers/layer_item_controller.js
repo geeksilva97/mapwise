@@ -6,8 +6,18 @@ export default class extends Controller {
   static targets = ["form", "display", "name", "strokeColor", "fillColor", "displayName", "displayDot"]
 
   toggle() {
+    const isOpening = this.formTarget.classList.contains("hidden")
     this.formTarget.classList.toggle("hidden")
     this.displayTarget.classList.toggle("hidden")
+
+    const drawingCtrl = this.#drawingController()
+    if (!drawingCtrl) return
+
+    if (isOpening) {
+      drawingCtrl.startEditingLayer(this.layerIdValue)
+    } else {
+      drawingCtrl.cancelEditingLayer()
+    }
   }
 
   deleteLayer(event) {
@@ -47,8 +57,15 @@ export default class extends Controller {
 
     if (!name) return
 
+    // Capture edited geometry before finishing
+    const drawingCtrl = this.#drawingController()
+    const editedGeometry = drawingCtrl?.getEditedGeometry()
+
+    const layerParams = { name, stroke_color: strokeColor, fill_color: fillColor }
+    if (editedGeometry) layerParams.geometry_data = editedGeometry
+
     patchJSON(`/maps/${this.mapIdValue}/layers/${this.layerIdValue}`, {
-      layer: { name, stroke_color: strokeColor, fill_color: fillColor }
+      layer: layerParams
     })
       .then(layer => {
         // Update sidebar display
@@ -60,23 +77,27 @@ export default class extends Controller {
         this.formTarget.classList.add("hidden")
         this.displayTarget.classList.remove("hidden")
 
-        // Update map rendering
+        // Finish editing in Terra Draw, then update map rendering
+        if (drawingCtrl) drawingCtrl.finishEditingLayer()
         this.#updateDrawingLayers(layer)
       })
       .catch(err => console.error("Failed to update layer:", err))
   }
 
   #updateDrawingLayers(updatedLayer) {
-    const drawingEl = document.querySelector("[data-controller='drawing']")
-    if (!drawingEl) return
-
-    const drawingCtrl = this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
+    const drawingCtrl = this.#drawingController()
     if (!drawingCtrl) return
 
     drawingCtrl.layersValue = drawingCtrl.layersValue.map(l =>
       String(l.id) === String(updatedLayer.id)
-        ? { ...l, name: updatedLayer.name, stroke_color: updatedLayer.stroke_color, fill_color: updatedLayer.fill_color }
+        ? { ...l, name: updatedLayer.name, stroke_color: updatedLayer.stroke_color, fill_color: updatedLayer.fill_color, geometry_data: updatedLayer.geometry_data }
         : l
     )
+  }
+
+  #drawingController() {
+    const drawingEl = document.querySelector("[data-controller='drawing']")
+    if (!drawingEl) return null
+    return this.application.getControllerForElementAndIdentifier(drawingEl, "drawing")
   }
 }

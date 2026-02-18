@@ -9,6 +9,14 @@ const LAYER_TYPE_MAP = {
   freehand: "freehand"
 }
 
+const LAYER_TO_MODE = {
+  polygon: "polygon",
+  line: "linestring",
+  circle: "circle",
+  rectangle: "rectangle",
+  freehand: "freehand"
+}
+
 export default class extends Controller {
   static values = {
     mapId: Number,
@@ -21,7 +29,11 @@ export default class extends Controller {
   connect() {
     this.draw = null
     this.activeMode = null
+    this.dataLayer = null
     this.dataFeatures = []
+    this.editingLayerId = null
+    this.editingFeatureId = null
+    this.editingOriginalGeometry = null
     this.waitForMap()
   }
 
@@ -29,6 +41,10 @@ export default class extends Controller {
     if (this.draw) {
       this.draw.stop()
       this.draw = null
+    }
+    if (this.dataLayer) {
+      this.dataLayer.setMap(null)
+      this.dataLayer = null
     }
   }
 
@@ -44,6 +60,8 @@ export default class extends Controller {
     const mapCtrl = this.application.getControllerForElementAndIdentifier(mapEl, "map")
     if (mapCtrl?.map) {
       this.googleMap = mapCtrl.map
+      // Use a separate Data layer so Terra Draw's default data layer doesn't interfere
+      this.dataLayer = new google.maps.Data({ map: this.googleMap })
       if (this.readonlyValue) {
         this.renderExistingLayers()
       } else {
@@ -111,15 +129,13 @@ export default class extends Controller {
 
   renderExistingLayers() {
     // Clear any previously rendered data features
-    this.dataFeatures.forEach(feature => {
-      const gMap = this.googleMap
-      const existing = gMap.data.getFeatureById(feature.id)
-      if (existing) gMap.data.remove(existing)
+    this.dataFeatures.forEach(({ feature }) => {
+      this.dataLayer.remove(feature)
     })
     this.dataFeatures = []
 
     this.layersValue
-      .filter(layer => layer.visible)
+      .filter(layer => layer.visible && layer.id !== this.editingLayerId)
       .forEach(layer => {
         try {
           const geojson = typeof layer.geometry_data === "string"
@@ -127,17 +143,17 @@ export default class extends Controller {
             : layer.geometry_data
 
           if (geojson.type === "Feature") {
-            const features = this.googleMap.data.addGeoJson(geojson)
+            const features = this.dataLayer.addGeoJson(geojson)
             features.forEach(f => {
               f.setProperty("_layerId", layer.id)
-              this.googleMap.data.overrideStyle(f, {
+              this.dataLayer.overrideStyle(f, {
                 strokeColor: layer.stroke_color || "#3B82F6",
                 strokeWeight: layer.stroke_width || 2,
                 fillColor: layer.fill_color || "#3B82F6",
                 fillOpacity: layer.fill_opacity ?? 0.3,
                 clickable: false
               })
-              this.dataFeatures.push({ id: f.getId(), feature: f })
+              this.dataFeatures.push({ feature: f })
             })
           }
         } catch (e) {
@@ -210,6 +226,9 @@ export default class extends Controller {
   }
 
   handleFinish(id) {
+    // Ignore finish events for the feature being edited
+    if (this.editingFeatureId && id === this.editingFeatureId) return
+
     const snapshot = this.draw.getSnapshot()
     const feature = snapshot.find(f => f.id === id)
     if (!feature) return
@@ -250,6 +269,81 @@ export default class extends Controller {
       .then(resp => resp.text())
       .then(html => Turbo.renderStreamMessage(html))
       .catch(err => console.error("Failed to save layer:", err))
+  }
+
+  startEditingLayer(layerId) {
+    if (!this.draw) return
+
+    // Cancel any in-progress edit first
+    if (this.editingLayerId) this.cancelEditingLayer()
+
+    const layer = this.layersValue.find(l => l.id === layerId)
+    if (!layer) return
+
+    // Store original geometry for cancel/revert
+    this.editingLayerId = layerId
+    this.editingOriginalGeometry = layer.geometry_data
+
+    // Remove layer from our Data layer to avoid visual duplicate with Terra Draw
+    this.dataFeatures
+      .filter(({ feature }) => feature.getProperty("_layerId") === layerId)
+      .forEach(({ feature }) => this.dataLayer.remove(feature))
+    this.dataFeatures = this.dataFeatures.filter(({ feature }) => feature.getProperty("_layerId") !== layerId)
+
+    // Parse geometry and ensure mode property is set for Terra Draw
+    const geojson = typeof layer.geometry_data === "string"
+      ? JSON.parse(layer.geometry_data)
+      : { ...layer.geometry_data }
+
+    const modeName = LAYER_TO_MODE[layer.layer_type] || "polygon"
+    if (geojson.properties) {
+      geojson.properties.mode = modeName
+    } else {
+      geojson.properties = { mode: modeName }
+    }
+
+    // Add feature to Terra Draw and switch to select mode
+    const results = this.draw.addFeatures([geojson])
+    if (!results[0]?.valid) {
+      console.warn("Failed to add layer to Terra Draw:", results[0]?.reason)
+      this.editingLayerId = null
+      this.editingOriginalGeometry = null
+      this.renderExistingLayers()
+      return
+    }
+    this.editingFeatureId = results[0].id
+    this.setMode("select")
+    this.draw.selectFeature(this.editingFeatureId)
+  }
+
+  getEditedGeometry() {
+    if (!this.draw || !this.editingFeatureId) return null
+
+    const snapshot = this.draw.getSnapshot()
+    const feature = snapshot.find(f => f.id === this.editingFeatureId)
+    return feature ? JSON.stringify(feature) : null
+  }
+
+  finishEditingLayer() {
+    if (!this.draw || !this.editingFeatureId) return
+
+    this.draw.removeFeatures([this.editingFeatureId])
+    this.editingLayerId = null
+    this.editingFeatureId = null
+    this.editingOriginalGeometry = null
+    this.setMode("render")
+    // Caller updates layersValue which triggers re-render on Data layer
+  }
+
+  cancelEditingLayer() {
+    if (!this.draw || !this.editingFeatureId) return
+
+    this.draw.removeFeatures([this.editingFeatureId])
+    this.editingLayerId = null
+    this.editingFeatureId = null
+    this.editingOriginalGeometry = null
+    this.setMode("render")
+    this.renderExistingLayers()
   }
 
   toggleLayerVisibility(event) {
