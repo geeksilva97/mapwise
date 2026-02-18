@@ -53,4 +53,10 @@ Rails.application.configure do
 
   # Allow reading unencrypted data from fixtures (fixtures bypass AR encryption)
   config.active_record.encryption.support_unencrypted_data = true
+
+  # Provide deterministic encryption keys for test env so tests pass without
+  # RAILS_MASTER_KEY (e.g. in CI). These are test-only keys — not used in prod.
+  config.active_record.encryption.primary_key = "test-primary-key-for-ci-only"
+  config.active_record.encryption.deterministic_key = "test-deterministic-key-for-ci"
+  config.active_record.encryption.key_derivation_salt = "test-key-derivation-salt-ci"
 end
