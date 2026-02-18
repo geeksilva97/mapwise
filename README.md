@@ -1,6 +1,6 @@
 # MapWise
 
-A map creation platform inspired by Google My Maps and Atlist. Create custom maps with markers and styles, then embed them on any website via iframe.
+A map creation platform inspired by Google My Maps and Atlist. Create custom maps with markers, styles, layers, and vehicle tracking, then embed them on any website via iframe.
 
 ## Requirements
 
@@ -40,7 +40,14 @@ The AI chat feature uses [RubyLLM](https://rubyllm.com) for multi-provider suppo
 bin/dev
 ```
 
-This starts the Rails server and Tailwind CSS watcher. Visit http://localhost:3000.
+This starts the Rails server, Tailwind CSS watcher, and Solid Queue worker. Visit http://localhost:3000.
+
+The Solid Queue worker is required for background jobs (AI chat, CSV import, geocoding, deviation checks). To run manually in separate terminals:
+
+```bash
+bin/rails server   # web server
+bin/jobs            # Solid Queue worker
+```
 
 ## Tests
 
@@ -76,8 +83,18 @@ The editor is a full-screen split view with a sidebar and map canvas:
 
 - **Markers tab**: Add, edit, drag, and delete markers on the map. Import from CSV/Excel. Organize with groups and layers.
 - **Settings tab**: Edit title, description, starting position (lat/lng/zoom), and map style. Settings save inline via Turbo Stream. Style changes apply immediately.
-- **Tracking tab**: Manage tracked vehicles with webhooks, planned paths, and deviation alerts.
+- **Tracking tab**: Manage tracked vehicles with webhooks, planned paths, and deviation alerts. Each vehicle gets a unique webhook URL for receiving GPS data.
 - **AI tab**: Chat with an AI assistant to create and modify your map using natural language. Powered by RubyLLM (Anthropic, OpenAI, Gemini).
+
+### Live Tracking
+
+Each map can have tracked vehicles that receive GPS data via webhooks:
+
+1. Add a vehicle in the Tracking tab — it gets a unique webhook URL
+2. Send GPS data to the webhook: `POST /webhooks/tracking/:token` with `{ lat, lng, speed, heading }`
+3. View live positions and trails on the dedicated tracking page (`/maps/:id/tracking`)
+4. Draw planned paths and get deviation alerts when vehicles go off-route
+5. Review historical data with the playback feature (date range filtering, speed controls)
 
 ### AI Chat
 
@@ -103,9 +120,13 @@ MapWise uses three layouts:
 
 Auth pages (sign in, sign up) hide the navbar for a clean, centered card design.
 
+### Email Verification
+
+New users must verify their email within 7 days. During the grace period, an amber banner reminds them. After 7 days, unverified accounts are blocked until verified. Verification tokens expire after 3 days and can be re-sent.
+
 ## Stack
 
-- Rails 8.1 with Hotwire (Turbo + Stimulus)
+- Rails 8.1.2 with Hotwire (Turbo + Stimulus)
 - Tailwind CSS
 - SQLite with Solid Queue, Solid Cache, Solid Cable
 - Google Maps JavaScript API (dual-mode: AdvancedMarkerElement with cloud Map ID, or legacy Marker with JSON styles)

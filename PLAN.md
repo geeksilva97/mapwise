@@ -32,8 +32,10 @@ User (auth generator + name)
       ├── Marker (lat, lng, title, description, color, icon, position, marker_group_id, custom_info_html, extra_data)
       ├── MarkerGroup (name, color, icon, visible, position) — Phase 2
       ├── Layer (name, layer_type, geometry_data JSON, stroke/fill styles, visible, position) — Phase 2
-      └── TrackingConfig (webhook_token, planned_path JSON, deviation_threshold, alert_email) — Phase 4
-           └── TrackingPoint (lat, lng, recorded_at, metadata JSON, deviated) — Phase 4
+      ├── ChatMessage (role, content, tool_calls JSON) — Phase 5
+      └── TrackedVehicle (name, color, icon, webhook_token, planned_path JSON, deviation_threshold_meters, active) — Phase 4
+           ├── TrackingPoint (lat, lng, speed, heading, recorded_at) — Phase 4
+           └── DeviationAlert (message, distance_meters, lat, lng, acknowledged) — Phase 4
 ```
 
 - Geometry stored as JSON text (SQLite has no spatial types)
@@ -47,7 +49,7 @@ User (auth generator + name)
 - **Three layouts**: `application.html.erb` (navbar + container), `fullscreen.html.erb` (zero-padding for editor/viewer), `embed.html.erb` (minimal for iframes)
 - **Shared partials**: `shared/_navbar.html.erb` (responsive nav with logo, links, user menu, mobile hamburger), `shared/_flash.html.erb` (flash messages with SVG icons)
 - **Auth pages**: Sign in and sign up hide the navbar via `content_for :hide_navbar` for a clean centered card design
-- **Stimulus controllers**: `navbar_controller.js` (mobile menu toggle), plus existing map/tabs/marker-editor/style-picker controllers
+- **Stimulus controllers**: `navbar_controller.js` (mobile menu toggle), `map_controller.js` (Google Maps), `tabs_controller.js` (sidebar tabs), `marker_editor_controller.js` (marker CRUD), `style_picker_controller.js` (styles), `drawing_controller.js` (Terra Draw layers), `group_controller.js` (groups), `import_controller.js` / `import_dialog_controller.js` (CSV import), `tracking_controller.js` / `playback_controller.js` (live tracking), `vehicle_editor_controller.js` / `vehicle_item_controller.js` (vehicle CRUD), `chat_controller.js` (AI chat), `share_controller.js` (embed), `map_search_controller.js` (map search)
 - **Editor settings**: Inline save via Turbo Stream — no page refresh, stays on current tab
 - **Style picker**: Select dropdown (was buttons), uses Stimulus `application.getControllerForElementAndIdentifier` to communicate with the map controller on a sibling element
 - **Design tokens**: Cards use `bg-white rounded-xl border border-gray-200 shadow-sm`, inputs use `rounded-lg border-gray-300 bg-gray-50` with blue focus ring, page background `bg-gray-50`
@@ -69,7 +71,7 @@ bin/jobs            # Solid Queue worker (required for AI chat, CSV import, geoc
 
 ## Architecture
 
-- **Google Maps loading**: Script tag injected by Stimulus controller; API key passed via `data-` attribute
+- **Google Maps loading**: Script tag in HTML layouts (not dynamic JS injection); API key passed via `data-` attribute
 - **API key resolution**:
   - Inside MapWise (editor, viewer, dashboard): always use platform key from `Rails.application.credentials.google_maps_api_key`
   - Embed endpoint: use the map owner's customer-provided API key; if none exists, show "embedding not configured" message
@@ -226,8 +228,8 @@ Security fixes, separation of concerns, and code quality improvements before Pha
 - **Style authorization**: Scoped find + `system_default?` guard replaces manual ownership checks
 
 ### Code Quality (P2)
-- **CSRF utility**: `app/javascript/utils/csrf.js` — shared across all controllers
-- **Fetch error handling**: All fetch calls have `.catch()` with `console.error` + visual toast
+- **Shared JS utilities**: `utils/csrf.js` (CSRF token), `utils/http.js` (fetch helpers), `utils/controllers.js` (controller lookups), `utils/flash.js` (error toasts)
+- **Fetch error handling**: All fetch calls have `.catch()` with `showError()` visual toast (from `utils/flash.js`)
 - **Marker validations**: lat (-90..90), lng (-180..180), hex color format
 - **N+1 fix**: `counter_cache: true` on Marker → Map; dashboard uses `markers_count` column
 - **Nav helper**: `nav_link_to(label, path, mobile:)` replaces 6 inline active-link checks
@@ -243,7 +245,7 @@ Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId
 - Style picker is now a section in Settings with immediate-apply behavior
 
 ### Tests
-- 126 tests, 361 assertions (up from 104/308)
+- 126 tests, 361 assertions at time of pre-Phase 2 completion
 - New coverage: validation bounds, auto-positioning, model methods, dual-mode data attributes, cross-user auth
 
 ---
@@ -259,7 +261,7 @@ Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId
 
 **Routes**: `resources :marker_groups` (with `assign` + circle selection), `resources :layers`, `resources :imports` (nested under maps); `ungroup` member route on markers
 
-**Tests**: 244 tests, 655 assertions
+**Tests**: 244 tests, 655 assertions (at time of Phase 2 completion)
 
 ---
 
@@ -271,14 +273,19 @@ Google Maps API constraint: `AdvancedMarkerElement` requires `mapId`, but `mapId
 
 ---
 
-## Phase 4 — Tracking (Outline)
+## Phase 4 — Tracking (DONE)
 
-1. **Tracking config** — `TrackingConfig` model; webhook token; planned path drawing (reuse Terra Draw)
-2. **Webhook receiver** — `POST /webhooks/tracking/:token`; authenticate by token; create `TrackingPoint`; broadcast via Action Cable
-3. **Live map updates** — `TrackingChannel` (Action Cable); `tracking_controller.js` updates polyline in real time
-4. **Deviation alerts** — `DeviationCheckJob` with Haversine formula; `TrackingAlertMailer`
+1. **Tracked vehicles** — `TrackedVehicle` model (per-map, with `webhook_token`, `color`, `planned_path` JSON, `deviation_threshold_meters`); CRUD via `TrackedVehiclesController` with Turbo Stream + JSON responses
+2. **Webhook receiver** — `POST /webhooks/tracking/:token`; authenticate by token; create `TrackingPoint` (lat, lng, speed, heading, recorded_at); broadcast via Action Cable; deviation check via `DeviationCheckService`
+3. **Live tracking page** — Dedicated fullscreen page at `/maps/:id/tracking` with 3 sidebar tabs (Vehicles, Alerts, Playback); `tracking_controller.js` renders real-time markers/trails via Action Cable subscription to `TrackingChannel`
+4. **Deviation alerts** — `DeviationAlert` model; `DeviationCheckService` uses Haversine + cross-track distance; alerts broadcast via Action Cable; dismissible in sidebar
+5. **Historical playback** — `playback_controller.js`; date range + speed controls; animated marker + trail with progress bar
+6. **Planned paths** — Terra Draw integration via `drawing_controller.js` callback mode; GeoJSON stored on vehicle; rendered as dashed polyline on tracking map
+7. **Tracking point pagination** — `QueryPoints` service accepts `limit` param (clamped 1..10,000); JS passes limit=5000 for live trails, limit=10000 for playback
 
-**New routes**: `resource :tracking_config` (nested under maps), `post "webhooks/tracking/:token"`
+**Routes**: `resources :tracked_vehicles` (nested under maps, with `toggle_active`, `clear_points`, `save_planned_path`, `points` member routes), `resources :deviation_alerts` (nested, with `acknowledge`), `post "webhooks/tracking/:token"`
+
+**Tests**: 507 tests, 1297 assertions
 
 ---
 
@@ -368,7 +375,7 @@ ActionCable.server.broadcast("ai_chat_map_#{map.id}", {
 ```
 
 ### Tests
-- 476 tests, 1187 assertions (up from 321/827 in Phase 4)
+- 507 tests, 1297 assertions
 - Model tests, controller tests, service tests (RubyLLM mock objects), job tests, channel tests, all 8 tool tests
 
 ### Deferred
@@ -379,6 +386,17 @@ ActionCable.server.broadcast("ai_chat_map_#{map.id}", {
 - "Create with AI" button on dashboard
 
 **Routes**: `resources :chat_messages, only: :create` (nested under maps)
+
+---
+
+## JS Codebase Quality (DONE)
+
+1. **Shared utilities** — `utils/controllers.js` provides `findMapController()`, `findDrawingController()`, `findTrackingController()` for cross-controller communication. `utils/flash.js` provides `showError()` toast used across all controllers. Replaced per-controller `#showError()` methods and bare `console.error` calls.
+2. **Diff-based marker rendering** — `map_controller.js` uses `markerById` Map (markerId → `{ gmMarker, data }`) instead of array-based clear-and-rebuild. Computes toAdd/toRemove/toUpdate diffs each render cycle. Clustering rebuild separated from marker rendering.
+3. **Reload elimination** — Replaced `window.location.reload()` in ungroup and assign-markers flows with client-side DOM updates (move markers between groups, update color dots, adjust counts).
+4. **Tracking point pagination** — `QueryPoints` service accepts `limit` param (clamped 1..10,000). JS passes limit=5000 for 24h trails, limit=10000 for playback.
+
+**Tests**: 507 tests, 1297 assertions
 
 ---
 
@@ -433,7 +451,7 @@ TrackedVehicle.find_by(webhook_token: token)     # may fail — Zeitwerk looks f
 Constants that currently need `::`: `::Map` (in `Maps::`), `::TrackedVehicle` (in `Tracking::`), `::MapStyle` (in `MapStyles::`), `::CsvImportJob` (in `Imports::`).
 
 ### Tests
-- 476 tests, 1204 assertions — all existing controller integration tests pass unchanged (services are tested indirectly)
+- 507 tests, 1297 assertions — all existing controller integration tests pass unchanged (services are tested indirectly)
 
 ---
 
