@@ -1,5 +1,4 @@
 import { Controller } from "@hotwired/stimulus"
-import { fireAndForget } from "utils/http"
 
 // Two rendering modes based on google_map_id presence:
 //   With google_map_id → mapId set → AdvancedMarkerElement, cloud-based styling
@@ -29,7 +28,6 @@ export default class extends Controller {
   }
 
   disconnect() {
-    if (this.saveTimeout) clearTimeout(this.saveTimeout)
   }
 
   waitForGoogleMaps() {
@@ -73,12 +71,6 @@ export default class extends Controller {
   }
 
   setupEditorEvents() {
-    // Persist center/zoom on idle (debounced)
-    this.map.addListener("idle", () => {
-      if (this.saveTimeout) clearTimeout(this.saveTimeout)
-      this.saveTimeout = setTimeout(() => this.persistMapState(), 1000)
-    })
-
     // Map click for marker placement
     this.map.addListener("click", (event) => {
       if (this.placementMode) {
@@ -89,24 +81,6 @@ export default class extends Controller {
     })
   }
 
-  persistMapState() {
-    if (!this.idValue) return
-    if (this._skipPersist) { this._skipPersist = false; return }
-
-    const center = this.map.getCenter()
-
-    fireAndForget(`/maps/${this.idValue}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        map: {
-          center_lat: center.lat(),
-          center_lng: center.lng(),
-          zoom: this.map.getZoom()
-        }
-      })
-    })
-  }
 
   // Called by external Stimulus actions to enter placement mode
   enterPlacementMode() {
@@ -326,10 +300,8 @@ export default class extends Controller {
   }
 
   // Pan the map to given coordinates and optionally set zoom
-  // Pass { persist: false } to skip saving the new position
-  panTo(lat, lng, zoom, { persist = true } = {}) {
+  panTo(lat, lng, zoom) {
     if (!this.map) return
-    if (!persist) this._skipPersist = true
     this.map.panTo({ lat, lng })
     if (zoom !== undefined) this.map.setZoom(zoom)
   }

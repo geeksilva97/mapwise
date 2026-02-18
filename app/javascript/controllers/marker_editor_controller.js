@@ -104,7 +104,7 @@ export default class extends Controller {
       .catch(err => this.#showError("Failed to save marker position.", err))
   }
 
-  // Capture the current map center/zoom into the settings form fields
+  // Capture the current map center/zoom into the settings form and save
   capturePosition() {
     const mapCtrl = this.#mapController()
     if (!mapCtrl?.map) return
@@ -117,6 +117,9 @@ export default class extends Controller {
     if (latField) latField.value = Math.round(center.lat() * 1000000) / 1000000
     if (lngField) lngField.value = Math.round(center.lng() * 1000000) / 1000000
     if (zoomField) zoomField.value = mapCtrl.map.getZoom()
+
+    const form = document.getElementById("map_settings_form")
+    if (form) form.requestSubmit()
   }
 
   // Proxy layer actions to drawing controller (sidebar can't reach it directly)
@@ -149,7 +152,7 @@ export default class extends Controller {
     if (!mapCtrl) return
 
     const marker = (mapCtrl.markersValue || []).find(m => m.id === markerId)
-    if (marker) mapCtrl.panTo(marker.lat, marker.lng, undefined, { persist: false })
+    if (marker) mapCtrl.panTo(marker.lat, marker.lng)
   }
 
   // Pan the map to a layer's center on double-click
@@ -168,7 +171,7 @@ export default class extends Controller {
     const center = this.#geojsonCenter(geojson)
     if (center) {
       const mapCtrl = this.#mapController()
-      if (mapCtrl) mapCtrl.panTo(center.lat, center.lng, undefined, { persist: false })
+      if (mapCtrl) mapCtrl.panTo(center.lat, center.lng)
     }
   }
 
