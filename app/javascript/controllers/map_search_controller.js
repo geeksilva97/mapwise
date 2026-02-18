@@ -17,6 +17,7 @@ export default class extends Controller {
   }
 
   disconnect() {
+    if (this._waitTimer) clearTimeout(this._waitTimer)
     if (this.debounceTimer) clearTimeout(this.debounceTimer)
     document.removeEventListener("click", this._onDocumentClick)
   }
@@ -33,7 +34,7 @@ export default class extends Controller {
         this.#initPlacesAutocomplete()
       }
     } else {
-      setTimeout(() => this.waitForMap(), 200)
+      this._waitTimer = setTimeout(() => this.waitForMap(), 200)
     }
   }
 

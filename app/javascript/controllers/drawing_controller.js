@@ -38,6 +38,10 @@ export default class extends Controller {
   }
 
   disconnect() {
+    if (this._waitTimer) {
+      clearTimeout(this._waitTimer)
+      this._waitTimer = null
+    }
     if (this.draw) {
       this.draw.stop()
       this.draw = null
@@ -69,7 +73,7 @@ export default class extends Controller {
       }
     } else {
       // Retry until map is ready
-      setTimeout(() => this.waitForMap(), 200)
+      this._waitTimer = setTimeout(() => this.waitForMap(), 200)
     }
   }
 

@@ -78,7 +78,7 @@ export default class extends Controller {
         // Remove from map
         const mapCtrl = this.#mapController()
         if (mapCtrl) {
-          mapCtrl.markersValue = (mapCtrl.markersValue || []).filter(m => m.id !== markerId)
+          mapCtrl.markersValue = (mapCtrl.markersValue || []).filter(m => m.id !== Number(markerId))
         }
       })
       .catch(err => this.#showError("Failed to delete marker.", err))

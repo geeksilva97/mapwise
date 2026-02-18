@@ -12,6 +12,7 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.#clearResponseTimeout()
     if (this.subscription) {
       this.subscription.unsubscribe()
       this.subscription = null
@@ -40,19 +41,22 @@ export default class extends Controller {
 
     // POST to create chat message
     try {
+      // Safety timeout: re-enable input if Action Cable response never arrives
+      this.#startResponseTimeout()
+
       await request(`/maps/${this.mapIdValue}/chat_messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "text/html" },
         body: JSON.stringify({ chat_message: { content } })
       })
     } catch {
+      this.#clearResponseTimeout()
       this.#removeThinking()
       this.messagesTarget.insertAdjacentHTML("beforeend",
         this.#assistantBubbleHTML("Sorry, something went wrong. Please try again."))
       this.#setInputEnabled(true)
       this.#scrollToBottom()
     }
-    // On success, the response comes via Action Cable — input re-enabled in #handleMessage
   }
 
   #subscribe() {
@@ -72,6 +76,7 @@ export default class extends Controller {
 
     if (data.type !== "assistant_message") return
 
+    this.#clearResponseTimeout()
     this.#syncMapState(data)
 
     // Remove thinking indicator
@@ -133,6 +138,24 @@ export default class extends Controller {
   #removeThinking() {
     const thinking = document.getElementById("thinking_indicator")
     if (thinking) thinking.remove()
+  }
+
+  #startResponseTimeout() {
+    this.#clearResponseTimeout()
+    this._responseTimeout = setTimeout(() => {
+      this.#removeThinking()
+      this.messagesTarget.insertAdjacentHTML("beforeend",
+        this.#assistantBubbleHTML("The response took too long. Please try again."))
+      this.#setInputEnabled(true)
+      this.#scrollToBottom()
+    }, 90_000)
+  }
+
+  #clearResponseTimeout() {
+    if (this._responseTimeout) {
+      clearTimeout(this._responseTimeout)
+      this._responseTimeout = null
+    }
   }
 
   #scrollToBottom() {

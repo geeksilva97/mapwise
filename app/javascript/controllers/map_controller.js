@@ -29,6 +29,10 @@ export default class extends Controller {
   }
 
   disconnect() {
+    if (this._waitTimer) {
+      clearTimeout(this._waitTimer)
+      this._waitTimer = null
+    }
   }
 
   markerSyncTargetConnected(el) {
@@ -41,7 +45,7 @@ export default class extends Controller {
       this.initMap()
     } else {
       // Script is in the layout with async/defer — poll until ready
-      setTimeout(() => this.waitForGoogleMaps(), 100)
+      this._waitTimer = setTimeout(() => this.waitForGoogleMaps(), 100)
     }
   }
 

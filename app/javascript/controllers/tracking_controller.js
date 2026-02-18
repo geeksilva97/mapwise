@@ -23,6 +23,10 @@ export default class extends Controller {
   }
 
   disconnect() {
+    if (this._waitTimer) {
+      clearTimeout(this._waitTimer)
+      this._waitTimer = null
+    }
     if (this.subscription) {
       this.subscription.unsubscribe()
       this.subscription = null
@@ -33,7 +37,7 @@ export default class extends Controller {
     if (window.google?.maps?.Map) {
       this.initMap()
     } else {
-      setTimeout(() => this.waitForGoogleMaps(), 100)
+      this._waitTimer = setTimeout(() => this.waitForGoogleMaps(), 100)
     }
   }
 
