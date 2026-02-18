@@ -2,3 +2,8 @@
   <%= render "layers/layer_item", layer: @layer %>
 <% end %>
 <%= turbo_stream.remove "layers_empty" %>
+<%= turbo_stream.append "drawing-canvas" do %>
+  <template data-drawing-target="layerSync"
+            data-layers="<%= @layer.map.layers.visible.ordered.to_json(only: [:id, :name, :layer_type, :geometry_data, :stroke_color, :stroke_width, :fill_color, :fill_opacity, :visible]) %>">
+  </template>
+<% end %>
