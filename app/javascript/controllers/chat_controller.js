@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import consumer from "channels/consumer"
-import { csrfToken } from "utils/csrf"
+import { request } from "utils/http"
 
 export default class extends Controller {
   static values = { mapId: Number }
@@ -39,17 +39,13 @@ export default class extends Controller {
     this.#scrollToBottom()
 
     // POST to create chat message
-    const response = await fetch(`/maps/${this.mapIdValue}/chat_messages`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "text/html"
-      },
-      body: JSON.stringify({ chat_message: { content } })
-    })
-
-    if (!response.ok) {
+    try {
+      await request(`/maps/${this.mapIdValue}/chat_messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "text/html" },
+        body: JSON.stringify({ chat_message: { content } })
+      })
+    } catch {
       this.#removeThinking()
       this.messagesTarget.insertAdjacentHTML("beforeend",
         this.#assistantBubbleHTML("Sorry, something went wrong. Please try again."))

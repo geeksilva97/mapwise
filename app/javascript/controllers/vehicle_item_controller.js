@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { turboPatch, turboDelete, turboGet } from "utils/http"
 
 export default class extends Controller {
   static values = {
@@ -25,55 +25,31 @@ export default class extends Controller {
   }
 
   toggleActive() {
-    fetch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/toggle_active`, {
-      method: "PATCH",
-      headers: {
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "text/vnd.turbo-stream.html"
-      }
-    }).then(resp => {
-      if (!resp.ok) throw new Error("Failed to toggle active")
-      return resp.text()
-    }).then(html => {
-      document.documentElement.insertAdjacentHTML("beforeend", html)
-    }).catch(err => console.error("Failed to toggle active:", err))
+    turboPatch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/toggle_active`)
+      .then(html => {
+        document.documentElement.insertAdjacentHTML("beforeend", html)
+      }).catch(err => console.error("Failed to toggle active:", err))
   }
 
   clearPoints() {
     if (!confirm("Clear all tracking history for this vehicle?")) return
 
-    fetch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/clear_points`, {
-      method: "DELETE",
-      headers: {
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "text/vnd.turbo-stream.html"
-      }
-    }).then(resp => {
-      if (!resp.ok) throw new Error("Failed to clear points")
-      return resp.text()
-    }).then(html => {
-      document.documentElement.insertAdjacentHTML("beforeend", html)
-    }).catch(err => console.error("Failed to clear points:", err))
+    turboDelete(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/clear_points`)
+      .then(html => {
+        document.documentElement.insertAdjacentHTML("beforeend", html)
+      }).catch(err => console.error("Failed to clear points:", err))
   }
 
   saveThreshold() {
     const value = this.thresholdInputTarget.value
     const threshold = value === "" ? null : parseFloat(value)
 
-    fetch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "text/vnd.turbo-stream.html"
-      },
-      body: JSON.stringify({ tracked_vehicle: { deviation_threshold_meters: threshold } })
-    }).then(resp => {
-      if (!resp.ok) throw new Error("Failed to save threshold")
-      return resp.text()
-    }).then(html => {
-      document.documentElement.insertAdjacentHTML("beforeend", html)
-    }).catch(err => console.error("Failed to save threshold:", err))
+    turboPatch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}`, {
+      tracked_vehicle: { deviation_threshold_meters: threshold }
+    })
+      .then(html => {
+        document.documentElement.insertAdjacentHTML("beforeend", html)
+      }).catch(err => console.error("Failed to save threshold:", err))
   }
 
   clearPlannedPath() {
@@ -97,13 +73,7 @@ export default class extends Controller {
   }
 
   editVehicle() {
-    // Load the edit form via Turbo
-    fetch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/edit`, {
-      headers: {
-        "Accept": "text/vnd.turbo-stream.html",
-        "X-CSRF-Token": csrfToken()
-      }
-    }).then(resp => resp.text())
+    turboGet(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/edit`)
       .then(html => {
         document.documentElement.insertAdjacentHTML("beforeend", html)
       })
@@ -118,34 +88,18 @@ export default class extends Controller {
   }
 
   confirmDeleteVehicle() {
-    fetch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}`, {
-      method: "DELETE",
-      headers: {
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "text/vnd.turbo-stream.html"
-      }
-    }).then(resp => {
-      if (!resp.ok) throw new Error("Failed to delete vehicle")
-      return resp.text()
-    }).then(html => {
-      document.documentElement.insertAdjacentHTML("beforeend", html)
-    }).catch(err => console.error("Failed to delete vehicle:", err))
+    turboDelete(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}`)
+      .then(html => {
+        document.documentElement.insertAdjacentHTML("beforeend", html)
+      }).catch(err => console.error("Failed to delete vehicle:", err))
   }
 
   #savePlannedPath(geojsonString) {
-    fetch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/save_planned_path`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "text/vnd.turbo-stream.html"
-      },
-      body: JSON.stringify({ planned_path: geojsonString })
-    }).then(resp => {
-      if (!resp.ok) throw new Error("Failed to save planned path")
-      return resp.text()
-    }).then(html => {
-      document.documentElement.insertAdjacentHTML("beforeend", html)
-    }).catch(err => console.error("Failed to save planned path:", err))
+    turboPatch(`/maps/${this.mapIdValue}/tracked_vehicles/${this.vehicleIdValue}/save_planned_path`, {
+      planned_path: geojsonString
+    })
+      .then(html => {
+        document.documentElement.insertAdjacentHTML("beforeend", html)
+      }).catch(err => console.error("Failed to save planned path:", err))
   }
 }

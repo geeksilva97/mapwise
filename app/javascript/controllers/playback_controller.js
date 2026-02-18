@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { getJSON } from "utils/http"
 
 export default class extends Controller {
   static values = { mapId: Number }
@@ -32,13 +33,9 @@ export default class extends Controller {
     if (to) params.set("to", new Date(to).toISOString())
 
     try {
-      const resp = await fetch(
-        `/maps/${this.mapIdValue}/tracked_vehicles/${vehicleId}/points?${params}`,
-        { headers: { Accept: "application/json" } }
+      this.points = await getJSON(
+        `/maps/${this.mapIdValue}/tracked_vehicles/${vehicleId}/points?${params}`
       )
-      if (!resp.ok) throw new Error("Failed to load points")
-
-      this.points = await resp.json()
       this.currentIndex = 0
 
       if (this.points.length === 0) {

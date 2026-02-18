@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { request } from "utils/http"
 
 export default class extends Controller {
   static values = { mapId: Number }
@@ -9,16 +9,12 @@ export default class extends Controller {
     const isPublic = this.toggleTarget.checked
     this.embedSectionTarget.classList.toggle("hidden", !isPublic)
 
-    fetch(`/maps/${this.mapIdValue}`, {
+    request(`/maps/${this.mapIdValue}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken()
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ map: { public: isPublic } })
     })
-      .then(r => {
-        if (!r.ok) throw new Error(`Failed: ${r.status}`)
+      .then(() => {
         this.#flash(isPublic ? "Map is now public" : "Map is now private")
       })
       .catch(err => {

@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { postJSON, turboPatch, turboDelete } from "utils/http"
 
 const LAYER_TYPE_MAP = {
   polygon: "polygon",
@@ -231,25 +231,13 @@ export default class extends Controller {
     this.updateToolbarState()
 
     // Save to server
-    fetch(`/maps/${this.mapIdValue}/layers`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({
-        layer: {
-          name: autoName,
-          layer_type: layerType,
-          geometry_data: JSON.stringify(feature)
-        }
-      })
+    postJSON(`/maps/${this.mapIdValue}/layers`, {
+      layer: {
+        name: autoName,
+        layer_type: layerType,
+        geometry_data: JSON.stringify(feature)
+      }
     })
-      .then(resp => {
-        if (!resp.ok) throw new Error("Failed to save layer")
-        return resp.json()
-      })
       .then(layer => {
         // Add to local layers array to trigger re-render on map
         this.layersValue = [...this.layersValue, layer]
@@ -263,18 +251,7 @@ export default class extends Controller {
     const layerId = event.currentTarget.dataset.layerId
     if (!layerId) return
 
-    fetch(`/maps/${this.mapIdValue}/layers/${layerId}/toggle_visibility`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "text/vnd.turbo-stream.html"
-      }
-    })
-      .then(resp => {
-        if (!resp.ok) throw new Error("Failed to toggle visibility")
-        return resp.text()
-      })
+    turboPatch(`/maps/${this.mapIdValue}/layers/${layerId}/toggle_visibility`)
       .then(html => {
         // Update local layers data
         this.layersValue = this.layersValue.map(l =>
@@ -293,17 +270,7 @@ export default class extends Controller {
   }
 
   deleteLayerById(layerId) {
-    fetch(`/maps/${this.mapIdValue}/layers/${layerId}`, {
-      method: "DELETE",
-      headers: {
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "text/vnd.turbo-stream.html"
-      }
-    })
-      .then(resp => {
-        if (!resp.ok) throw new Error("Failed to delete layer")
-        return resp.text()
-      })
+    turboDelete(`/maps/${this.mapIdValue}/layers/${layerId}`)
       .then(html => {
         // Remove from local layers data
         this.layersValue = this.layersValue.filter(l => String(l.id) !== String(layerId))

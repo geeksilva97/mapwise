@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { turboPatch, turboDelete, turboPost, patchJSON } from "utils/http"
 
 export default class extends Controller {
   static values = { id: Number, mapId: Number }
@@ -21,17 +21,7 @@ export default class extends Controller {
     event.preventDefault()
     if (!this.idValue || !this.mapIdValue) return
 
-    fetch(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}/toggle_visibility`, {
-      method: "PATCH",
-      headers: {
-        "Accept": "text/vnd.turbo-stream.html",
-        "X-CSRF-Token": csrfToken()
-      }
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Failed to toggle visibility: ${r.status}`)
-        return r.text()
-      })
+    turboPatch(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}/toggle_visibility`)
       .then(html => {
         // Update map controller's groups value
         const mapCtrl = this.#mapController()
@@ -59,18 +49,7 @@ export default class extends Controller {
     mapCtrl.enterCircleSelectionMode((markerIds) => {
       if (markerIds.length === 0) return
 
-      fetch(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}/assign_markers`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken()
-        },
-        body: JSON.stringify({ marker_ids: markerIds })
-      })
-        .then(r => {
-          if (!r.ok) throw new Error(`Failed to assign markers: ${r.status}`)
-          return r.json()
-        })
+      patchJSON(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}/assign_markers`, { marker_ids: markerIds })
         .then(() => {
           window.location.reload()
         })
@@ -104,17 +83,7 @@ export default class extends Controller {
     event.preventDefault()
     if (!this.idValue || !this.mapIdValue) return
 
-    fetch(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}`, {
-      method: "DELETE",
-      headers: {
-        "Accept": "text/vnd.turbo-stream.html",
-        "X-CSRF-Token": csrfToken()
-      }
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Failed to delete group: ${r.status}`)
-        return r.text()
-      })
+    turboDelete(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}`)
       .then(html => {
         // Remove from map controller's groups value
         const mapCtrl = this.#mapController()
@@ -185,21 +154,10 @@ export default class extends Controller {
     const mapId = editorEl?.dataset?.markerEditorMapIdValue
     if (!mapId) return
 
-    fetch(`/maps/${mapId}/marker_groups`, {
-      method: "POST",
-      headers: {
-        "Accept": "text/vnd.turbo-stream.html",
-        "X-CSRF-Token": csrfToken()
-      },
-      body: new URLSearchParams({
-        "marker_group[name]": formData.get("name"),
-        "marker_group[color]": formData.get("color")
-      })
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Failed to create group: ${r.status}`)
-        return r.text()
-      })
+    turboPost(`/maps/${mapId}/marker_groups`, new URLSearchParams({
+      "marker_group[name]": formData.get("name"),
+      "marker_group[color]": formData.get("color")
+    }))
       .then(html => {
         Turbo.renderStreamMessage(html)
         // Update map controller's groups value

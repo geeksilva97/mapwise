@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { turboPost, turboPatch, getJSON, turboGet } from "utils/http"
 
 export default class extends Controller {
   static values = { mapId: Number, importId: Number, polling: { type: Boolean, default: false } }
@@ -22,18 +22,7 @@ export default class extends Controller {
     const formData = new FormData()
     formData.append("file", this.fileInputTarget.files[0])
 
-    fetch(`/maps/${this.mapIdValue}/imports`, {
-      method: "POST",
-      headers: {
-        "Accept": "text/vnd.turbo-stream.html",
-        "X-CSRF-Token": csrfToken()
-      },
-      body: formData
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Upload failed: ${r.status}`)
-        return r.text()
-      })
+    turboPost(`/maps/${this.mapIdValue}/imports`, formData)
       .then(html => Turbo.renderStreamMessage(html))
       .catch(err => console.error("Upload failed:", err))
   }
@@ -43,18 +32,7 @@ export default class extends Controller {
     const form = event.target
     const formData = new FormData(form)
 
-    fetch(`/maps/${this.mapIdValue}/imports/${this.importIdValue}`, {
-      method: "PATCH",
-      headers: {
-        "Accept": "text/vnd.turbo-stream.html",
-        "X-CSRF-Token": csrfToken()
-      },
-      body: new URLSearchParams(formData)
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Mapping failed: ${r.status}`)
-        return r.text()
-      })
+    turboPatch(`/maps/${this.mapIdValue}/imports/${this.importIdValue}`, new URLSearchParams(formData))
       .then(html => Turbo.renderStreamMessage(html))
       .catch(err => console.error("Mapping submission failed:", err))
   }
@@ -73,10 +51,7 @@ export default class extends Controller {
   pollProgress() {
     if (!this.importIdValue || !this.mapIdValue) return
 
-    fetch(`/maps/${this.mapIdValue}/imports/${this.importIdValue}`, {
-      headers: { "Accept": "application/json" }
-    })
-      .then(r => r.json())
+    getJSON(`/maps/${this.mapIdValue}/imports/${this.importIdValue}`)
       .then(data => {
         if (this.hasProgressBarTarget) {
           this.progressBarTarget.style.width = `${data.progress}%`
@@ -88,10 +63,7 @@ export default class extends Controller {
         if (data.status === "completed" || data.status === "failed") {
           this.stopPolling()
           // Fetch the turbo stream version to get the completed/failed UI
-          fetch(`/maps/${this.mapIdValue}/imports/${this.importIdValue}`, {
-            headers: { "Accept": "text/vnd.turbo-stream.html" }
-          })
-            .then(r => r.text())
+          turboGet(`/maps/${this.mapIdValue}/imports/${this.importIdValue}`)
             .then(html => Turbo.renderStreamMessage(html))
         }
       })

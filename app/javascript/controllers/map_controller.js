@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { fireAndForget } from "utils/http"
 
 // Two rendering modes based on google_map_id presence:
 //   With google_map_id → mapId set → AdvancedMarkerElement, cloud-based styling
@@ -95,12 +95,9 @@ export default class extends Controller {
 
     const center = this.map.getCenter()
 
-    fetch(`/maps/${this.idValue}`, {
+    fireAndForget(`/maps/${this.idValue}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken()
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         map: {
           center_lat: center.lat(),
@@ -109,7 +106,6 @@ export default class extends Controller {
         }
       })
     })
-      .catch(err => console.error("Failed to save map state:", err))
   }
 
   // Called by external Stimulus actions to enter placement mode

@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { postJSON, patchJSON, request } from "utils/http"
 
 export default class extends Controller {
   static values = { mapId: Number }
@@ -22,19 +22,7 @@ export default class extends Controller {
     const { lat, lng } = event.detail
     const mapCtrl = this.#mapController()
 
-    fetch(`/maps/${this.mapIdValue}/markers`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "X-CSRF-Token": csrfToken()
-      },
-      body: JSON.stringify({ marker: { lat, lng, title: "", color: "#FF0000" } })
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Failed to create marker: ${r.status}`)
-        return r.json()
-      })
+    postJSON(`/maps/${this.mapIdValue}/markers`, { marker: { lat, lng, title: "", color: "#FF0000" } })
       .then(marker => {
         // Update sidebar
         this.#appendMarkerToSidebar(marker)
@@ -80,13 +68,8 @@ export default class extends Controller {
     event.preventDefault()
     const markerId = event.params.id
 
-    fetch(`/maps/${this.mapIdValue}/markers/${markerId}`, {
-      method: "DELETE",
-      headers: { "Accept": "application/json", "X-CSRF-Token": csrfToken() }
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Failed to delete marker: ${r.status}`)
-
+    request(`/maps/${this.mapIdValue}/markers/${markerId}`, { method: "DELETE" })
+      .then(() => {
         // Remove from sidebar
         const item = document.getElementById(`marker_${markerId}`)
         if (item) item.remove()
@@ -106,14 +89,7 @@ export default class extends Controller {
     event.preventDefault()
     const markerId = event.params.id
 
-    fetch(`/maps/${this.mapIdValue}/markers/${markerId}/ungroup`, {
-      method: "PATCH",
-      headers: { "Accept": "application/json", "X-CSRF-Token": csrfToken() }
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`Failed to ungroup marker: ${r.status}`)
-        return r.json()
-      })
+    patchJSON(`/maps/${this.mapIdValue}/markers/${markerId}/ungroup`)
       .then(() => {
         window.location.reload()
       })
@@ -124,11 +100,7 @@ export default class extends Controller {
   dragged(event) {
     const { id, lat, lng } = event.detail
 
-    fetch(`/maps/${this.mapIdValue}/markers/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json", "Accept": "application/json", "X-CSRF-Token": csrfToken() },
-      body: JSON.stringify({ marker: { lat, lng } })
-    })
+    patchJSON(`/maps/${this.mapIdValue}/markers/${id}`, { marker: { lat, lng } })
       .catch(err => this.#showError("Failed to save marker position.", err))
   }
 

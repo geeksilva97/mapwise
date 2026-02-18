@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { patchJSON } from "utils/http"
 
 export default class extends Controller {
   static values = { mapId: Number, layerId: Number }
@@ -47,19 +47,9 @@ export default class extends Controller {
 
     if (!name) return
 
-    fetch(`/maps/${this.mapIdValue}/layers/${this.layerIdValue}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-        "Accept": "application/json"
-      },
-      body: JSON.stringify({ layer: { name, stroke_color: strokeColor, fill_color: fillColor } })
+    patchJSON(`/maps/${this.mapIdValue}/layers/${this.layerIdValue}`, {
+      layer: { name, stroke_color: strokeColor, fill_color: fillColor }
     })
-      .then(resp => {
-        if (!resp.ok) throw new Error("Failed to update layer")
-        return resp.json()
-      })
       .then(layer => {
         // Update sidebar display
         this.displayNameTarget.textContent = layer.name

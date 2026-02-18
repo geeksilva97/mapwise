@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { csrfToken } from "utils/csrf"
+import { fireAndForget } from "utils/http"
 
 export default class extends Controller {
   static values = {
@@ -17,14 +17,10 @@ export default class extends Controller {
     }
 
     // Persist to server
-    fetch(`/maps/${this.mapIdValue}`, {
+    fireAndForget(`/maps/${this.mapIdValue}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken()
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ map: { style_json: styleJson } })
     })
-      .catch(err => console.error("Failed to save style:", err))
   }
 }
