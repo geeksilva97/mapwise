@@ -20,8 +20,8 @@ export default class extends Controller {
   }
 
   connect() {
-    this.mapMarkers = []
-    this.markerInfoMap = new Map()
+    this.markerById = new Map()    // markerId → { gmMarker, data }
+    this.markerInfoMap = new Map() // markerId → { marker, infoWindow }
     this.markerClusterer = null
     this.placementMode = false
     this.circleSelectionMode = false
@@ -32,6 +32,18 @@ export default class extends Controller {
     if (this._waitTimer) {
       clearTimeout(this._waitTimer)
       this._waitTimer = null
+    }
+    this.markerById.forEach(({ gmMarker }) => {
+      if (this.useAdvancedMarkers) {
+        gmMarker.map = null
+      } else {
+        gmMarker.setMap(null)
+      }
+    })
+    this.markerById.clear()
+    if (this.markerClusterer) {
+      this.markerClusterer.clearMarkers()
+      this.markerClusterer = null
     }
   }
 
@@ -112,33 +124,14 @@ export default class extends Controller {
     }
   }
 
-  // Re-render markers when clustering is toggled
+  // Rebuild clustering without full diff when only clustering mode changed
   clusteringEnabledValueChanged() {
     if (this.map) {
-      this.renderMarkers()
+      this.#rebuildClustering()
     }
   }
 
   renderMarkers() {
-    // Clear existing clusterer
-    if (this.markerClusterer) {
-      this.markerClusterer.clearMarkers()
-      this.markerClusterer = null
-    }
-
-    // Clear marker info map
-    this.markerInfoMap.clear()
-
-    // Clear existing markers
-    this.mapMarkers.forEach(m => {
-      if (this.useAdvancedMarkers) {
-        m.map = null
-      } else {
-        m.setMap(null)
-      }
-    })
-    this.mapMarkers = []
-
     // Build a set of hidden group IDs
     const hiddenGroupIds = new Set(
       this.groupsValue
@@ -146,73 +139,105 @@ export default class extends Controller {
         .map(g => g.id)
     )
 
-    const addToMap = !this.clusteringEnabledValue
-
+    // Build map of visible markers
+    const visibleMarkers = new Map()
     this.markersValue.forEach(markerData => {
-      // Skip markers whose group is hidden
       if (markerData.marker_group_id && hiddenGroupIds.has(markerData.marker_group_id)) {
         return
       }
-
-      const marker = this.useAdvancedMarkers
-        ? this.#createAdvancedMarker(markerData, addToMap)
-        : this.#createLegacyMarker(markerData, addToMap)
-
-      if (!this.readonlyValue) {
-        if (this.useAdvancedMarkers) {
-          marker.addListener("dragend", () => {
-            const pos = marker.position
-            this.dispatch("markerDragged", {
-              detail: { id: markerData.id, lat: pos.lat, lng: pos.lng }
-            })
-          })
-        } else {
-          marker.addListener("dragend", (event) => {
-            this.dispatch("markerDragged", {
-              detail: { id: markerData.id, lat: event.latLng.lat(), lng: event.latLng.lng() }
-            })
-          })
-        }
-
-        marker.addListener("click", () => {
-          this.dispatch("markerClicked", { detail: { id: markerData.id } })
-        })
-      }
-
-      // Info window for viewer/read-only mode
-      if (this.readonlyValue && (markerData.title || markerData.custom_info_html)) {
-        const infoContent = document.createElement("div")
-        infoContent.className = "p-2"
-
-        if (markerData.custom_info_html) {
-          infoContent.innerHTML = markerData.custom_info_html
-        } else {
-          const strong = document.createElement("strong")
-          strong.textContent = markerData.title
-          infoContent.appendChild(strong)
-
-          if (markerData.description) {
-            const p = document.createElement("p")
-            p.textContent = markerData.description
-            infoContent.appendChild(p)
-          }
-        }
-
-        const infoWindow = new google.maps.InfoWindow({ content: infoContent })
-
-        marker.addListener("click", () => {
-          infoWindow.open({ anchor: marker, map: this.map })
-        })
-
-        this.markerInfoMap.set(markerData.id, { marker, infoWindow })
-      }
-
-      this.mapMarkers.push(marker)
+      visibleMarkers.set(markerData.id, markerData)
     })
 
-    // Apply clustering if enabled
-    if (this.clusteringEnabledValue && this.mapMarkers.length > 0) {
-      this.#applyClustering()
+    // Compute diff
+    const toAdd = []
+    const toRemove = []
+    const toUpdate = []
+
+    visibleMarkers.forEach((data, id) => {
+      const existing = this.markerById.get(id)
+      if (!existing) {
+        toAdd.push(data)
+      } else if (this.#markerNeedsUpdate(existing.data, data)) {
+        toUpdate.push({ existing, data })
+      }
+    })
+
+    this.markerById.forEach((entry, id) => {
+      if (!visibleMarkers.has(id)) {
+        toRemove.push({ id, gmMarker: entry.gmMarker })
+      }
+    })
+
+    if (toAdd.length === 0 && toRemove.length === 0 && toUpdate.length === 0) return
+
+    const setChanged = toAdd.length > 0 || toRemove.length > 0
+
+    // Remove
+    toRemove.forEach(({ id, gmMarker }) => {
+      if (this.useAdvancedMarkers) {
+        gmMarker.map = null
+      } else {
+        gmMarker.setMap(null)
+      }
+      this.markerById.delete(id)
+      this.markerInfoMap.delete(id)
+    })
+
+    // Update in place
+    toUpdate.forEach(({ existing, data }) => {
+      const { gmMarker } = existing
+
+      if (data.lat !== existing.data.lat || data.lng !== existing.data.lng) {
+        if (this.useAdvancedMarkers) {
+          gmMarker.position = { lat: data.lat, lng: data.lng }
+        } else {
+          gmMarker.setPosition({ lat: data.lat, lng: data.lng })
+        }
+      }
+
+      if (data.title !== existing.data.title) {
+        gmMarker.title = data.title || ""
+      }
+
+      if (data.color !== existing.data.color) {
+        if (this.useAdvancedMarkers) {
+          const pinGlyph = new google.maps.marker.PinElement({
+            background: data.color || "#FF0000",
+            borderColor: data.color || "#FF0000",
+            glyphColor: "#FFFFFF"
+          })
+          gmMarker.content = pinGlyph.element
+        } else {
+          gmMarker.setIcon(this.#markerIcon(data.color))
+        }
+      }
+
+      // Update info window if content changed (readonly only)
+      if (this.readonlyValue) {
+        const infoChanged = data.title !== existing.data.title ||
+                           data.description !== existing.data.description ||
+                           data.custom_info_html !== existing.data.custom_info_html
+        if (infoChanged) {
+          this.#setupInfoWindow(gmMarker, data)
+        }
+      }
+
+      existing.data = data
+    })
+
+    // Add (created without map — #rebuildClustering handles placement)
+    toAdd.forEach(markerData => {
+      const gmMarker = this.useAdvancedMarkers
+        ? this.#createAdvancedMarker(markerData, false)
+        : this.#createLegacyMarker(markerData, false)
+
+      this.#attachMarkerListeners(gmMarker, markerData)
+      this.markerById.set(markerData.id, { gmMarker, data: markerData })
+    })
+
+    // Rebuild clustering when marker set changes
+    if (setChanged) {
+      this.#rebuildClustering()
     }
   }
 
@@ -341,16 +366,114 @@ export default class extends Controller {
 
   // --- Private ---
 
-  async #applyClustering() {
+  #markerNeedsUpdate(oldData, newData) {
+    return oldData.lat !== newData.lat ||
+           oldData.lng !== newData.lng ||
+           oldData.title !== newData.title ||
+           oldData.color !== newData.color ||
+           oldData.description !== newData.description ||
+           oldData.custom_info_html !== newData.custom_info_html
+  }
+
+  #attachMarkerListeners(gmMarker, markerData) {
+    if (!this.readonlyValue) {
+      if (this.useAdvancedMarkers) {
+        gmMarker.addListener("dragend", () => {
+          const pos = gmMarker.position
+          this.dispatch("markerDragged", {
+            detail: { id: markerData.id, lat: pos.lat, lng: pos.lng }
+          })
+        })
+      } else {
+        gmMarker.addListener("dragend", (event) => {
+          this.dispatch("markerDragged", {
+            detail: { id: markerData.id, lat: event.latLng.lat(), lng: event.latLng.lng() }
+          })
+        })
+      }
+
+      gmMarker.addListener("click", () => {
+        this.dispatch("markerClicked", { detail: { id: markerData.id } })
+      })
+    }
+
+    if (this.readonlyValue) {
+      // Single click handler that dynamically looks up current info window
+      gmMarker.addListener("click", () => {
+        const entry = this.markerInfoMap.get(markerData.id)
+        if (entry) {
+          entry.infoWindow.open({ anchor: gmMarker, map: this.map })
+        }
+      })
+      this.#setupInfoWindow(gmMarker, markerData)
+    }
+  }
+
+  #setupInfoWindow(gmMarker, markerData) {
+    if (!markerData.title && !markerData.custom_info_html) {
+      this.markerInfoMap.delete(markerData.id)
+      return
+    }
+
+    const infoContent = document.createElement("div")
+    infoContent.className = "p-2"
+
+    if (markerData.custom_info_html) {
+      infoContent.innerHTML = markerData.custom_info_html
+    } else {
+      const strong = document.createElement("strong")
+      strong.textContent = markerData.title
+      infoContent.appendChild(strong)
+
+      if (markerData.description) {
+        const p = document.createElement("p")
+        p.textContent = markerData.description
+        infoContent.appendChild(p)
+      }
+    }
+
+    const infoWindow = new google.maps.InfoWindow({ content: infoContent })
+    this.markerInfoMap.set(markerData.id, { marker: gmMarker, infoWindow })
+  }
+
+  #rebuildClustering() {
+    if (this.markerClusterer) {
+      this.markerClusterer.clearMarkers()
+      this.markerClusterer = null
+    }
+
+    const allMarkers = [...this.markerById.values()].map(({ gmMarker }) => gmMarker)
+
+    if (this.clusteringEnabledValue && allMarkers.length > 0) {
+      allMarkers.forEach(m => {
+        if (this.useAdvancedMarkers) {
+          m.map = null
+        } else {
+          m.setMap(null)
+        }
+      })
+      this.#applyClustering(allMarkers)
+    } else {
+      allMarkers.forEach(m => {
+        if (this.useAdvancedMarkers) {
+          m.map = this.map
+        } else {
+          m.setMap(this.map)
+        }
+      })
+    }
+  }
+
+  async #applyClustering(markers) {
     try {
       const { MarkerClusterer } = await import("@googlemaps/markerclusterer")
       this.markerClusterer = new MarkerClusterer({
         map: this.map,
-        markers: this.mapMarkers
+        markers
       })
     } catch (e) {
       console.warn("MarkerClusterer not available, adding markers directly:", e)
-      this.mapMarkers.forEach(m => {
+      markers.forEach(m => {
         if (this.useAdvancedMarkers) {
           m.map = this.map
         } else {
