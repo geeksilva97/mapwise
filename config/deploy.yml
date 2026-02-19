@@ -4,6 +4,10 @@ image: edy-ai-playground/mapwise/mapwise
 servers:
   web:
     - 34.135.208.39
+  job:
+    hosts:
+      - 34.135.208.39
+    cmd: bin/jobs
 
 registry:
   server: us-central1-docker.pkg.dev
@@ -15,7 +19,6 @@ env:
   secret:
     - RAILS_MASTER_KEY
   clear:
-    SOLID_QUEUE_IN_PUMA: true
     WEB_CONCURRENCY: 2
 
 volumes:
