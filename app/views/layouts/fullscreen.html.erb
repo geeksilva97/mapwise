@@ -20,9 +20,11 @@
     <script src="https://maps.googleapis.com/maps/api/js?key=<%= platform_api_key %>&libraries=marker,places,geometry&v=weekly" async defer></script>
   </head>
 
-  <body class="m-0 p-0 overflow-hidden" data-controller="confirm-dialog">
+  <body class="m-0 p-0 overflow-hidden h-screen flex flex-col" data-controller="confirm-dialog">
     <%= render "shared/email_verification_banner" %>
-    <%= yield %>
+    <div class="flex-1 min-h-0">
+      <%= yield %>
+    </div>
 
     <%= render "shared/confirm_dialog" %>
   </body>
