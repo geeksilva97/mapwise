@@ -1,4 +1,5 @@
-<%= form_with model: map, id: "map_settings_form" do |form| %>
+<%= form_with model: map, id: "map_settings_form",
+    **(!map.new_record? ? { data: { controller: "autosave", action: "input->autosave#debounceSave change->autosave#saveNow turbo:submit-end->autosave#saved" } } : {}) do |form| %>
   <% if map.errors.any? %>
     <div class="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
       <ul class="list-disc ml-5">
@@ -87,9 +88,10 @@
       </div>
     <% end %>
 
-    <div class="flex items-center gap-3">
-      <%= form.submit class: "rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
-      <div id="settings_feedback"></div>
-    </div>
+    <% if map.new_record? %>
+      <div class="flex items-center gap-3">
+        <%= form.submit class: "rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
+      </div>
+    <% end %>
   </div>
 <% end %>

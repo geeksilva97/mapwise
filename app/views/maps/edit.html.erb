@@ -133,7 +133,10 @@
 
       <%# Settings panel %>
       <div data-tabs-target="panel" class="flex-1 overflow-y-auto p-4 hidden">
-        <h2 class="font-bold text-lg mb-4">Map Settings</h2>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-bold text-lg">Map Settings</h2>
+          <div id="settings_feedback"></div>
+        </div>
         <%= render "form", map: @map %>
 
         <div class="border-t border-gray-200 pt-4 mt-4"
