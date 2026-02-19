@@ -102,7 +102,7 @@ class AiChatService
   end
 
   def map_snapshot
-    { center_lat: @map.center_lat, center_lng: @map.center_lng, zoom: @map.zoom, style_json: @map.style_json }
+    { title: @map.title, description: @map.description, center_lat: @map.center_lat, center_lng: @map.center_lng, zoom: @map.zoom, style_json: @map.style_json }
   end
 
   def broadcast_round_update(prev)
@@ -119,6 +119,14 @@ class AiChatService
       marker_count: @map.markers.count,
       groups_json: @map.marker_groups.ordered.to_json(only: [ :id, :name, :color, :visible ])
     }
+
+    if @map.title != prev[:title]
+      payload[:title] = @map.title
+    end
+
+    if @map.description != prev[:description]
+      payload[:description] = @map.description
+    end
 
     if @map.style_json != prev[:style_json]
       payload[:style_json] = @map.style_json

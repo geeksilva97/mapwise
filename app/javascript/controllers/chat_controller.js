@@ -109,6 +109,18 @@ export default class extends Controller {
       }
     }
 
+    // Update header title and settings form
+    if (data.title) {
+      const titleEl = document.getElementById("map_title")
+      if (titleEl) titleEl.textContent = data.title
+      const titleInput = document.getElementById("map_title_input") || document.querySelector("#map_settings_form input[name='map[title]']")
+      if (titleInput) titleInput.value = data.title
+    }
+    if (data.description !== undefined) {
+      const descInput = document.querySelector("#map_settings_form textarea[name='map[description]']")
+      if (descInput) descInput.value = data.description || ""
+    }
+
     // Update sidebar markers list
     const markersList = document.getElementById("markers_list")
     if (markersList && data.markers_html !== undefined) {

@@ -29,9 +29,12 @@ class MapsController < ApplicationController
     if Maps::Update.call(@map, map_params)
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: turbo_stream.update("settings_feedback") {
-            helpers.tag.p("Settings saved.", class: "text-sm text-green-600 font-medium")
-          }
+          render turbo_stream: [
+            turbo_stream.update("settings_feedback") {
+              helpers.tag.p("Settings saved.", class: "text-sm text-green-600 font-medium")
+            },
+            turbo_stream.update("map_title", @map.title)
+          ]
         end
         format.html { redirect_to edit_map_path(@map), notice: "Map updated." }
         format.json { head :ok }

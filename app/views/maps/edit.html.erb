@@ -10,7 +10,7 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
         </svg>
       <% end %>
-      <h1 class="font-bold text-lg"><%= @map.title %></h1>
+      <h1 id="map_title" class="font-bold text-lg"><%= @map.title %></h1>
     </div>
     <div class="flex gap-2">
       <%= link_to root_path, class: "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 border border-gray-300 hover:bg-gray-50 text-sm font-medium transition-colors" do %>
