@@ -4,7 +4,7 @@ import { showError } from "utils/flash"
 
 export default class extends Controller {
   static values = { mapId: Number, importId: Number, polling: { type: Boolean, default: false } }
-  static targets = ["fileInput", "progressBar", "progressText"]
+  static targets = ["fileInput", "submitButton", "progressBar", "progressText"]
 
   connect() {
     if (this.pollingValue && this.importIdValue) {
@@ -14,6 +14,13 @@ export default class extends Controller {
 
   disconnect() {
     this.stopPolling()
+  }
+
+  fileSelected() {
+    const hasFile = this.hasFileInputTarget && this.fileInputTarget.files.length > 0
+    if (this.hasSubmitButtonTarget) {
+      this.submitButtonTarget.disabled = !hasFile
+    }
   }
 
   upload(event) {
