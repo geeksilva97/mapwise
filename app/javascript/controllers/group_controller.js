@@ -4,7 +4,7 @@ import { findMapController } from "utils/controllers"
 import { showError } from "utils/flash"
 
 export default class extends Controller {
-  static values = { id: Number, mapId: Number }
+  static values = { id: Number, mapId: Number, color: String }
   static targets = ["content", "chevron"]
 
   toggleCollapse() {
@@ -53,8 +53,7 @@ export default class extends Controller {
 
       patchJSON(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}/assign_markers`, { marker_ids: markerIds })
         .then(() => {
-          const group = (mapCtrl.groupsValue || []).find(g => g.id === this.idValue)
-          const groupColor = group?.color || "#6B7280"
+          const groupColor = this.colorValue || "#6B7280"
 
           // Update map markers data
           const markerIdSet = new Set(markerIds)
@@ -140,6 +139,20 @@ export default class extends Controller {
 
     turboDelete(`/maps/${this.mapIdValue}/marker_groups/${this.idValue}`)
       .then(html => {
+        // Move marker items back to ungrouped list before removing the group DOM
+        const markersList = document.getElementById("markers_list")
+        if (markersList) {
+          const groupContent = this.element.querySelector('[data-group-target="content"]')
+          if (groupContent) {
+            groupContent.querySelectorAll('[id^="marker_"]').forEach(item => {
+              // Remove the "Ungroup" link since markers are now ungrouped
+              const ungroupLink = item.querySelector('[data-action*="ungroupMarker"]')
+              if (ungroupLink) ungroupLink.remove()
+              markersList.appendChild(item)
+            })
+          }
+        }
+
         // Remove from map controller's groups value
         const mapCtrl = this.#mapController()
         if (mapCtrl) {
@@ -152,7 +165,7 @@ export default class extends Controller {
             return m
           })
         }
-        // Apply turbo stream to remove the DOM element
+        // Apply turbo stream to remove the group DOM element
         Turbo.renderStreamMessage(html)
       })
       .catch(err => showError("Failed to delete group.", err))
@@ -215,12 +228,6 @@ export default class extends Controller {
     }))
       .then(html => {
         Turbo.renderStreamMessage(html)
-        // Update map controller's groups value
-        const mapCtrl = this.#mapController()
-        if (mapCtrl) {
-          // Reload page data for groups would be complex, so we just let Turbo handle the DOM
-          // The groups data attribute doesn't need immediate update since visibility is true by default
-        }
       })
       .catch(err => showError("Failed to create group.", err))
   }
