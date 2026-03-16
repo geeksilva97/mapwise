@@ -3,10 +3,10 @@ image: edy-ai-playground/mapwise/mapwise
 
 servers:
   web:
-    - 34.135.208.39
+    - <%= ENV["DEPLOY_HOST"] %>
   job:
     hosts:
-      - 34.135.208.39
+      - <%= ENV["DEPLOY_HOST"] %>
     cmd: bin/jobs
 
 registry:
@@ -20,6 +20,7 @@ env:
     - RAILS_MASTER_KEY
   clear:
     WEB_CONCURRENCY: 2
+    MAILER_HOST: <%= ENV["DEPLOY_HOST"] %>
 
 volumes:
   - "mapwise_storage:/rails/storage"

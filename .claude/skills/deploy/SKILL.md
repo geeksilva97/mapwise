@@ -12,7 +12,7 @@ Deploy MapWise to production. Before deploying:
 4. Run `bin/kamal deploy` to deploy to GCP
 
 ## Environment
-- **Host**: GCP Compute Engine `e2-small` at `34.135.208.39`
+- **Host**: GCP Compute Engine `e2-small` — IP set via `DEPLOY_HOST` in `.kamal/secrets`
 - **Registry**: GCP Artifact Registry `us-central1-docker.pkg.dev/edy-ai-playground/mapwise`
 - **Requires**: Docker Desktop running locally + `gcloud` authenticated
 

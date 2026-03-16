@@ -16,7 +16,7 @@ The Solid Queue worker (`bin/jobs`) is **required** for AI chat, CSV import, geo
 - **Backend**: Rails 8.1.2, SQLite, Solid Queue/Cache/Cable, Propshaft, Importmap
 - **Frontend**: Hotwire (Turbo + Stimulus), Tailwind CSS, Google Maps JS API
 - **AI**: RubyLLM gem (multi-provider: Anthropic, OpenAI, Gemini) — model via `ENV["RUBY_LLM_MODEL"]`
-- **Deployment**: Kamal 2 → GCP Compute Engine (`34.135.208.39`)
+- **Deployment**: Kamal 2 → GCP Compute Engine (IP in `.kamal/secrets`)
 - **Dev email**: `letter_opener_web` at `/letter_opener`
 
 ## Architecture Rules
@@ -125,7 +125,7 @@ bin/kamal console   # Rails console on production
 bin/kamal shell     # SSH into container
 ```
 
-- **Host**: GCP `e2-small` at `34.135.208.39` (Ubuntu 24.04)
+- **Host**: GCP `e2-small` (Ubuntu 24.04) — IP set via `DEPLOY_HOST` in `.kamal/secrets`
 - **Registry**: `us-central1-docker.pkg.dev/edy-ai-playground/mapwise`
 - **Solid Queue**: runs in-process via `SOLID_QUEUE_IN_PUMA=true`
 - **Storage**: Docker volume `mapwise_storage:/rails/storage` (SQLite DB + Active Storage)
