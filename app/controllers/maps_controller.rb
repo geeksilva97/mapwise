@@ -34,7 +34,7 @@ class MapsController < ApplicationController
               '<p class="text-xs text-gray-500 flex items-center gap-1">' \
               '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' \
               '<path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>' \
-              '</svg>All changes saved</p>'),
+              "</svg>All changes saved</p>"),
             turbo_stream.update("map_title", @map.title)
           ]
         end
