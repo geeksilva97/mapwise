@@ -3,12 +3,12 @@
 <div class="min-h-[80vh] flex items-center justify-center">
   <div class="w-full max-w-md">
     <div class="text-center mb-8">
-      <svg class="mx-auto h-12 w-12 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+      <svg class="mx-auto h-12 w-12 text-brand-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
       </svg>
       <h1 class="mt-4 text-2xl font-bold text-gray-900">Sign up</h1>
-      <p class="mt-1 text-sm text-gray-500">Create your MapWise account</p>
+      <p class="mt-1 text-sm text-gray-500">Create your <%= app_name %> account</p>
     </div>
 
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
@@ -45,13 +45,13 @@
             <%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", placeholder: "Confirm your password", maxlength: 72, class: "block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none" %>
           </div>
 
-          <%= form.submit "Sign up", class: "w-full rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
+          <%= form.submit "Sign up", class: "w-full rounded-lg px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
         </div>
       <% end %>
     </div>
 
     <p class="mt-4 text-center text-sm text-gray-500">
-      Already have an account? <%= link_to "Sign in", new_session_path, class: "text-blue-600 hover:text-blue-500" %>
+      Already have an account? <%= link_to "Sign in", new_session_path, class: "text-brand-600 hover:text-brand-500" %>
     </p>
   </div>
 </div>

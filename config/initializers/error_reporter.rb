@@ -6,7 +6,8 @@ class MapwiseErrorReporter
     merged_context = error.respond_to?(:context) ? error.context.merge(context) : context
     context_str = merged_context.any? ? " | context: #{merged_context.inspect}" : ""
 
-    line = "[MapWise] #{severity.upcase} (#{label})#{source_tag} #{error.class}: #{error.message}#{context_str}"
+    app_tag = defined?(Branding) ? Branding.app_name : "MapWise"
+    line = "[#{app_tag}] #{severity.upcase} (#{label})#{source_tag} #{error.class}: #{error.message}#{context_str}"
 
     case severity.to_sym
     when :error   then Rails.logger.error(line)

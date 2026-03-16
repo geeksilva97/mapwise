@@ -4,7 +4,7 @@ module ApplicationHelper
     base = "px-3 py-2 rounded-lg text-sm font-medium"
     base = "block #{base}" if mobile
 
-    active_classes = "#{base} bg-blue-50 text-blue-600"
+    active_classes = "#{base} bg-brand-50 text-brand-600"
     inactive_classes = if mobile
       "#{base} text-gray-600 hover:bg-gray-50"
     else

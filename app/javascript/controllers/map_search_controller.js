@@ -117,7 +117,7 @@ export default class extends Controller {
 
       results.slice(0, 8).forEach((result, index) => {
         const li = document.createElement("li")
-        li.className = "px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+        li.className = "px-3 py-2 text-sm cursor-pointer hover:bg-brand-50 transition-colors"
         li.dataset.index = index
 
         const main = document.createElement("span")
@@ -171,7 +171,7 @@ export default class extends Controller {
 
     matches.forEach((m, index) => {
       const li = document.createElement("li")
-      li.className = "px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 transition-colors"
+      li.className = "px-3 py-2 text-sm cursor-pointer hover:bg-brand-50 transition-colors"
       li.dataset.index = index
 
       const title = document.createElement("span")
@@ -224,7 +224,7 @@ export default class extends Controller {
 
   #highlightItem(items) {
     items.forEach((item, i) => {
-      item.classList.toggle("bg-blue-50", i === this.selectedIndex)
+      item.classList.toggle("bg-brand-50", i === this.selectedIndex)
     })
   }
 

@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brand-50: var(--brand-50, oklch(0.97 0.01 250.48));
+  --color-brand-100: var(--brand-100, oklch(0.93 0.03 254.13));
+  --color-brand-500: var(--brand-500, oklch(0.62 0.19 259.09));
+  --color-brand-600: var(--brand-600, oklch(0.55 0.20 262.88));
+  --color-brand-700: var(--brand-700, oklch(0.49 0.19 264.38));
+  --color-brand-800: var(--brand-800, oklch(0.42 0.17 265.64));
+}

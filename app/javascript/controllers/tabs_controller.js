@@ -22,10 +22,10 @@ export default class extends Controller {
   showTab(index) {
     this.tabTargets.forEach((tab, i) => {
       if (i === index) {
-        tab.classList.add("border-blue-600", "text-blue-600")
+        tab.classList.add("border-brand-600", "text-brand-600")
         tab.classList.remove("border-transparent", "text-gray-500")
       } else {
-        tab.classList.remove("border-blue-600", "text-blue-600")
+        tab.classList.remove("border-brand-600", "text-brand-600")
         tab.classList.add("border-transparent", "text-gray-500")
       }
     })

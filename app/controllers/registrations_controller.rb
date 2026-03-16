@@ -13,7 +13,7 @@ class RegistrationsController < ApplicationController
     if @user.save
       start_new_session_for(@user)
       EmailVerifications::Send.call(@user)
-      redirect_to root_path, notice: "Welcome to MapWise! Please check your email to verify your account."
+      redirect_to root_path, notice: "Welcome to #{Branding.app_name}! Please check your email to verify your account."
     else
       render :new, status: :unprocessable_entity
     end

@@ -186,7 +186,7 @@ export default class extends Controller {
           <div>
             <label class="block text-xs font-medium text-gray-700">Name</label>
             <input type="text" name="name" placeholder="Group name" required
-                   class="block w-full shadow-sm rounded-md border border-gray-300 focus:outline-blue-600 px-3 py-1.5 mt-1 text-sm">
+                   class="block w-full shadow-sm rounded-md border border-gray-300 focus:outline-brand-600 px-3 py-1.5 mt-1 text-sm">
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-700">Color</label>
@@ -195,7 +195,7 @@ export default class extends Controller {
           </div>
           <div class="flex gap-2">
             <button type="submit"
-                    class="rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer">
+                    class="rounded-md px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer">
               Create Group
             </button>
             <button type="button" data-action="click->group#cancelForm"

@@ -1,5 +1,5 @@
-service: mapwise
-image: edy-ai-playground/mapwise/mapwise
+service: <%= ENV.fetch("DEPLOY_SERVICE", "mapwise") %>
+image: <%= ENV.fetch("DEPLOY_IMAGE", "mapwise") %>
 
 servers:
   web:
@@ -10,8 +10,8 @@ servers:
     cmd: bin/jobs
 
 registry:
-  server: us-central1-docker.pkg.dev
-  username: oauth2accesstoken
+  server: <%= ENV.fetch("DEPLOY_REGISTRY", "us-central1-docker.pkg.dev") %>
+  username: <%= ENV.fetch("DEPLOY_REGISTRY_USERNAME", "oauth2accesstoken") %>
   password:
     - KAMAL_REGISTRY_PASSWORD
 
@@ -23,7 +23,7 @@ env:
     MAILER_HOST: <%= ENV["DEPLOY_HOST"] %>
 
 volumes:
-  - "mapwise_storage:/rails/storage"
+  - "<%= ENV.fetch("DEPLOY_VOLUME", "mapwise_storage") %>:/rails/storage"
 
 asset_path: /rails/public/assets
 
@@ -31,9 +31,11 @@ builder:
   arch: amd64
 
 ssh:
-  user: edy
+  user: <%= ENV.fetch("DEPLOY_SSH_USER", "root") %>
+  <% if ENV["DEPLOY_SSH_KEY"] %>
   keys:
-    - ~/.ssh/google_compute_engine
+    - <%= ENV["DEPLOY_SSH_KEY"] %>
+  <% end %>
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"

@@ -9,7 +9,7 @@
       <div>
         <label class="block text-xs font-medium text-gray-700"><%= label %></label>
         <select name="column_mapping[<%= field %>]"
-                class="block w-full rounded-md border border-gray-300 focus:outline-blue-600 px-3 py-1.5 mt-1 text-sm">
+                class="block w-full rounded-md border border-gray-300 focus:outline-brand-600 px-3 py-1.5 mt-1 text-sm">
           <option value="">-- Skip --</option>
           <% headers.each do |header| %>
             <option value="<%= header %>"
@@ -26,7 +26,7 @@
 
     <div class="flex gap-2">
       <button type="submit"
-              class="rounded-lg px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors">
+              class="rounded-lg px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer transition-colors">
         Start Import
       </button>
       <button type="button" data-action="click->import#cancel"

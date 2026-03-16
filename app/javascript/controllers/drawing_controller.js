@@ -213,8 +213,8 @@ export default class extends Controller {
 
     this.toolbarTarget.querySelectorAll("[data-mode]").forEach(btn => {
       const isActive = btn.dataset.mode === this.activeMode
-      btn.classList.toggle("bg-blue-100", isActive)
-      btn.classList.toggle("text-blue-700", isActive)
+      btn.classList.toggle("bg-brand-100", isActive)
+      btn.classList.toggle("text-brand-700", isActive)
       btn.classList.toggle("ring-1", isActive)
       btn.classList.toggle("ring-blue-300", isActive)
     })

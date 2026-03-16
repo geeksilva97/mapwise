@@ -15,7 +15,7 @@ class ErrorReporterTest < ActiveSupport::TestCase
       reporter.report(error, handled: true, severity: :error, context: { extra: "info" }, source: "test")
     end
 
-    assert_includes output, "[MapWise]"
+    assert_includes output, "[#{Branding.app_name}]"
     assert_includes output, "ERROR"
     assert_includes output, "(handled)"
     assert_includes output, "[test]"
@@ -70,7 +70,7 @@ class ErrorReporterTest < ActiveSupport::TestCase
       Rails.error.report(MapwiseError.new("test dispatch", context: { foo: 1 }), handled: true, source: "dispatch_test")
     end
 
-    assert_includes output, "[MapWise]"
+    assert_includes output, "[#{Branding.app_name}]"
     assert_includes output, "test dispatch"
   end
 

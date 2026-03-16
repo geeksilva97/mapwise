@@ -44,7 +44,7 @@
             <%= form.email_field :email_address, class: "block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none" %>
           </div>
 
-          <%= form.submit "Save Changes", class: "rounded-lg px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
+          <%= form.submit "Save Changes", class: "rounded-lg px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
         </div>
       <% end %>
     </div>
@@ -52,7 +52,7 @@
 
   <%# API Keys tab %>
   <div data-tabs-target="panel" class="hidden">
-    <p class="text-gray-600 mb-4 text-sm">Add your Google Maps API key to enable map embedding on external sites. Maps inside MapWise work without a key.</p>
+    <p class="text-gray-600 mb-4 text-sm">Add your Google Maps API key to enable map embedding on external sites. Maps inside <%= app_name %> work without a key.</p>
 
     <% if @api_keys.any? %>
       <div class="space-y-3 mb-6">

@@ -179,7 +179,7 @@ export default class extends Controller {
   #userBubbleHTML(content) {
     const escaped = this.#escapeHTML(content)
     return `<div class="flex mb-3 justify-end">
-      <div class="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed rounded-br-sm bg-blue-600 text-white">
+      <div class="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed rounded-br-sm bg-brand-600 text-white">
         <span>${escaped}</span>
       </div>
     </div>`

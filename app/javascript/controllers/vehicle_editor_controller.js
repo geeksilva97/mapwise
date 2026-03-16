@@ -45,7 +45,7 @@ export default class extends Controller {
         </div>
         <div class="flex gap-2">
           <button type="submit"
-                  class="flex-1 rounded-lg px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer">
+                  class="flex-1 rounded-lg px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer">
             Add Vehicle
           </button>
           <button type="button" data-action="click->vehicle-editor#hideForm"

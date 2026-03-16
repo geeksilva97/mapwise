@@ -40,7 +40,7 @@
 
     <div class="flex gap-2">
       <button type="button" data-action="click->playback#load"
-              class="flex-1 rounded-lg px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer">
+              class="flex-1 rounded-lg px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer">
         Load
       </button>
       <button type="button" data-action="click->playback#playPause" data-playback-target="playBtn"
@@ -57,7 +57,7 @@
 
     <div data-playback-target="progressContainer" class="hidden">
       <div class="w-full bg-gray-200 rounded-full h-1.5">
-        <div data-playback-target="progressBar" class="bg-blue-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+        <div data-playback-target="progressBar" class="bg-brand-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
       </div>
       <p data-playback-target="progressLabel" class="text-xs text-gray-400 mt-1">0 / 0 points</p>
     </div>

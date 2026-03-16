@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "MapWise <noreply@mapwise.app>"
+  default from: -> { Branding.mailer_from }
   layout "mailer"
 end

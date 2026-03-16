@@ -7,7 +7,7 @@ class UserMailerTest < ActionMailer::TestCase
 
     assert_equal "Verify your email address", mail.subject
     assert_equal [ user.email_address ], mail.to
-    assert_equal [ "noreply@mapwise.app" ], mail.from
+    assert_equal [ Branding.mailer_from_address ], mail.from
     assert_match "Verify my email", mail.body.encoded
   end
 end

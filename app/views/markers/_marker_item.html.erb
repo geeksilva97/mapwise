@@ -15,7 +15,7 @@
       <% end %>
       <%= link_to "Edit", edit_map_marker_path(marker.map, marker),
           data: { turbo_frame: "marker_form" },
-          class: "text-blue-600 hover:text-blue-800 text-xs font-medium" %>
+          class: "text-brand-600 hover:text-brand-800 text-xs font-medium" %>
       <a href="#" data-action="click->marker-editor#deleteMarker"
          data-marker-editor-id-param="<%= marker.id %>"
          class="text-red-600 hover:text-red-800 text-xs font-medium cursor-pointer">Delete</a>

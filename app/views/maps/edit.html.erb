@@ -4,7 +4,7 @@
 
   <header class="bg-white border-b px-4 py-3 flex items-center justify-between shrink-0">
     <div class="flex items-center gap-3">
-      <%= link_to root_path, class: "text-gray-400 hover:text-blue-600 transition-colors" do %>
+      <%= link_to root_path, class: "text-gray-400 hover:text-brand-600 transition-colors" do %>
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -32,7 +32,7 @@
       <%# Tab navigation %>
       <nav class="flex border-b shrink-0">
         <button data-tabs-target="tab" data-action="click->tabs#select"
-                class="flex-1 py-3 text-sm font-medium text-center border-b-2 border-blue-600 text-blue-600 cursor-pointer">
+                class="flex-1 py-3 text-sm font-medium text-center border-b-2 border-brand-600 text-brand-600 cursor-pointer">
           Markers
         </button>
         <button data-tabs-target="tab" data-action="click->tabs#select"
@@ -61,14 +61,14 @@
             </button>
             <button data-marker-editor-target="addButton"
                     data-action="click->marker-editor#togglePlacementMode"
-                    class="rounded-md px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium cursor-pointer">
+                    class="rounded-md px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer">
               + Add
             </button>
           </div>
         </div>
 
-        <div data-marker-editor-target="placementBanner" class="hidden mb-3 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
-          <p class="text-sm text-blue-700 font-medium">Click on the map to place a marker</p>
+        <div data-marker-editor-target="placementBanner" class="hidden mb-3 rounded-lg bg-brand-50 border border-brand-100 px-3 py-2">
+          <p class="text-sm text-brand-700 font-medium">Click on the map to place a marker</p>
         </div>
 
         <div data-marker-editor-target="circleSelectionBanner" class="hidden mb-3 rounded-lg bg-indigo-50 border border-indigo-200 px-3 py-2">
@@ -95,7 +95,7 @@
             <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Groups</p>
             <button type="button"
                     data-action="click->group#showNewForm"
-                    class="text-xs text-blue-600 hover:text-blue-800 font-medium cursor-pointer">
+                    class="text-xs text-brand-600 hover:text-brand-800 font-medium cursor-pointer">
               + New Group
             </button>
           </div>
@@ -144,7 +144,7 @@
              data-style-picker-map-id-value="<%= @map.id %>">
           <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Map style</p>
           <%= render "map_styles/picker", styles: MapStyle.for_user(Current.user), map: @map %>
-          <p class="text-xs text-gray-400 mt-2">Applies immediately. <% if MapStyle.for_user(Current.user).where(system_default: false).any? %>Manage styles in <%= link_to "Settings", settings_path, class: "text-blue-600 hover:text-blue-800 underline" %>.<% end %></p>
+          <p class="text-xs text-gray-400 mt-2">Applies immediately. <% if MapStyle.for_user(Current.user).where(system_default: false).any? %>Manage styles in <%= link_to "Settings", settings_path, class: "text-brand-600 hover:text-brand-800 underline" %>.<% end %></p>
         </div>
 
         <div class="border-t border-gray-200 pt-4 mt-4"
@@ -157,7 +157,7 @@
                    data-share-target="toggle"
                    data-action="change->share#togglePublic"
                    <%= "checked" if @map.public? %>
-                   class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500/20">
+                   class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-blue-500/20">
             <span class="text-sm font-medium text-gray-700">Public map</span>
           </label>
           <p class="text-xs text-gray-400 mt-1.5 ml-6.5">Public maps can be embedded on external websites.</p>

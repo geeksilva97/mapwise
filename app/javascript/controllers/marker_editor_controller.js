@@ -222,8 +222,8 @@ export default class extends Controller {
   #enterPlacementMode(mapCtrl) {
     mapCtrl.enterPlacementMode()
     this.addButtonTarget.textContent = "Done"
-    this.addButtonTarget.classList.replace("bg-blue-600", "bg-green-600")
-    this.addButtonTarget.classList.replace("hover:bg-blue-500", "hover:bg-green-500")
+    this.addButtonTarget.classList.replace("bg-brand-600", "bg-green-600")
+    this.addButtonTarget.classList.replace("hover:bg-brand-500", "hover:bg-green-500")
     this.placementBannerTarget.classList.remove("hidden")
   }
 
@@ -233,8 +233,8 @@ export default class extends Controller {
       mapCtrl.element.style.cursor = ""
     }
     this.addButtonTarget.textContent = "+ Add"
-    this.addButtonTarget.classList.replace("bg-green-600", "bg-blue-600")
-    this.addButtonTarget.classList.replace("hover:bg-green-500", "hover:bg-blue-500")
+    this.addButtonTarget.classList.replace("bg-green-600", "bg-brand-600")
+    this.addButtonTarget.classList.replace("hover:bg-green-500", "hover:bg-brand-500")
     this.placementBannerTarget.classList.add("hidden")
   }
 
@@ -272,7 +272,7 @@ export default class extends Controller {
     const editLink = document.createElement("a")
     editLink.href = `/maps/${this.mapIdValue}/markers/${marker.id}/edit`
     editLink.dataset.turboFrame = "marker_form"
-    editLink.className = "text-blue-600 hover:text-blue-800 text-xs font-medium"
+    editLink.className = "text-brand-600 hover:text-brand-800 text-xs font-medium"
     editLink.textContent = "Edit"
 
     const deleteLink = document.createElement("a")

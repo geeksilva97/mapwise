@@ -1,61 +1,330 @@
 # MapWise
 
-A map creation platform inspired by Google My Maps and Atlist. Create custom maps with markers, styles, layers, and vehicle tracking, then embed them on any website via iframe. Includes an AI assistant that builds maps from natural language.
+A self-hostable map creation platform. Create custom maps with markers, groups, layers, and styles, then embed them on any website via iframe. Includes live vehicle tracking with deviation alerts and an AI assistant that builds maps from natural language.
 
-## Requirements
+Inspired by Google My Maps and Atlist, but you own your data and infrastructure.
 
-- Ruby 3.4.5
-- SQLite 3
-- Node.js (for Tailwind CSS CLI)
+## Table of Contents
 
-## Setup
+- [Self-Hosting Guide](#self-hosting-guide)
+  - [Prerequisites](#prerequisites)
+  - [1. Clone and Install](#1-clone-and-install)
+  - [2. Configure Credentials](#2-configure-credentials)
+  - [3. Configure Branding](#3-configure-branding)
+  - [4. Seed the Database](#4-seed-the-database)
+  - [5. Run Locally](#5-run-locally)
+  - [6. Deploy to Production](#6-deploy-to-production)
+  - [7. SSL Setup](#7-ssl-setup)
+  - [8. Email Delivery](#8-email-delivery)
+- [Configuration Reference](#configuration-reference)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tests](#tests)
+- [Developer Tools](#developer-tools)
+- [Stack](#stack)
+
+---
+
+## Self-Hosting Guide
+
+### Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Ruby | 3.4.5 | Exact version in `.ruby-version` |
+| SQLite | 3.8+ | Ships with macOS and most Linux distros |
+| Node.js | 18+ | Only for the Tailwind CSS CLI during asset compilation |
+| Docker | 20+ | For production deployment via Kamal |
+
+No external database server, Redis, or message broker required. Everything runs on SQLite with Solid Queue, Solid Cache, and Solid Cable.
+
+### 1. Clone and Install
 
 ```bash
-# Install dependencies
+git clone <repo-url> && cd mapwise
 bundle install
-
-# Set up the database
-bin/rails db:prepare
-
-# Seed map styles
-bin/rails db:seed
-
-# Set your Google Maps platform API key
-EDITOR="vim" bin/rails credentials:edit
-# Add: google_maps_api_key: YOUR_KEY_HERE
-
-# Set your LLM API key(s) (required for AI chat)
-EDITOR="vim" bin/rails credentials:edit
-# Add one or more:
-#   anthropic_api_key: YOUR_KEY_HERE
-#   openai_api_key: YOUR_KEY_HERE
-#   gemini_api_key: YOUR_KEY_HERE
 ```
 
-The AI chat feature uses [RubyLLM](https://rubyllm.com) for multi-provider support. By default it uses Claude Sonnet — set `RUBY_LLM_MODEL` env var to switch models (e.g. `gpt-4o`, `gemini-2.0-flash`).
+### 2. Configure Credentials
 
-## Running
+Credentials are stored encrypted in `config/credentials.yml.enc`. You need to create your own master key and credentials file:
+
+```bash
+# Delete the existing credentials (they're encrypted with a key you don't have)
+rm config/credentials.yml.enc
+
+# Generate your own master key + credentials file
+EDITOR="vim" bin/rails credentials:edit
+```
+
+Add the following keys:
+
+```yaml
+# Required — powers all maps (editor, viewer, dashboard)
+google_maps_api_key: YOUR_GOOGLE_MAPS_API_KEY
+
+# At least one LLM key is needed for the AI chat feature (optional)
+anthropic_api_key: YOUR_KEY    # Claude
+openai_api_key: YOUR_KEY       # GPT
+gemini_api_key: YOUR_KEY       # Gemini
+
+# For production email delivery (optional, see Email Delivery section)
+# smtp:
+#   user_name: YOUR_SMTP_USER
+#   password: YOUR_SMTP_PASSWORD
+```
+
+**Google Maps API key**: Create one at [console.cloud.google.com](https://console.cloud.google.com/apis/credentials). Enable the Maps JavaScript API, Places API, and Geocoding API.
+
+**AI chat**: Uses [RubyLLM](https://rubyllm.com) for multi-provider support. Defaults to Claude Sonnet. Set `RUBY_LLM_MODEL` env var to switch (e.g. `gpt-4o`, `gemini-2.0-flash`).
+
+> **Important**: Keep `config/master.key` safe and never commit it. You'll need it for production deployment.
+
+### 3. Configure Branding
+
+Copy the example environment file and customize:
+
+```bash
+cp .env.example .env
+```
+
+Branding variables (all optional, sensible defaults provided):
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `APP_NAME` | MapWise | Shown in navbar, page titles, emails, PWA manifest |
+| `MAILER_FROM_ADDRESS` | noreply@example.com | Sender address for verification and password reset emails |
+| `THEME_COLOR` | #2563eb | PWA theme color and manifest background |
+
+The primary brand color used for buttons, links, and active states is defined via CSS custom properties in `app/assets/tailwind/application.css`. To change it, override the `--brand-*` CSS variables:
+
+```css
+/* In your custom CSS or via a <style> tag */
+:root {
+  --brand-50: oklch(0.98 0.01 155);
+  --brand-100: oklch(0.94 0.03 155);
+  --brand-500: oklch(0.55 0.17 155);
+  --brand-600: oklch(0.48 0.17 155);
+  --brand-700: oklch(0.42 0.16 155);
+  --brand-800: oklch(0.36 0.14 155);
+}
+```
+
+To replace the logo, swap `public/icon.png` and `public/icon.svg` with your own files. The navbar logo is an inline SVG in `app/views/shared/_navbar.html.erb`.
+
+### 4. Seed the Database
+
+```bash
+bin/rails db:prepare
+bin/rails db:seed     # Creates 6 built-in map styles
+```
+
+### 5. Run Locally
 
 ```bash
 bin/dev
 ```
 
-This starts the Rails server, Tailwind CSS watcher, and Solid Queue worker via `Procfile.dev`. Visit http://localhost:3000.
+This starts three processes via `Procfile.dev`:
+- **web**: Rails server on port 3000
+- **css**: Tailwind CSS watcher (rebuilds on file changes)
+- **jobs**: Solid Queue worker (processes background jobs)
 
-The Solid Queue worker (`bin/jobs`) is required for background jobs: AI chat, CSV/Excel import, geocoding, tracking broadcasts, and deviation checks. To run manually in separate terminals:
+Visit http://localhost:3000, create an account, and start building maps.
+
+> The Solid Queue worker is required for AI chat, CSV/Excel import, geocoding, tracking broadcasts, and deviation checks. Without it, these features will silently fail.
+
+To run processes manually in separate terminals:
 
 ```bash
 bin/rails server   # web server
-bin/jobs            # Solid Queue worker
+bin/jobs            # background jobs
 ```
 
-## Tests
+### 6. Deploy to Production
+
+The app ships with a Kamal 2 deployment configuration that deploys to any Linux server with Docker.
+
+#### a. Prepare your server
+
+You need a Linux server (Ubuntu 22.04+ recommended) with:
+- Docker installed (`curl -fsSL https://get.docker.com | sh`)
+- SSH access from your local machine
+- A container registry (Docker Hub, GitHub Container Registry, GCP Artifact Registry, etc.)
+
+#### b. Configure deployment
+
+Edit `.env` with your deployment details:
 
 ```bash
-bin/rails test
+# Server
+DEPLOY_HOST=203.0.113.10           # Your server's IP or hostname
+DEPLOY_SSH_USER=root               # SSH user with Docker access
+DEPLOY_SSH_KEY=~/.ssh/id_rsa       # Path to your SSH private key
+
+# Container registry
+DEPLOY_REGISTRY=ghcr.io                  # Registry server
+DEPLOY_REGISTRY_USERNAME=your-username   # Registry username
+DEPLOY_IMAGE=your-username/mapwise       # Image name
+DEPLOY_VOLUME=mapwise_storage            # Docker volume name for data
+
+# Service name (used by Kamal for container naming)
+DEPLOY_SERVICE=mapwise
+
+# Registry authentication — set KAMAL_REGISTRY_PASSWORD here,
+# or let .kamal/secrets auto-detect (works for GCP with gcloud CLI)
+KAMAL_REGISTRY_PASSWORD=your-registry-token
 ```
 
-507 tests, 1297 assertions (96% line coverage, 85% branch coverage).
+#### c. Set the master key
+
+Your production server needs the Rails master key to decrypt credentials:
+
+```bash
+# .kamal/secrets reads it automatically from config/master.key
+# Make sure this file exists locally before deploying
+cat config/master.key
+```
+
+#### d. Deploy
+
+```bash
+# First deployment (sets up Docker, creates volumes, runs migrations)
+bin/kamal setup
+
+# Subsequent deployments
+bin/kamal deploy
+```
+
+#### e. Useful commands
+
+```bash
+bin/kamal logs        # Tail production logs
+bin/kamal console     # Rails console on the server
+bin/kamal shell       # SSH into the running container
+```
+
+#### Production details
+
+- **Solid Queue** runs in-process with Puma via `SOLID_QUEUE_IN_PUMA=true` (no separate job server needed)
+- **Data persistence**: SQLite databases and Active Storage uploads live in a Docker volume mounted at `/rails/storage`
+- **Health check**: `GET /up` returns 200 when the app is ready
+- The app accepts connections on port 80 via Thruster (Rails' built-in HTTP proxy)
+
+### 7. SSL Setup
+
+The app ships without SSL enabled. For production, you have two options:
+
+**Option A: Reverse proxy (recommended)**
+
+Put Nginx, Caddy, or a cloud load balancer in front of the app. Caddy auto-provisions Let's Encrypt certificates:
+
+```
+# Caddyfile
+yourdomain.com {
+    reverse_proxy localhost:80
+}
+```
+
+Then uncomment in `config/environments/production.rb`:
+
+```ruby
+config.assume_ssl = true
+config.force_ssl = true
+```
+
+**Option B: Thruster with Let's Encrypt**
+
+Thruster (the built-in proxy) can handle SSL automatically if you set `TLS_DOMAIN`:
+
+```bash
+# Add to your .env or Kamal env config
+TLS_DOMAIN=yourdomain.com
+```
+
+### 8. Email Delivery
+
+In development, emails are captured by `letter_opener_web` at http://localhost:3000/letter_opener.
+
+For production, configure SMTP in `config/environments/production.rb`:
+
+```ruby
+config.action_mailer.smtp_settings = {
+  user_name: Rails.application.credentials.dig(:smtp, :user_name),
+  password: Rails.application.credentials.dig(:smtp, :password),
+  address: "smtp.example.com",
+  port: 587,
+  authentication: :plain
+}
+```
+
+Add your SMTP credentials via `bin/rails credentials:edit` and set `MAILER_HOST` in your `.env` to your domain or IP (used for links in emails).
+
+---
+
+## Configuration Reference
+
+### Environment Variables
+
+| Variable | Where | Default | Description |
+|----------|-------|---------|-------------|
+| `APP_NAME` | Branding | MapWise | Application name (navbar, titles, emails) |
+| `MAILER_FROM_ADDRESS` | Branding | noreply@example.com | Email sender address |
+| `THEME_COLOR` | Branding | #2563eb | PWA theme/background color |
+| `RUBY_LLM_MODEL` | AI | claude-sonnet (via RubyLLM) | LLM model for AI chat |
+| `MAILER_HOST` | Email | localhost | Host for email links |
+| `RAILS_LOG_LEVEL` | Logging | info | Log verbosity (debug/info/warn/error) |
+| `WEB_CONCURRENCY` | Performance | 2 | Puma worker count |
+| `RAILS_MAX_THREADS` | Performance | 5 | Threads per Puma worker |
+| `SOLID_QUEUE_IN_PUMA` | Jobs | false | Run Solid Queue in Puma process |
+
+### Encrypted Credentials (`bin/rails credentials:edit`)
+
+| Key | Required | Description |
+|-----|----------|-------------|
+| `google_maps_api_key` | Yes | Google Maps JavaScript API key |
+| `anthropic_api_key` | For AI | Anthropic API key (Claude models) |
+| `openai_api_key` | For AI | OpenAI API key (GPT models) |
+| `gemini_api_key` | For AI | Google Gemini API key |
+| `smtp.user_name` | For email | SMTP username |
+| `smtp.password` | For email | SMTP password |
+
+### Deployment Variables (`.env`)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DEPLOY_HOST` | *(none)* | Server IP or hostname |
+| `DEPLOY_SERVICE` | mapwise | Kamal service name |
+| `DEPLOY_IMAGE` | mapwise | Container image name |
+| `DEPLOY_REGISTRY` | *(none)* | Container registry server |
+| `DEPLOY_REGISTRY_USERNAME` | *(none)* | Registry auth username |
+| `DEPLOY_SSH_USER` | root | SSH user for deployment |
+| `DEPLOY_SSH_KEY` | *(none)* | Path to SSH private key |
+| `DEPLOY_VOLUME` | mapwise_storage | Docker volume for data |
+| `KAMAL_REGISTRY_PASSWORD` | *(auto for GCP)* | Registry auth token/password |
+
+### CSS Custom Properties (Brand Colors)
+
+Override in your CSS to change the primary brand color:
+
+| Variable | Default (oklch) | Usage |
+|----------|-----------------|-------|
+| `--brand-50` | Light tint | Hover backgrounds, banners |
+| `--brand-100` | Lighter shade | Borders, subtle backgrounds |
+| `--brand-500` | Mid shade | Secondary buttons, hover states |
+| `--brand-600` | Primary | Buttons, links, active tabs |
+| `--brand-700` | Darker shade | Button hover (dark variant) |
+| `--brand-800` | Dark shade | Link hover, emphasis text |
+
+### Files to Customize
+
+| File | What to change |
+|------|---------------|
+| `public/icon.png` | Favicon and PWA icon (512x512 PNG) |
+| `public/icon.svg` | SVG favicon |
+| `app/views/shared/_navbar.html.erb` | Navbar logo (inline SVG on line 6) |
+
+---
 
 ## Features
 
@@ -65,14 +334,12 @@ bin/rails test
 - Sign in / sign out with session management
 - Password reset via email
 - Account settings page to update name and email
-- **Email verification**: New users must verify their email within 7 days. During the grace period, an amber banner reminds them. After 7 days, unverified accounts are blocked until verified. Verification tokens expire after 3 days and can be re-sent
+- Email verification with 7-day grace period. Amber banner during grace period, hard block after deadline. Tokens expire in 3 days and can be re-sent
 
-### API Keys
+### API Keys (Dual Model)
 
-MapWise uses a dual API key model:
-
-- **Platform key** (in `config/credentials.yml.enc`): Powers all maps inside the app (editor, viewer, dashboard). Users don't need to provide a key to use MapWise
-- **Customer key** (optional, in Settings > API Keys): Encrypted via Active Record Encryption. Required only for embedding public maps on external sites
+- **Platform key** (in encrypted credentials): Powers all maps inside the app. Users don't need a key to use the application
+- **Customer key** (optional, in Settings > API Keys): Encrypted via Active Record Encryption. Required only for embedding public maps on external sites via iframe
 
 ### Dashboard
 
@@ -80,224 +347,182 @@ Grid of map cards ordered by most recently updated. Quick access to create new m
 
 ### Map Editor
 
-The editor is a full-screen split view with a sidebar (4 tabs) and map canvas:
+Full-screen split view with a sidebar (4 tabs) and map canvas:
 
 - **Markers tab**: Add, edit, drag, and delete markers. Import from CSV/Excel. Organize with groups and layers. Draw geometric shapes
-- **Settings tab**: Edit title, description, starting position (lat/lng/zoom), map style, clustering toggle, search mode. Settings save inline via Turbo Stream — no page refresh
+- **Settings tab**: Title, description, starting position, map style, clustering, search mode. Settings auto-save via Turbo Stream
 - **Tracking tab**: Manage tracked vehicles with webhooks, planned paths, and deviation alerts
 - **AI tab**: Chat with an AI assistant to create and modify your map using natural language
 
 ### Markers
 
-- **Placement mode**: Click "+ Add", then click the map to place markers. Placement is persistent (multi-marker) — click Cancel to exit
-- **Editing**: Inline sidebar form for title, description, color, icon, custom info window HTML
-- **Drag to reposition**: Drag markers on the map, position auto-saves
-- **Info windows**: Click a marker to see its title, description, and any custom HTML content
-- **Clustering**: Optional marker clustering via `@googlemaps/markerclusterer`, togglable in Settings
+- Persistent placement mode (click map to place multiple markers, Cancel to exit)
+- Inline editing: title, description, color, icon, custom info window HTML
+- Drag to reposition (auto-saves)
+- Info windows on click
+- Optional clustering via `@googlemaps/markerclusterer`
 
 ### Marker Groups
 
-- Create named groups with a color and icon
-- Toggle group visibility (show/hide all markers in a group)
-- **Circle selection**: Click "Pick markers" on a group, then draw a circle on the map to bulk-assign markers
-- Ungroup individual markers back to the ungrouped section
+- Named groups with color and icon
+- Toggle group visibility
+- Circle selection: draw a circle on the map to bulk-assign markers
+- Ungroup individual markers
 
 ### Geometric Layers (Terra Draw)
 
-Draw shapes directly on the map using a toolbar at the top center:
-
-- **Polygon**: Click vertices, double-click to finish
-- **Line**: Connected line segments
-- **Circle**: Click center, click to set radius
-- **Rectangle**: Click opposite corners
-- **Freehand**: Free-form drawing
-
-Each layer has a name, stroke color, stroke width, fill color, and fill opacity. Layers are editable inline in the sidebar and support visibility toggling. In read-only views (viewer, embed), layers render via Google Maps Data layer without Terra Draw.
+Draw shapes on the map: polygon, line, circle, rectangle, freehand. Each layer has name, stroke color/width, fill color/opacity. Inline editing, visibility toggling. Read-only views render via Google Maps Data layer.
 
 ### CSV/Excel Import
 
-- Import markers from CSV or XLSX files via a dialog modal
-- Column mapping UI: map file columns to lat, lng, address, title, description, color, group
+- Import from CSV or XLSX via dialog modal
+- Column mapping UI (lat, lng, address, title, description, color, group)
 - Address-only import with deferred geocoding
-- Async processing via background job with progress polling
-- Auto-creates groups if a group column is mapped
-- Per-row error reporting with completion summary
+- Async processing with progress polling
+- Auto-creates groups from a mapped column
 
 ### Map Styling
 
-Two rendering modes (mutually exclusive, determined by whether the map has a `google_map_id`):
+Two mutually exclusive rendering modes:
 
 - **With Google Map ID**: `AdvancedMarkerElement` + cloud-based styling
 - **Without Google Map ID**: Legacy `Marker` with SVG pin icons + JSON styles
 
-Style picker dropdown in Settings with 6 pre-seeded styles (Default, Silver, Night, Retro, Aubergine, Minimal). Users can also create custom JSON styles.
+6 pre-seeded styles: Default, Silver, Night, Retro, Aubergine, Minimal. Users can create custom JSON styles.
 
 ### Map Search
 
-Search overlay on the map with two modes (configurable in Settings):
+Overlay with two modes (configurable in Settings):
 
-- **Places mode**: Google Places API autocomplete — search for addresses and places
+- **Places mode**: Google Places API autocomplete
 - **Marker mode**: Search markers on the current map by title
 
 ### Map Visibility & Embedding
 
-- **Private maps**: Viewable only inside MapWise (requires authentication)
-- **Public maps**: Also embeddable via iframe on external sites (requires customer API key)
+- **Private maps**: Viewable only inside the app (requires authentication)
+- **Public maps**: Embeddable via iframe (requires customer API key)
 
 ```html
 <iframe src="https://your-domain.com/embed/TOKEN" width="100%" height="400" frameborder="0"></iframe>
 ```
 
-The embed endpoint returns 503 if no customer API key is configured, and 404 for private maps.
-
-### Map Viewer
-
-Dedicated read-only page at `/maps/:id` for viewing maps. Renders markers with info windows, layers, clustering, and search — without editing controls.
+Returns 503 if no customer API key is configured, 404 for private maps.
 
 ### Live Tracking
 
-Each map can have tracked vehicles that receive GPS data via webhooks:
-
-1. Add a vehicle in the Tracking tab — it gets a unique webhook URL
+1. Add a vehicle in the Tracking tab — gets a unique webhook URL
 2. Send GPS data: `POST /webhooks/tracking/:token` with `{ lat, lng, speed, heading, recorded_at }`
-3. View live positions and trails on the dedicated tracking page (`/maps/:id/tracking`)
+3. View live positions and trails on the tracking page (`/maps/:id/tracking`)
 4. Draw planned paths and get deviation alerts when vehicles go off-route
 5. Toggle vehicles active/inactive, clear tracking history
-6. Auto-zoom: the tracking map fits to existing data on load and pans to follow incoming points
 
-Response codes: `200` (success), `404` (vehicle not found), `410` (vehicle inactive), `422` (validation error).
+Response codes: `200` (success), `404` (not found), `410` (inactive), `422` (validation error).
 
 ### Deviation Alerts
 
-- Draw a planned path for a vehicle using the drawing tool
+- Draw a planned path for a vehicle
 - Set a deviation threshold in meters
-- When a tracking point exceeds the threshold distance from the planned path, a `DeviationAlert` is created
-- Alerts appear in real-time on the tracking page sidebar (Alerts tab)
-- Dismissible with an acknowledge button
+- Real-time alerts when a tracking point exceeds the threshold distance from the planned path
+- Dismissible via acknowledge button
 
 ### Historical Playback
 
-Review vehicle movement history on the tracking page:
-
-- Select a vehicle and date range
-- Play/pause/stop controls with speed multiplier (1x, 2x, 5x, 10x)
-- Animated marker moves along the historical trail with a progress bar
-- Fetches up to 10,000 tracking points per query
+- Select a vehicle and date range on the tracking page
+- Play/pause/stop with speed multiplier (1x, 2x, 5x, 10x)
+- Animated marker along historical trail with progress bar
 
 ### AI Chat
 
-The AI tab lets you describe map changes in plain English:
+Describe map changes in natural language:
 
 - "Add 5 coffee shops in downtown Manhattan"
 - "Change the style to Night"
 - "Create a group called Hotels and add 3 hotels near Times Square"
-- "Delete the first marker"
-- "What markers are on this map?"
 
-The AI assistant uses 8 tools to execute map operations:
+8 tools: `create_marker`, `update_marker`, `delete_marker`, `list_markers`, `update_map`, `apply_style`, `create_group`, `assign_to_group`. Changes appear in real-time via Action Cable.
 
-| Tool | Description |
-|------|-------------|
-| `create_marker` | Add a marker with lat, lng, title, description, color |
-| `update_marker` | Edit an existing marker |
-| `delete_marker` | Remove a marker |
-| `list_markers` | Get all markers on the map |
-| `update_map` | Change title, description, center, zoom |
-| `apply_style` | Apply a map style by name |
-| `create_group` | Create a marker group |
-| `assign_to_group` | Add markers to a group |
-
-Changes appear on the map in real-time via Action Cable. Powered by RubyLLM with support for Anthropic (Claude), OpenAI (GPT), and Google Gemini.
-
-## Developer Tools
-
-### Tracking Simulator
-
-A standalone CLI script for demoing live tracking without a real GPS device:
-
-```bash
-# List available routes
-bin/simulate_tracking --list
-
-# Simulate with defaults (nyc_taxi route, 2s interval, localhost:3000)
-bin/simulate_tracking <WEBHOOK_TOKEN>
-
-# Customize route, speed, and host
-bin/simulate_tracking <WEBHOOK_TOKEN> --route delivery_route --interval 1 --host localhost:3000
-
-# Loop the route continuously
-bin/simulate_tracking <WEBHOOK_TOKEN> --loop
-```
-
-Three predefined routes with realistic GPS interpolation (~50m steps, auto-computed headings):
-
-| Route | Description |
-|-------|-------------|
-| `nyc_taxi` | Cab through Manhattan: Times Square → Central Park → East Village |
-| `highway_drive` | I-95 NJ/NY stretch at highway speeds |
-| `delivery_route` | Brooklyn neighborhood delivery loop with stops |
-
-No Rails dependency — uses only Ruby stdlib.
-
-### Dev Email
-
-Emails in development are captured by `letter_opener_web`. Browse sent emails at http://localhost:3000/letter_opener.
-
-### Security & Linting
-
-```bash
-bin/brakeman        # Security scanner
-bin/rubocop         # Code style
-bundle exec bundler-audit check  # Gem vulnerabilities
-```
+---
 
 ## Architecture
 
 ### Service Layer
 
-Controllers never talk to the database directly — all ActiveRecord operations go through namespaced service classes using the `.call` pattern. Auth controllers are excluded.
+Controllers never touch the database directly. All ActiveRecord operations go through namespaced `.call` service classes:
 
-Service namespaces: `Maps::`, `Markers::`, `MarkerGroups::`, `Layers::`, `Tracking::`, `Chat::`, `ApiKeys::`, `MapStyles::`, `Imports::`, `EmailVerifications::`.
+```ruby
+@marker = Markers::Create.call(@map, marker_params)
+```
 
-### Real-Time Communication
+Namespaces: `Maps::`, `Markers::`, `MarkerGroups::`, `Layers::`, `Tracking::`, `Chat::`, `ApiKeys::`, `MapStyles::`, `Imports::`, `EmailVerifications::`.
 
-Two Action Cable channels:
+### Real-Time (Action Cable)
 
 - **TrackingChannel** (`tracking_map_{id}`): Live vehicle positions, deviation alerts
-- **AiChatChannel** (`ai_chat_map_{id}`): AI assistant responses, map state updates after tool use
+- **AiChatChannel** (`ai_chat_map_{id}`): AI responses, map state updates
 
 ### Background Jobs (Solid Queue)
 
-- `AiChatJob` — AI chat processing with tool loop
-- `CsvImportJob` — CSV/Excel row processing with progress
-- `TrackingBroadcastJob` — Real-time vehicle position broadcasts
-- `DeviationCheckJob` — Path deviation detection
-- `GeocodeJob` — Address geocoding via Google Geocoding API
+`AiChatJob`, `CsvImportJob`, `TrackingBroadcastJob`, `DeviationCheckJob`, `GeocodeJob`.
 
-### JavaScript Architecture
+### JavaScript (Stimulus)
 
-Stimulus controllers with shared utilities:
+Shared utilities in `app/javascript/utils/`: `controllers.js` (cross-controller lookups), `flash.js` (error toasts), `csrf.js`, `http.js` (fetch wrappers).
 
-- `utils/controllers.js` — Cross-controller lookup helpers (`findMapController`, `findDrawingController`, `findTrackingController`)
-- `utils/flash.js` — Error toast notifications
-- `utils/csrf.js` — CSRF token helper
-- `utils/http.js` — Fetch wrappers (`getJSON`, `postJSON`, `patchJSON`, `turboPost`, etc.)
-
-Key controllers: `map_controller` (Google Maps + diff-based marker rendering), `drawing_controller` (Terra Draw), `tracking_controller` (live tracking), `playback_controller` (historical playback), `chat_controller` (AI chat), `import_controller` / `import_dialog_controller` (CSV import).
+Key controllers: `map_controller` (Google Maps, diff-based rendering), `drawing_controller` (Terra Draw), `tracking_controller`, `playback_controller`, `chat_controller`, `import_controller`.
 
 ### Layouts
 
-- **Application**: Navbar + container (dashboard, settings, auth pages)
-- **Fullscreen**: Zero-padding (editor, viewer, tracking page)
-- **Embed**: Minimal (iframe embeds)
+- **Application**: Navbar + container (dashboard, settings, auth)
+- **Fullscreen**: Zero-padding (editor, viewer, tracking)
+- **Embed**: Minimal (iframes)
+
+---
+
+## Tests
+
+```bash
+bin/rails test
+```
+
+514 tests, 1305 assertions (95.7% line coverage, 83.5% branch coverage).
+
+---
+
+## Developer Tools
+
+### Tracking Simulator
+
+Standalone CLI for demoing live tracking without a real GPS device:
+
+```bash
+bin/simulate_tracking --list                          # List routes
+bin/simulate_tracking <TOKEN>                          # NYC taxi, 2s interval
+bin/simulate_tracking <TOKEN> --route delivery_route   # Custom route
+bin/simulate_tracking <TOKEN> --loop                   # Loop continuously
+```
+
+Routes: `nyc_taxi`, `highway_drive`, `delivery_route`.
+
+### Dev Email
+
+Captured by `letter_opener_web` at http://localhost:3000/letter_opener.
+
+### Security Scanning
+
+```bash
+bin/brakeman                          # Static analysis
+bin/rubocop                           # Code style
+bundle exec bundler-audit check       # Gem vulnerabilities
+```
+
+---
 
 ## Stack
 
-- Rails 8.1.2 with Hotwire (Turbo + Stimulus)
-- Tailwind CSS
+- Rails 8.1.2, Hotwire (Turbo + Stimulus), Tailwind CSS v4
 - SQLite with Solid Queue, Solid Cache, Solid Cable
-- Google Maps JavaScript API (dual-mode: AdvancedMarkerElement with cloud Map ID, or legacy Marker with JSON styles)
-- Terra Draw (geometric layer drawing)
+- Google Maps JavaScript API (dual-mode rendering)
+- Terra Draw (geometric layers)
 - RubyLLM (multi-provider AI: Anthropic, OpenAI, Gemini)
-- Importmap (no bundler), Propshaft
-- Roo (Excel/XLSX parsing)
+- Importmap, Propshaft
+- Kamal 2 (deployment)

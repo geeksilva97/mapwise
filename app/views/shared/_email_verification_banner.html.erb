@@ -8,7 +8,7 @@
     </svg>
 
     <% if expired %>
-      <span>Your email verification has expired. Please verify your email to continue using MapWise.</span>
+      <span>Your email verification has expired. Please verify your email to continue using <%= app_name %>.</span>
     <% else %>
       <span>Please verify your email within <%= pluralize(days_left, "day") %>.</span>
     <% end %>
