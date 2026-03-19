@@ -128,4 +128,15 @@ class WebhooksControllerTest < ActionDispatch::IntegrationTest
     data = JSON.parse(response.body)
     assert_equal "Vehicle is inactive", data["error"]
   end
+
+  test "should ignore unpermitted params" do
+    assert_difference "TrackingPoint.count", 1 do
+      post webhook_tracking_path(@vehicle.webhook_token),
+        params: { lat: 40.7128, lng: -74.0060, vehicle_id: 999, malicious_field: "hack" }
+    end
+
+    assert_response :ok
+    point = TrackingPoint.last
+    assert_equal @vehicle.id, point.tracked_vehicle_id
+  end
 end

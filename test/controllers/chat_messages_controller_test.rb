@@ -87,4 +87,17 @@ class ChatMessagesControllerTest < ActionDispatch::IntegrationTest
     delete clear_map_chat_messages_path(other_map)
     assert_response :not_found
   end
+
+  test "create ignores unpermitted params" do
+    assert_difference("ChatMessage.count") do
+      post map_chat_messages_path(@map),
+           params: { chat_message: { content: "Hello", role: "assistant", map_id: 999 } },
+           as: :json
+    end
+
+    assert_response :ok
+    message = ChatMessage.last
+    assert_equal "user", message.role
+    assert_equal @map.id, message.map_id
+  end
 end

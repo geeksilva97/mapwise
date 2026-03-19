@@ -204,4 +204,25 @@ class MarkerGroupsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_path
   end
+
+  test "create ignores unpermitted params" do
+    assert_difference("MarkerGroup.count") do
+      post map_marker_groups_path(@map),
+           params: { marker_group: { name: "Safe", color: "#FF0000", map_id: 999, position: 0 } },
+           as: :json
+    end
+
+    group = MarkerGroup.last
+    assert_equal @map.id, group.map_id
+  end
+
+  test "assign_markers ignores unpermitted params" do
+    marker = markers(:one)
+    patch assign_markers_map_marker_group_path(@map, @group),
+          params: { marker_ids: [ marker.id ], group_id: 999, map_id: 999 },
+          as: :json
+
+    assert_response :success
+    assert_equal @group.id, marker.reload.marker_group_id
+  end
 end

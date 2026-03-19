@@ -16,7 +16,7 @@ class WebhooksController < ApplicationController
       return
     end
 
-    point = Tracking::CreateTrackingPoint.call(vehicle, params)
+    point = Tracking::CreateTrackingPoint.call(vehicle, tracking_params)
 
     if point.persisted?
       TrackingBroadcastJob.perform_later(point.id)
@@ -25,5 +25,11 @@ class WebhooksController < ApplicationController
     else
       render json: { errors: point.errors.full_messages }, status: :unprocessable_entity
     end
+  end
+
+  private
+
+  def tracking_params
+    params.permit(:lat, :lng, :speed, :heading, :recorded_at)
   end
 end

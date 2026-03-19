@@ -3,7 +3,8 @@ class ImportsController < ApplicationController
   before_action :set_import, only: %i[ show update ]
 
   def create
-    unless params[:file].present?
+    file = import_params[:file]
+    unless file.present?
       return respond_to do |format|
         format.turbo_stream { render turbo_stream: turbo_stream.replace("import_area", html: helpers.tag.div(id: "import_area") { helpers.tag.p("Please select a file.", class: "text-sm text-red-600") }) }
         format.json { render json: { error: "No file uploaded" }, status: :unprocessable_entity }
@@ -11,7 +12,7 @@ class ImportsController < ApplicationController
       end
     end
 
-    result = Imports::CreateFromUpload.call(@map, params[:file])
+    result = Imports::CreateFromUpload.call(@map, file)
 
     if result[:error]
       respond_to do |format|
@@ -83,5 +84,9 @@ class ImportsController < ApplicationController
 
   def set_import
     @import = @map.imports.find(params[:id])
+  end
+
+  def import_params
+    params.permit(:file)
   end
 end

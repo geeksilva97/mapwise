@@ -128,6 +128,20 @@ class ImportsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_session_path
   end
 
+  test "update ignores unpermitted column mapping params" do
+    import = @map.imports.create!(file_name: "test.csv", status: "mapping")
+
+    patch map_import_path(@map, import),
+          params: { column_mapping: { lat: "Latitude", lng: "Longitude", admin: "true", sql: "DROP TABLE" } },
+          as: :json
+
+    assert_response :success
+    import.reload
+    assert_equal "Latitude", import.column_mapping["lat"]
+    assert_nil import.column_mapping["admin"]
+    assert_nil import.column_mapping["sql"]
+  end
+
   private
 
   def create_tempfile(filename, content)

@@ -41,7 +41,7 @@ class MarkerGroupsController < ApplicationController
   end
 
   def assign_markers
-    marker_ids = params[:marker_ids] || []
+    marker_ids = params.permit(marker_ids: []).fetch(:marker_ids, [])
     markers = MarkerGroups::AssignMarkers.call(@map, @marker_group, marker_ids)
 
     respond_to do |format|

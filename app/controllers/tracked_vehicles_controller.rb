@@ -64,7 +64,7 @@ class TrackedVehiclesController < ApplicationController
   end
 
   def save_planned_path
-    if Tracking::SavePlannedPath.call(@vehicle, params[:planned_path])
+    if Tracking::SavePlannedPath.call(@vehicle, planned_path_params[:planned_path])
       respond_to do |format|
         format.turbo_stream { render turbo_stream: turbo_stream.replace("vehicle_#{@vehicle.id}", partial: "tracked_vehicles/vehicle_item", locals: { vehicle: @vehicle, map: @map }) }
         format.json { render json: vehicle_json(@vehicle) }
@@ -97,6 +97,10 @@ class TrackedVehiclesController < ApplicationController
 
   def vehicle_params
     params.require(:tracked_vehicle).permit(:name, :color, :icon, :deviation_threshold_meters, :planned_path)
+  end
+
+  def planned_path_params
+    params.permit(:planned_path)
   end
 
   def vehicle_json(vehicle)

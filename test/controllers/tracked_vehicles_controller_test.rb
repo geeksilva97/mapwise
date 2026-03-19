@@ -260,4 +260,30 @@ class TrackedVehiclesControllerTest < ActionDispatch::IntegrationTest
       as: :json
     assert_response :redirect
   end
+
+  # STRONG PARAMS
+  test "create ignores unpermitted params" do
+    assert_difference "TrackedVehicle.count", 1 do
+      post map_tracked_vehicles_path(@map),
+        params: { tracked_vehicle: { name: "Safe Vehicle", map_id: 999, webhook_token: "hacked", active: false } },
+        as: :json
+    end
+
+    vehicle = TrackedVehicle.last
+    assert_equal @map.id, vehicle.map_id
+    assert_not_equal "hacked", vehicle.webhook_token
+  end
+
+  test "save_planned_path ignores unpermitted params" do
+    geojson = '{"type":"Feature","geometry":{"type":"LineString","coordinates":[[-74,40.7],[-73.9,40.8]]}}'
+    patch save_planned_path_map_tracked_vehicle_path(@map, @vehicle),
+      params: { planned_path: geojson, name: "Hacked", active: false },
+      as: :json
+
+    assert_response :success
+    @vehicle.reload
+    assert_equal geojson, @vehicle.planned_path
+    assert_equal "Delivery Truck", @vehicle.name
+    assert @vehicle.active?
+  end
 end
