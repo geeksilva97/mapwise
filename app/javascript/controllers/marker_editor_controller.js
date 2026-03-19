@@ -132,6 +132,14 @@ export default class extends Controller {
           if (countSpan && content) {
             const count = content.querySelectorAll('[id^="marker_"]').length
             countSpan.textContent = `(${count})`
+
+            // Re-add empty placeholder when group becomes empty
+            if (count === 0 && !content.querySelector('p.text-xs.text-gray-400')) {
+              const placeholder = document.createElement("p")
+              placeholder.className = "text-xs text-gray-400 px-3 py-2"
+              placeholder.textContent = "No markers in this group"
+              content.appendChild(placeholder)
+            }
           }
         }
       })
