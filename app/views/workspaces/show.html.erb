@@ -1,0 +1,82 @@
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900"><%= @workspace.name %></h1>
+    <% if @membership&.admin? && !@workspace.personal? %>
+      <div class="flex items-center gap-3">
+        <%= link_to "Edit", edit_workspace_path(@workspace), class: "text-sm text-gray-600 hover:text-gray-900" %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Members %>
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+    <h2 class="font-bold text-lg mb-4">Members</h2>
+
+    <div class="divide-y divide-gray-100">
+      <% @memberships.each do |membership| %>
+        <div class="flex items-center justify-between py-3">
+          <div>
+            <p class="text-sm font-medium text-gray-900"><%= membership.user.name %></p>
+            <p class="text-xs text-gray-500"><%= membership.user.email_address %></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium
+              <%= membership.admin? ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-600' %>">
+              <%= membership.role.capitalize %>
+            </span>
+
+            <% if @membership&.admin? && membership.user != Current.user %>
+              <% if membership.editor? %>
+                <%= button_to "Make Admin", workspace_membership_path(@workspace, membership),
+                    params: { role: "admin" }, method: :patch,
+                    class: "text-xs text-blue-600 hover:text-blue-800 cursor-pointer" %>
+              <% else %>
+                <%= button_to "Make Editor", workspace_membership_path(@workspace, membership),
+                    params: { role: "editor" }, method: :patch,
+                    class: "text-xs text-blue-600 hover:text-blue-800 cursor-pointer" %>
+              <% end %>
+
+              <%= button_to "Remove", workspace_membership_path(@workspace, membership),
+                  method: :delete,
+                  class: "text-xs text-red-600 hover:text-red-800 cursor-pointer" %>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Invite form (admin only) %>
+  <% if @membership&.admin? %>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+      <h2 class="font-bold text-lg mb-4">Invite Member</h2>
+
+      <%= form_with url: workspace_memberships_path(@workspace), method: :post do |form| %>
+        <div class="flex items-end gap-3">
+          <div class="flex-1">
+            <%= form.label :email, "Email address", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= form.email_field :email, required: true, placeholder: "colleague@example.com",
+                class: "block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none" %>
+          </div>
+          <div>
+            <%= form.label :role, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= form.select :role, [["Editor", "editor"], ["Admin", "admin"]], {},
+                class: "rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none" %>
+          </div>
+          <%= form.submit "Invite", class: "rounded-lg px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# Danger zone %>
+  <% if @membership&.admin? && !@workspace.personal? %>
+    <div class="bg-white rounded-xl border border-red-200 shadow-sm p-6">
+      <h2 class="font-bold text-lg text-red-700 mb-2">Danger Zone</h2>
+      <p class="text-sm text-gray-600 mb-4">Deleting a workspace will permanently remove all its maps, markers, and data.</p>
+      <%= button_to "Delete Workspace", workspace_path(@workspace), method: :delete,
+          class: "rounded-lg px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-sm font-medium cursor-pointer transition-colors",
+          data: { turbo_confirm: "Are you sure you want to delete this workspace? This cannot be undone." } %>
+    </div>
+  <% end %>
+</div>

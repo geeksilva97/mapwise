@@ -1,5 +1,5 @@
 class Maps::List
-  def self.call(user)
-    user.maps.order(updated_at: :desc)
+  def self.call(workspace)
+    workspace.maps.order(updated_at: :desc)
   end
 end

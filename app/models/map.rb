@@ -1,5 +1,6 @@
 class Map < ApplicationRecord
   belongs_to :user
+  belongs_to :workspace
   has_many :markers, dependent: :destroy
   has_many :marker_groups, dependent: :destroy
   has_many :imports, dependent: :destroy
@@ -22,7 +23,7 @@ class Map < ApplicationRecord
   end
 
   def embed_api_key
-    user.api_keys.first&.google_maps_key
+    workspace.api_keys.first&.google_maps_key
   end
 
   private

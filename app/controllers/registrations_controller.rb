@@ -11,6 +11,7 @@ class RegistrationsController < ApplicationController
     @user = User.new(registration_params)
 
     if @user.save
+      Workspaces::CreatePersonal.call(@user)
       start_new_session_for(@user)
       EmailVerifications::Send.call(@user)
       redirect_to root_path, notice: "Welcome to #{Branding.app_name}! Please check your email to verify your account."

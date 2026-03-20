@@ -13,6 +13,6 @@ class DeviationAlertsController < ApplicationController
   private
 
   def set_map
-    @map = Maps::Find.call(Current.user, params[:map_id])
+    @map = Maps::Find.call(Current.workspace, params[:map_id])
   end
 end

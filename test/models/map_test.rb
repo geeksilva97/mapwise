@@ -8,7 +8,7 @@ class MapTest < ActiveSupport::TestCase
   end
 
   test "generates embed_token on create" do
-    map = users(:one).maps.create!(title: "Token Test")
+    map = workspaces(:one).maps.create!(user: users(:one), title: "Token Test")
     assert_not_nil map.embed_token
     assert_equal 22, map.embed_token.length
   end
@@ -56,9 +56,9 @@ class MapTest < ActiveSupport::TestCase
     assert_equal expected_key, map.embed_api_key
   end
 
-  test "embed_api_key returns nil when user has no API keys" do
+  test "embed_api_key returns nil when workspace has no API keys" do
     map = maps(:one)
-    map.user.api_keys.destroy_all
+    map.workspace.api_keys.destroy_all
     assert_nil map.embed_api_key
   end
 
@@ -86,7 +86,7 @@ class MapTest < ActiveSupport::TestCase
   end
 
   test "valid with all required attributes" do
-    map = Map.new(user: users(:one), title: "Valid Map")
+    map = Map.new(user: users(:one), workspace: workspaces(:one), title: "Valid Map")
     assert map.valid?
   end
 

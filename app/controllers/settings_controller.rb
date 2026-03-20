@@ -1,7 +1,7 @@
 class SettingsController < ApplicationController
   def show
     @user = Current.user
-    @api_key = Current.user.api_keys.first || ApiKey.new
+    @api_key = Current.workspace.api_keys.first || ApiKey.new
   end
 
   def update
@@ -10,7 +10,7 @@ class SettingsController < ApplicationController
     if @user.update(user_params)
       redirect_to settings_path, notice: "Settings saved."
     else
-      @api_key = Current.user.api_keys.first || ApiKey.new
+      @api_key = Current.workspace.api_keys.first || ApiKey.new
       render :show, status: :unprocessable_entity
     end
   end

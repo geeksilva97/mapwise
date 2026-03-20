@@ -1,5 +1,5 @@
 class ApiKeys::List
-  def self.call(user)
-    user.api_keys
+  def self.call(workspace)
+    workspace.api_keys
   end
 end

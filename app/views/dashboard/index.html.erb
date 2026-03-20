@@ -1,5 +1,5 @@
 <div class="flex items-center justify-between mb-8">
-  <h1 class="text-2xl font-bold text-gray-900">My Maps</h1>
+  <h1 class="text-2xl font-bold text-gray-900"><%= current_workspace&.personal? ? "My Maps" : current_workspace&.name %></h1>
   <%= link_to new_map_path, class: "inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium transition-colors" do %>
     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

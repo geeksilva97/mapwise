@@ -1,6 +1,7 @@
 class Maps::Create
-  def self.call(user, params)
-    map = user.maps.build(params)
+  def self.call(workspace, user, params)
+    map = workspace.maps.build(params)
+    map.user = user
     map.save
     map
   end

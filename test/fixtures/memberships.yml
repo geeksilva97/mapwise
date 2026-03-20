@@ -1,0 +1,19 @@
+one_personal:
+  user: one
+  workspace: one
+  role: admin
+
+two_personal:
+  user: two
+  workspace: two
+  role: admin
+
+one_team_admin:
+  user: one
+  workspace: team
+  role: admin
+
+two_team_editor:
+  user: two
+  workspace: team
+  role: editor

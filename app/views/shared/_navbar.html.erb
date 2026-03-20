@@ -20,8 +20,32 @@
             </svg>
           </button>
 
-          <div data-navbar-target="dropdown" class="hidden absolute right-0 top-full mt-1 w-48 bg-white rounded-lg border border-gray-200 shadow-lg py-1 z-50">
+          <div data-navbar-target="dropdown" class="hidden absolute right-0 top-full mt-1 w-64 bg-white rounded-lg border border-gray-200 shadow-lg py-1 z-50">
+            <%# Workspace switcher %>
+            <% if Current.user.workspaces.count > 1 %>
+              <div class="px-4 py-2">
+                <p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Workspaces</p>
+              </div>
+              <% Current.user.workspaces.each do |ws| %>
+                <% if ws == current_workspace %>
+                  <div class="flex items-center gap-2 px-4 py-2 text-sm text-brand-700 bg-brand-50">
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M4.5 12.75l6 6 9-13.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <%= ws.name %>
+                  </div>
+                <% else %>
+                  <%= button_to ws.name, switch_workspace_path(ws), method: :post,
+                      class: "w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer pl-10" %>
+                <% end %>
+              <% end %>
+              <div class="border-t border-gray-200 my-1"></div>
+            <% end %>
             <%= link_to "My Maps", root_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
+            <% if current_workspace %>
+              <%= link_to "Workspace Settings", workspace_path(current_workspace), class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
+            <% end %>
+            <%= link_to "New Workspace", new_workspace_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
             <%= link_to "Settings", settings_path, class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
             <div class="border-t border-gray-200 my-1"></div>
             <%= button_to "Sign out", session_path, method: :delete,
@@ -50,6 +74,9 @@
   <div class="hidden sm:hidden border-t border-gray-200" data-navbar-target="menu">
     <div class="px-4 py-3 space-y-1">
       <% if authenticated? %>
+        <% if current_workspace %>
+          <span class="block px-3 py-1 text-xs font-medium text-gray-400 uppercase tracking-wider"><%= current_workspace.name %></span>
+        <% end %>
         <%= nav_link_to "Settings", settings_path, mobile: true %>
         <div class="border-t border-gray-200 mt-2 pt-2">
           <span class="block px-3 py-1 text-sm text-gray-500"><%= Current.user.name %></span>

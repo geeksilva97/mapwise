@@ -1,5 +1,6 @@
 one:
   user: one
+  workspace: one
   title: My First Map
   description: A test map
   center_lat: 40.7128
@@ -11,6 +12,7 @@ one:
 
 public_map:
   user: one
+  workspace: one
   title: Public Map
   description: A public map
   center_lat: 0.0
@@ -24,6 +26,7 @@ public_map:
 
 styled_map:
   user: one
+  workspace: one
   title: Styled Map
   center_lat: 39.8283
   center_lng: -98.5795
@@ -35,6 +38,7 @@ styled_map:
 
 cloud_styled_map:
   user: one
+  workspace: one
   title: Cloud Styled Map
   center_lat: 39.8283
   center_lng: -98.5795
@@ -46,6 +50,7 @@ cloud_styled_map:
 
 two:
   user: two
+  workspace: two
   title: Other User Map
   description: Belongs to user two
   center_lat: 51.5074

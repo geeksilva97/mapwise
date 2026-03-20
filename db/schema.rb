@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_17_013812) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_20_002524) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -45,7 +45,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_013812) do
     t.string "label", default: "Default"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.integer "workspace_id", null: false
     t.index ["user_id"], name: "index_api_keys_on_user_id"
+    t.index ["workspace_id"], name: "index_api_keys_on_workspace_id"
   end
 
   create_table "chat_messages", force: :cascade do |t|
@@ -112,8 +114,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_013812) do
     t.boolean "system_default", default: false
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.integer "workspace_id"
     t.index ["system_default"], name: "index_map_styles_on_system_default"
     t.index ["user_id"], name: "index_map_styles_on_user_id"
+    t.index ["workspace_id"], name: "index_map_styles_on_workspace_id"
   end
 
   create_table "maps", force: :cascade do |t|
@@ -133,10 +137,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_013812) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.integer "workspace_id", null: false
     t.integer "zoom", default: 3
     t.index ["embed_token"], name: "index_maps_on_embed_token", unique: true
     t.index ["user_id", "created_at"], name: "index_maps_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_maps_on_user_id"
+    t.index ["workspace_id"], name: "index_maps_on_workspace_id"
   end
 
   create_table "marker_groups", force: :cascade do |t|
@@ -168,6 +174,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_013812) do
     t.index ["map_id", "position"], name: "index_markers_on_map_id_and_position"
     t.index ["map_id"], name: "index_markers_on_map_id"
     t.index ["marker_group_id"], name: "index_markers_on_marker_group_id"
+  end
+
+  create_table "memberships", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "role", default: "editor", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "workspace_id", null: false
+    t.index ["user_id", "workspace_id"], name: "index_memberships_on_user_id_and_workspace_id", unique: true
+    t.index ["user_id"], name: "index_memberships_on_user_id"
+    t.index ["workspace_id"], name: "index_memberships_on_workspace_id"
   end
 
   create_table "sessions", force: :cascade do |t|
@@ -220,19 +237,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_013812) do
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
+  create_table "workspaces", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.boolean "personal", default: false, null: false
+    t.datetime "updated_at", null: false
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "api_keys", "users"
+  add_foreign_key "api_keys", "workspaces"
   add_foreign_key "chat_messages", "maps"
   add_foreign_key "deviation_alerts", "tracked_vehicles"
   add_foreign_key "deviation_alerts", "tracking_points"
   add_foreign_key "imports", "maps"
   add_foreign_key "layers", "maps"
   add_foreign_key "map_styles", "users"
+  add_foreign_key "map_styles", "workspaces"
   add_foreign_key "maps", "users"
+  add_foreign_key "maps", "workspaces"
   add_foreign_key "marker_groups", "maps"
   add_foreign_key "markers", "maps"
   add_foreign_key "markers", "marker_groups"
+  add_foreign_key "memberships", "users"
+  add_foreign_key "memberships", "workspaces"
   add_foreign_key "sessions", "users"
   add_foreign_key "tracked_vehicles", "maps"
   add_foreign_key "tracking_points", "tracked_vehicles"

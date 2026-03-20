@@ -1,0 +1,11 @@
+one:
+  name: User One's Workspace
+  personal: true
+
+two:
+  name: User Two's Workspace
+  personal: true
+
+team:
+  name: Team Workspace
+  personal: false

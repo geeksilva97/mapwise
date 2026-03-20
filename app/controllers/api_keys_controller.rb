@@ -1,8 +1,9 @@
 class ApiKeysController < ApplicationController
+  before_action :authorize_admin!
   before_action :set_api_key, only: %i[ update destroy ]
 
   def create
-    @api_key = ApiKeys::Create.call(Current.user, api_key_params)
+    @api_key = ApiKeys::Create.call(Current.workspace, Current.user, api_key_params)
 
     if @api_key.persisted?
       redirect_to settings_path(tab: "google maps"), notice: "Google Maps API key saved."
@@ -29,7 +30,7 @@ class ApiKeysController < ApplicationController
   private
 
   def set_api_key
-    @api_key = ApiKeys::Find.call(Current.user, params[:id])
+    @api_key = ApiKeys::Find.call(Current.workspace, params[:id])
   end
 
   def api_key_params

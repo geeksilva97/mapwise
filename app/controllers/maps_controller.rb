@@ -1,13 +1,14 @@
 class MapsController < ApplicationController
   layout "fullscreen", only: %i[ show edit tracking ]
   before_action :set_map, only: %i[ show edit update destroy tracking ]
+  before_action :authorize_admin!, only: %i[ destroy ]
 
   def new
-    @map = Maps::Build.call(Current.user)
+    @map = Maps::Build.call(Current.workspace, Current.user)
   end
 
   def create
-    @map = Maps::Create.call(Current.user, map_params)
+    @map = Maps::Create.call(Current.workspace, Current.user, map_params)
 
     if @map.persisted?
       redirect_to edit_map_path(@map)
@@ -61,7 +62,7 @@ class MapsController < ApplicationController
   private
 
   def set_map
-    @map = Maps::Find.call(Current.user, params[:id])
+    @map = Maps::Find.call(Current.workspace, params[:id])
   end
 
   def map_params

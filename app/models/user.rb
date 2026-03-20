@@ -1,8 +1,10 @@
 class User < ApplicationRecord
   has_secure_password
   has_many :sessions, dependent: :destroy
-  has_many :api_keys, dependent: :destroy
+  has_many :memberships, dependent: :destroy
+  has_many :workspaces, through: :memberships
   has_many :maps, dependent: :destroy
+  has_many :api_keys, dependent: :destroy
   has_many :map_styles, dependent: :destroy
 
   normalizes :email_address, with: ->(e) { e.strip.downcase }
@@ -23,5 +25,9 @@ class User < ApplicationRecord
 
   def email_verification_expired?
     !email_verified? && Time.current > email_verification_deadline
+  end
+
+  def personal_workspace
+    workspaces.find_by(personal: true)
   end
 end

@@ -9,6 +9,11 @@ Rails.application.routes.draw do
   resources :api_keys, only: %i[ create update destroy ]
   resources :map_styles, only: %i[ create destroy ]
 
+  resources :workspaces, except: [ :index ] do
+    member { post :switch }
+    resources :memberships, only: [ :create, :update, :destroy ]
+  end
+
   resources :maps do
     resources :markers, except: %i[ index show ] do
       member { patch :ungroup }

@@ -1,9 +1,11 @@
 one:
   user: one
+  workspace: one
   google_maps_key: AIzaSyTestKey123456789
   label: Default
 
 two:
   user: two
+  workspace: two
   google_maps_key: AIzaSyOtherKey987654321
   label: Production

@@ -1,5 +1,7 @@
 class Maps::Build
-  def self.call(user, params = {})
-    user.maps.build(params)
+  def self.call(workspace, user, params = {})
+    map = workspace.maps.build(params)
+    map.user = user
+    map
   end
 end
