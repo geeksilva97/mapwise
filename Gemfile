@@ -24,7 +24,7 @@ gem "bcrypt", "~> 3.1.7"
 
 # CSV/Excel file parsing for marker import
 gem "csv"
-gem "roo", "~> 2.10"
+gem "roo", "~> 3.0"
 
 # Unified LLM client (Anthropic, OpenAI, Gemini, etc.)
 gem "ruby_llm"
