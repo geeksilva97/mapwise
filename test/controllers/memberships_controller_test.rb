@@ -55,6 +55,25 @@ class MembershipsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Cannot remove the last admin", flash[:alert]
   end
 
+  test "cannot demote last admin" do
+    memberships(:two_team_editor).destroy
+
+    membership = memberships(:one_team_admin)
+    patch workspace_membership_path(@workspace, membership), params: { role: "editor" }
+    assert_redirected_to workspace_path(@workspace)
+    assert_match "Cannot demote the last admin", flash[:alert]
+    assert_equal "admin", membership.reload.role
+  end
+
+  test "invalid role falls back to editor" do
+    new_user = User.create!(name: "Fallback User", email_address: "fallback@example.com", password: "password123")
+
+    post workspace_memberships_path(@workspace), params: { email: "fallback@example.com", role: "superadmin" }
+    assert_redirected_to workspace_path(@workspace)
+    membership = @workspace.memberships.find_by(user: new_user)
+    assert_equal "editor", membership.role
+  end
+
   test "editor cannot invite members" do
     sign_in_as(users(:two))
     assert_no_difference("Membership.count") do

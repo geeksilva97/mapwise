@@ -3,7 +3,8 @@ class MembershipsController < ApplicationController
   before_action :authorize_workspace_admin!
 
   def create
-    result = Memberships::Invite.call(@workspace, params[:email], role: params[:role] || "editor")
+    role = validated_role
+    result = Memberships::Invite.call(@workspace, params[:email], role: role)
 
     if result[:error]
       redirect_to workspace_path(@workspace), alert: result[:error]
@@ -14,11 +15,13 @@ class MembershipsController < ApplicationController
 
   def update
     membership = @workspace.memberships.find(params[:id])
+    role = validated_role
+    result = Memberships::UpdateRole.call(membership, role)
 
-    if Memberships::UpdateRole.call(membership, params[:role])
-      redirect_to workspace_path(@workspace), notice: "Role updated."
+    if result[:error]
+      redirect_to workspace_path(@workspace), alert: result[:error]
     else
-      redirect_to workspace_path(@workspace), alert: "Could not update role."
+      redirect_to workspace_path(@workspace), notice: "Role updated."
     end
   end
 
@@ -37,6 +40,10 @@ class MembershipsController < ApplicationController
 
   def set_workspace
     @workspace = Current.user.workspaces.find(params[:workspace_id])
+  end
+
+  def validated_role
+    params[:role].presence_in(%w[admin editor]) || "editor"
   end
 
   def authorize_workspace_admin!
