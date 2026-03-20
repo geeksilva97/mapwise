@@ -39,8 +39,7 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     get settings_path
     assert_response :success
 
-    api_key = api_keys(:one)
-    assert_select "button[data-action='click->confirm-dialog#open'][data-confirm-form='#delete_api_key_#{api_key.id}']"
-    assert_select "form#delete_api_key_#{api_key.id}[class='hidden']"
+    assert_select "button[data-action='click->confirm-dialog#open'][data-confirm-form='#delete_api_key']"
+    assert_select "form#delete_api_key[class='hidden']"
   end
 end

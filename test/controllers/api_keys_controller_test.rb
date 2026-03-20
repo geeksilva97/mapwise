@@ -9,22 +9,21 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
   test "create saves encrypted api key" do
     assert_difference("ApiKey.count") do
       post api_keys_path, params: {
-        api_key: { google_maps_key: "AIzaSyBrandNewKey123", label: "Test Key" }
+        api_key: { google_maps_key: "AIzaSyBrandNewKey123" }
       }
     end
 
-    assert_redirected_to settings_path(tab: "api keys")
+    assert_redirected_to settings_path(tab: "google maps")
 
     key = ApiKey.last
     assert_equal "AIzaSyBrandNewKey123", key.google_maps_key
-    assert_equal "Test Key", key.label
     assert_equal @user, key.user
   end
 
   test "create with invalid params re-renders form" do
     assert_no_difference("ApiKey.count") do
       post api_keys_path, params: {
-        api_key: { google_maps_key: "", label: "Bad" }
+        api_key: { google_maps_key: "" }
       }
     end
 
@@ -37,7 +36,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
       api_key: { google_maps_key: "AIzaSyUpdatedKey456" }
     }
 
-    assert_redirected_to settings_path(tab: "api keys")
+    assert_redirected_to settings_path(tab: "google maps")
     api_key.reload
     assert_equal "AIzaSyUpdatedKey456", api_key.google_maps_key
   end
@@ -48,7 +47,7 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
       delete api_key_path(api_key)
     end
 
-    assert_redirected_to settings_path(tab: "api keys")
+    assert_redirected_to settings_path(tab: "google maps")
   end
 
   test "user cannot access other user's api key" do
@@ -75,12 +74,15 @@ class ApiKeysControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "update label only" do
-    api_key = api_keys(:one)
-    patch api_key_path(api_key), params: {
-      api_key: { label: "Renamed Key" }
-    }
-    assert_redirected_to settings_path(tab: "api keys")
-    assert_equal "Renamed Key", api_key.reload.label
+  test "create ignores unpermitted params like label" do
+    assert_difference("ApiKey.count") do
+      post api_keys_path, params: {
+        api_key: { google_maps_key: "AIzaSyTestKey789", label: "Custom Label" }
+      }
+    end
+
+    assert_redirected_to settings_path(tab: "google maps")
+    key = ApiKey.last
+    assert_equal "Default", key.label
   end
 end

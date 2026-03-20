@@ -5,27 +5,25 @@ class ApiKeysController < ApplicationController
     @api_key = ApiKeys::Create.call(Current.user, api_key_params)
 
     if @api_key.persisted?
-      redirect_to settings_path(tab: "api keys"), notice: "API key saved."
+      redirect_to settings_path(tab: "google maps"), notice: "Google Maps API key saved."
     else
       @user = Current.user
-      @api_keys = ApiKeys::List.call(Current.user).reload
       render "settings/show", status: :unprocessable_entity
     end
   end
 
   def update
     if ApiKeys::Update.call(@api_key, api_key_params)
-      redirect_to settings_path(tab: "api keys"), notice: "API key updated."
+      redirect_to settings_path(tab: "google maps"), notice: "Google Maps API key updated."
     else
       @user = Current.user
-      @api_keys = ApiKeys::List.call(Current.user)
       render "settings/show", status: :unprocessable_entity
     end
   end
 
   def destroy
     ApiKeys::Destroy.call(@api_key)
-    redirect_to settings_path(tab: "api keys"), notice: "API key removed."
+    redirect_to settings_path(tab: "google maps"), notice: "Google Maps API key removed."
   end
 
   private
@@ -35,6 +33,6 @@ class ApiKeysController < ApplicationController
   end
 
   def api_key_params
-    params.require(:api_key).permit(:google_maps_key, :label)
+    params.require(:api_key).permit(:google_maps_key)
   end
 end

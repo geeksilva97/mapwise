@@ -12,7 +12,7 @@
       </button>
       <button data-tabs-target="tab" data-action="click->tabs#select"
               class="px-1 pb-3 text-sm font-medium border-b-2 cursor-pointer">
-        API Keys
+        Google Maps
       </button>
     </nav>
   </div>
@@ -50,36 +50,51 @@
     </div>
   </div>
 
-  <%# API Keys tab %>
+  <%# Google Maps tab %>
   <div data-tabs-target="panel" class="hidden">
-    <p class="text-gray-600 mb-4 text-sm">Add your Google Maps API key to enable map embedding on external sites. Maps inside <%= app_name %> work without a key.</p>
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <h2 class="font-bold text-lg mb-4">Google Maps API Key</h2>
+      <p class="text-gray-600 mb-4 text-sm">Your Google Maps API key is used for map embedding on external sites. Maps inside <%= app_name %> work without it.</p>
 
-    <% if @api_keys.any? %>
-      <div class="space-y-3 mb-6">
-        <% @api_keys.each do |api_key| %>
-          <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center justify-between">
-            <div>
-              <p class="font-medium"><%= api_key.label %></p>
-              <p class="text-sm text-gray-500 font-mono"><%= api_key.google_maps_key.first(8) %>...<%= api_key.google_maps_key.last(4) %></p>
-            </div>
-            <button type="button"
-                    data-action="click->confirm-dialog#open"
-                    data-confirm-title="Remove API key"
-                    data-confirm-message="Remove this API key? Maps using it for embedding will stop working."
-                    data-confirm-form="#delete_api_key_<%= api_key.id %>"
-                    class="text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer">
-              Remove
-            </button>
-            <%= form_with url: api_key_path(api_key), method: :delete, id: "delete_api_key_#{api_key.id}", class: "hidden" do %>
-            <% end %>
+      <% api_key = @api_key %>
+      <%= form_with model: api_key, url: api_key.persisted? ? api_key_path(api_key) : api_keys_path, method: api_key.persisted? ? :patch : :post do |form| %>
+        <% if api_key.errors.any? %>
+          <div class="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            <ul class="list-disc ml-5">
+              <% api_key.errors.each do |error| %>
+                <li><%= error.full_message %></li>
+              <% end %>
+            </ul>
           </div>
         <% end %>
-      </div>
-    <% end %>
 
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h2 class="font-bold text-lg mb-4">Add API Key</h2>
-      <%= render "api_keys/form", api_key: @api_key %>
+        <div class="space-y-4">
+          <div>
+            <%= form.label :google_maps_key, "API Key", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= form.text_field :google_maps_key, required: true, placeholder: "AIzaSy...", class: "block w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm font-mono focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none" %>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <%= form.submit api_key.persisted? ? "Update Key" : "Save Key", class: "rounded-lg px-4 py-2.5 bg-brand-600 hover:bg-brand-500 text-white text-sm font-medium cursor-pointer transition-colors" %>
+
+            <% if api_key.persisted? %>
+              <button type="button"
+                      data-action="click->confirm-dialog#open"
+                      data-confirm-title="Remove Google Maps API key"
+                      data-confirm-message="Remove your API key? Embedded maps will stop working."
+                      data-confirm-form="#delete_api_key"
+                      class="text-red-600 hover:text-red-800 text-sm font-medium cursor-pointer">
+                Remove Key
+              </button>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if api_key.persisted? %>
+        <%= form_with url: api_key_path(api_key), method: :delete, id: "delete_api_key", class: "hidden" do %>
+        <% end %>
+      <% end %>
     </div>
   </div>
 </div>
